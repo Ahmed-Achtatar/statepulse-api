@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/server.schema.json",
+  "name": "io.github.ahmed-achtatar/pagediff-api",
+  "version": "2.0.0",
+  "description": "Pay-per-call web page content diffing for monitoring agents. Compare Wayback Machine snapshots and receive structured added, removed, and modified text changes.",
+  "homepage": "https://pagediff-api.hahavoid0.workers.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ahmed-Achtatar/pagediff-api.git"
+  },
+  "transport": {
+    "type": "sse",
+    "url": "https://pagediff-api.hahavoid0.workers.dev/mcp"
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false
+  }
+}
