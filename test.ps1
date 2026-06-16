@@ -1,0 +1,182 @@
+param(
+  [string]$Url = "http://localhost:8787"
+)
+
+$ErrorActionPreference = "Stop"
+$failures = 0
+
+function Test-Status {
+  param(
+    [string]$Label,
+    [string]$Path,
+    [int]$Expected = 200
+  )
+
+  try {
+    $response = Invoke-WebRequest -Uri "$Url$Path" -UseBasicParsing -TimeoutSec 20
+    $status = [int]$response.StatusCode
+  } catch {
+    if ($_.Exception.Response) {
+      $status = [int]$_.Exception.Response.StatusCode
+    } else {
+      Write-Host "Fail: $Label request failed: $($_.Exception.Message)"
+      $script:failures++
+      return
+    }
+  }
+
+  if ($status -eq $Expected) {
+    Write-Host "Success: $Label returned $status"
+  } else {
+    Write-Host "Fail: $Label returned $status, expected $Expected"
+    $script:failures++
+  }
+}
+
+function Test-Contains {
+  param(
+    [string]$Label,
+    [string]$Path,
+    [string]$Expected
+  )
+
+  try {
+    $body = (Invoke-WebRequest -Uri "$Url$Path" -UseBasicParsing -TimeoutSec 20).Content
+  } catch {
+    Write-Host "Fail: $Label request failed: $($_.Exception.Message)"
+    $script:failures++
+    return
+  }
+
+  if ($body.Contains($Expected)) {
+    Write-Host "Success: $Label contains $Expected"
+  } else {
+    Write-Host "Fail: $Label missing $Expected"
+    $script:failures++
+  }
+}
+
+function Test-NotContains {
+  param(
+    [string]$Label,
+    [string]$Path,
+    [string]$Unexpected
+  )
+
+  try {
+    $body = (Invoke-WebRequest -Uri "$Url$Path" -UseBasicParsing -TimeoutSec 20).Content
+  } catch {
+    Write-Host "Fail: $Label request failed: $($_.Exception.Message)"
+    $script:failures++
+    return
+  }
+
+  if (-not $body.Contains($Unexpected)) {
+    Write-Host "Success: $Label does not contain $Unexpected"
+  } else {
+    Write-Host "Fail: $Label still contains $Unexpected"
+    $script:failures++
+  }
+}
+
+function Test-PaymentChallenge {
+  param(
+    [string]$Label,
+    [string]$Path,
+    [string]$Payload,
+    [string]$ExpectedAmount
+  )
+
+  try {
+    $response = Invoke-WebRequest -Uri "$Url$Path" -Method POST -ContentType "application/json" -Body $Payload -UseBasicParsing -TimeoutSec 20
+    $status = [int]$response.StatusCode
+    $body = $response.Content
+    $header = $response.Headers["PAYMENT-REQUIRED"]
+  } catch {
+    if ($_.Exception.Response) {
+      $status = [int]$_.Exception.Response.StatusCode
+      $header = $_.Exception.Response.Headers["PAYMENT-REQUIRED"]
+      $stream = $_.Exception.Response.GetResponseStream()
+      $reader = New-Object System.IO.StreamReader($stream)
+      $body = $reader.ReadToEnd()
+    } else {
+      Write-Host "Fail: $Label request failed: $($_.Exception.Message)"
+      $script:failures++
+      return
+    }
+  }
+
+  $challenge = ""
+  if ($header) {
+    $padded = $header
+    while ($padded.Length % 4 -ne 0) {
+      $padded += "="
+    }
+    $challenge = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($padded))
+  }
+
+  $bodyHasLegacyAmount = $body.Contains("""maxAmountRequired"":""$ExpectedAmount""")
+  $headerHasV2Amount = $challenge.Contains("""amount"":""$ExpectedAmount""")
+
+  if ($status -eq 402 -and ($bodyHasLegacyAmount -or $headerHasV2Amount)) {
+    Write-Host "Success: $Label returned 402 & $ExpectedAmount"
+  } else {
+    Write-Host "Fail: $Label did not return x402 amount $ExpectedAmount"
+    $script:failures++
+  }
+}
+
+Write-Host "Testing $Url"
+Write-Host ""
+
+Write-Host "1. Health check"
+Test-Status "homepage" "/"
+Test-Status "health" "/health"
+Write-Host ""
+
+Write-Host "2. Trust endpoints"
+Test-Status "logo.svg" "/logo.svg"
+Test-Status "terms" "/terms"
+Test-Status "privacy" "/privacy"
+Write-Host ""
+
+Write-Host "3. Discovery metadata"
+Test-Status "metadata.json" "/metadata.json"
+Test-Status "agenterc metadata" "/agenterc-metadata.json"
+Test-Status "agent registration well-known" "/.well-known/agent-registration.json"
+Test-Status "agent-card" "/.well-known/agent-card.json"
+Test-Status "agent.json" "/.well-known/agent.json"
+Test-Status "x402.json" "/.well-known/x402.json"
+Test-Status "mcp.json" "/.well-known/mcp.json"
+Test-Status "x402 discovery" "/x402/discovery"
+Test-Status "oasf.json" "/.well-known/oasf.json"
+Test-Status "llms.txt" "/llms.txt"
+Test-Status "well-known llms.txt" "/.well-known/llms.txt"
+Test-Status "openapi.json" "/openapi.json"
+Test-Status "a2a service GET" "/a2a"
+Test-Status "a2a card GET" "/a2a/card"
+Test-Status "mcp service GET" "/mcp"
+Test-Status "oasf service GET" "/oasf"
+Test-Contains "homepage" "/" "PageDiff API"
+Test-Contains "openapi" "/openapi.json" "/diff"
+Test-Contains "x402 metadata" "/.well-known/x402.json" "50000"
+Test-Contains "llms.txt" "/llms.txt" "POST $Url/diff"
+Test-Contains "llms.txt" "/llms.txt" 'Price: $0.050'
+Test-Contains "well-known llms.txt" "/.well-known/llms.txt" "npx agentcash@latest check"
+Test-Contains "agent-card" "/.well-known/agent-card.json" "diff_web_page_snapshots"
+Test-Contains "mcp.json" "/.well-known/mcp.json" "2025-06-18"
+Test-Contains "oasf.json" "/.well-known/oasf.json" "schema_version"
+Test-NotContains "openapi" "/openapi.json" "/enrich"
+Test-NotContains "x402 metadata" "/.well-known/x402.json" "/score/lead"
+Write-Host ""
+
+Write-Host "4. Payment challenge"
+Test-PaymentChallenge "page diff" "/diff" '{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01"}' "50000"
+Write-Host ""
+
+if ($failures -gt 0) {
+  Write-Host "$failures check(s) failed"
+  exit 1
+}
+
+Write-Host "All checks passed"

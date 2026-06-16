@@ -1,0 +1,515 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PageDiff API",
+    "description": "Pay-per-call web page content diffing for monitoring agents. Provide a URL and two dates to compare Wayback Machine snapshots and receive structured added, removed, and modified text blocks.",
+    "version": "2.0.0",
+    "contact": {
+      "email": "support@pagediff.dev"
+    },
+    "termsOfService": "https://pagediff-api.hahavoid0.workers.dev/terms",
+    "x-logo": {
+      "url": "https://pagediff-api.hahavoid0.workers.dev/logo.svg"
+    },
+    "x-agent-card": "https://pagediff-api.hahavoid0.workers.dev/.well-known/agent-card.json"
+  },
+  "servers": [
+    {
+      "url": "https://pagediff-api.hahavoid0.workers.dev"
+    }
+  ],
+  "externalDocs": {
+    "description": "x402 and A2A metadata",
+    "url": "https://pagediff-api.hahavoid0.workers.dev/.well-known/x402.json"
+  },
+  "paths": {
+    "/diff": {
+      "post": {
+        "operationId": "diffPage",
+        "summary": "Diff a web page between two archived dates",
+        "description": "Compare two Wayback Machine HTML snapshots for a URL and return structured added, removed, and modified text blocks for monitoring agents.",
+        "tags": [
+          "web-monitoring",
+          "wayback",
+          "diff",
+          "content-change"
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.050000"
+          },
+          "asset": "USDC",
+          "network": "eip155:8453",
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "x-bazaar": {
+          "discoverable": true,
+          "category": "web-monitoring",
+          "tags": [
+            "web-monitoring",
+            "wayback",
+            "diff",
+            "content-change"
+          ],
+          "input": {
+            "method": "POST",
+            "body": {
+              "type": "object",
+              "required": [
+                "url",
+                "from",
+                "to"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "examples": [
+                    "https://example.com/"
+                  ]
+                },
+                "from": {
+                  "type": "string",
+                  "description": "Requested earlier snapshot date in YYYY-MM-DD format.",
+                  "examples": [
+                    "2023-01-01"
+                  ]
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Requested later snapshot date in YYYY-MM-DD format.",
+                  "examples": [
+                    "2024-01-01"
+                  ]
+                }
+              }
+            }
+          },
+          "output": {
+            "type": "object",
+            "required": [
+              "url",
+              "from_snapshot",
+              "to_snapshot",
+              "summary",
+              "added",
+              "removed",
+              "modified"
+            ],
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "from_snapshot": {
+                "type": "object",
+                "required": [
+                  "requested_date",
+                  "timestamp",
+                  "original_url",
+                  "archive_url",
+                  "statuscode",
+                  "mimetype",
+                  "digest"
+                ],
+                "properties": {
+                  "requested_date": {
+                    "type": "string",
+                    "examples": [
+                      "2024-01-01"
+                    ]
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "examples": [
+                      "20240101120000"
+                    ]
+                  },
+                  "original_url": {
+                    "type": "string"
+                  },
+                  "archive_url": {
+                    "type": "string"
+                  },
+                  "statuscode": {
+                    "type": "string"
+                  },
+                  "mimetype": {
+                    "type": "string"
+                  },
+                  "digest": {
+                    "type": "string"
+                  }
+                }
+              },
+              "to_snapshot": {
+                "type": "object",
+                "required": [
+                  "requested_date",
+                  "timestamp",
+                  "original_url",
+                  "archive_url",
+                  "statuscode",
+                  "mimetype",
+                  "digest"
+                ],
+                "properties": {
+                  "requested_date": {
+                    "type": "string",
+                    "examples": [
+                      "2024-01-01"
+                    ]
+                  },
+                  "timestamp": {
+                    "type": "string",
+                    "examples": [
+                      "20240101120000"
+                    ]
+                  },
+                  "original_url": {
+                    "type": "string"
+                  },
+                  "archive_url": {
+                    "type": "string"
+                  },
+                  "statuscode": {
+                    "type": "string"
+                  },
+                  "mimetype": {
+                    "type": "string"
+                  },
+                  "digest": {
+                    "type": "string"
+                  }
+                }
+              },
+              "summary": {
+                "type": "object",
+                "required": [
+                  "change_level",
+                  "added_count",
+                  "removed_count",
+                  "modified_count"
+                ],
+                "properties": {
+                  "change_level": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "low",
+                      "moderate",
+                      "high"
+                    ]
+                  },
+                  "added_count": {
+                    "type": "number"
+                  },
+                  "removed_count": {
+                    "type": "number"
+                  },
+                  "modified_count": {
+                    "type": "number"
+                  }
+                }
+              },
+              "added": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "removed": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "modified": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "before",
+                    "after"
+                  ],
+                  "properties": {
+                    "before": {
+                      "type": "string"
+                    },
+                    "after": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "examples": [
+                      "https://example.com/"
+                    ]
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Requested earlier snapshot date in YYYY-MM-DD format.",
+                    "examples": [
+                      "2023-01-01"
+                    ]
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "Requested later snapshot date in YYYY-MM-DD format.",
+                    "examples": [
+                      "2024-01-01"
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "default": {
+                  "value": {
+                    "url": "https://example.com/",
+                    "from": "2023-01-01",
+                    "to": "2024-01-01"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "url",
+                    "from_snapshot",
+                    "to_snapshot",
+                    "summary",
+                    "added",
+                    "removed",
+                    "modified"
+                  ],
+                  "properties": {
+                    "url": {
+                      "type": "string"
+                    },
+                    "from_snapshot": {
+                      "type": "object",
+                      "required": [
+                        "requested_date",
+                        "timestamp",
+                        "original_url",
+                        "archive_url",
+                        "statuscode",
+                        "mimetype",
+                        "digest"
+                      ],
+                      "properties": {
+                        "requested_date": {
+                          "type": "string",
+                          "examples": [
+                            "2024-01-01"
+                          ]
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "examples": [
+                            "20240101120000"
+                          ]
+                        },
+                        "original_url": {
+                          "type": "string"
+                        },
+                        "archive_url": {
+                          "type": "string"
+                        },
+                        "statuscode": {
+                          "type": "string"
+                        },
+                        "mimetype": {
+                          "type": "string"
+                        },
+                        "digest": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "to_snapshot": {
+                      "type": "object",
+                      "required": [
+                        "requested_date",
+                        "timestamp",
+                        "original_url",
+                        "archive_url",
+                        "statuscode",
+                        "mimetype",
+                        "digest"
+                      ],
+                      "properties": {
+                        "requested_date": {
+                          "type": "string",
+                          "examples": [
+                            "2024-01-01"
+                          ]
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "examples": [
+                            "20240101120000"
+                          ]
+                        },
+                        "original_url": {
+                          "type": "string"
+                        },
+                        "archive_url": {
+                          "type": "string"
+                        },
+                        "statuscode": {
+                          "type": "string"
+                        },
+                        "mimetype": {
+                          "type": "string"
+                        },
+                        "digest": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "summary": {
+                      "type": "object",
+                      "required": [
+                        "change_level",
+                        "added_count",
+                        "removed_count",
+                        "modified_count"
+                      ],
+                      "properties": {
+                        "change_level": {
+                          "type": "string",
+                          "enum": [
+                            "none",
+                            "low",
+                            "moderate",
+                            "high"
+                          ]
+                        },
+                        "added_count": {
+                          "type": "number"
+                        },
+                        "removed_count": {
+                          "type": "number"
+                        },
+                        "modified_count": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "added": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "removed": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "modified": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "before",
+                          "after"
+                        ],
+                        "properties": {
+                          "before": {
+                            "type": "string"
+                          },
+                          "after": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "url": "https://example.com/",
+                      "from_snapshot": {
+                        "requested_date": "2023-01-01",
+                        "timestamp": "20230101000000",
+                        "original_url": "https://example.com/",
+                        "archive_url": "https://web.archive.org/web/20230101000000id_/https://example.com/",
+                        "statuscode": "200",
+                        "mimetype": "text/html",
+                        "digest": "EXAMPLE"
+                      },
+                      "to_snapshot": {
+                        "requested_date": "2024-01-01",
+                        "timestamp": "20240101000000",
+                        "original_url": "https://example.com/",
+                        "archive_url": "https://web.archive.org/web/20240101000000id_/https://example.com/",
+                        "statuscode": "200",
+                        "mimetype": "text/html",
+                        "digest": "EXAMPLE2"
+                      },
+                      "summary": {
+                        "change_level": "low",
+                        "added_count": 1,
+                        "removed_count": 1,
+                        "modified_count": 0
+                      },
+                      "added": [
+                        "Updated example page content."
+                      ],
+                      "removed": [
+                        "Original example page content."
+                      ],
+                      "modified": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "No usable Wayback snapshot found"
+          }
+        }
+      }
+    }
+  }
+}

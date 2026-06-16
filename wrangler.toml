@@ -1,0 +1,8 @@
+name = "pagediff-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "5e2b89d9dad44feca664f7bfe247a13e"

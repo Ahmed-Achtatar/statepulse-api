@@ -1,0 +1,19 @@
+{
+  "name": "pagediff-api-buyer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "buy": "node buy.mjs",
+    "buy:win": "set NODE_OPTIONS=--use-system-ca&& node buy.mjs",
+    "challenge": "node challenge.mjs",
+    "challenge:win": "set NODE_OPTIONS=--use-system-ca&& node challenge.mjs"
+  },
+  "dependencies": {
+    "@x402/core": "latest",
+    "@x402/evm": "latest",
+    "@x402/fetch": "latest",
+    "dotenv": "latest",
+    "viem": "latest"
+  }
+}

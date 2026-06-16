@@ -1,0 +1,47 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "PageDiff API",
+  "description": "Pay-per-call web page content diffing for monitoring agents. Provide a URL and two dates to compare Wayback Machine snapshots and receive structured added, removed, and modified text blocks.",
+  "image": "https://pagediff-api.hahavoid0.workers.dev/logo.svg",
+  "services": [
+    {
+      "name": "A2A",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/.well-known/agent-card.json",
+      "version": "0.3.0"
+    },
+    {
+      "name": "MCP",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/mcp",
+      "metadata": "https://pagediff-api.hahavoid0.workers.dev/.well-known/mcp.json",
+      "version": "2025-06-18"
+    },
+    {
+      "name": "OASF",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/oasf",
+      "metadata": "https://pagediff-api.hahavoid0.workers.dev/.well-known/oasf.json",
+      "version": "1.0.0",
+      "skills": ["tool_interaction", "web_page_diffing", "change_monitoring"],
+      "domains": ["web-monitoring", "compliance-monitoring", "competitive-intelligence"]
+    },
+    {
+      "name": "OpenAPI",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/openapi.json",
+      "version": "3.1.0"
+    },
+    {
+      "name": "x402",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/.well-known/x402.json",
+      "version": "2"
+    },
+    {
+      "name": "Website",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev"
+    },
+    {
+      "name": "agentWallet",
+      "endpoint": "eip155:8453:0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"
+    }
+  ],
+  "tags": ["x402", "a2a", "mcp", "oasf", "web-diff", "wayback", "monitoring"],
+  "license": "ISC"
+}

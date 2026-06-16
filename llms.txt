@@ -1,0 +1,157 @@
+# PageDiff API
+
+Pay-per-call web page content diffing for monitoring agents. Provide a URL and two dates to compare Wayback Machine snapshots and receive structured added, removed, and modified text blocks.
+
+## When to use this API
+
+Use PageDiff when you need to detect and summarize text changes between two historical versions of a public web page. It is best for competitor pricing changes, terms and privacy policy monitoring, documentation drift, product positioning changes, and compliance page audits.
+
+Do not use PageDiff for live scraping, crawling many pages, JavaScript-rendered screenshots, or private/authenticated pages. PageDiff compares Internet Archive Wayback Machine snapshots, so results depend on archived snapshot availability.
+
+## Base URL
+
+https://pagediff-api.hahavoid0.workers.dev
+
+## Authentication and payment
+
+All paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Required with standard x402 payment instructions in response headers.
+
+- Network: Base mainnet, eip155:8453
+- Asset: USDC, 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
+- Facilitator: https://facilitator.x402.org
+- x402 metadata: https://pagediff-api.hahavoid0.workers.dev/.well-known/x402.json
+- OpenAPI schema: https://pagediff-api.hahavoid0.workers.dev/openapi.json
+- Agent card: https://pagediff-api.hahavoid0.workers.dev/.well-known/agent-card.json
+- MCP metadata: https://pagediff-api.hahavoid0.workers.dev/.well-known/mcp.json
+
+## Endpoint: diff a web page between two archived dates
+
+POST https://pagediff-api.hahavoid0.workers.dev/diff
+
+Price: $0.050 per request (50000 atomic USDC units)
+
+Use this endpoint when the user asks whether a page changed between two dates, what changed on a pricing page, how terms/privacy/docs changed over time, or needs structured added/removed/modified text from archived page versions.
+
+Request body schema:
+
+```json
+{
+  "type": "object",
+  "required": [
+    "url",
+    "from",
+    "to"
+  ],
+  "properties": {
+    "url": {
+      "type": "string",
+      "examples": [
+        "https://example.com/"
+      ]
+    },
+    "from": {
+      "type": "string",
+      "description": "Requested earlier snapshot date in YYYY-MM-DD format.",
+      "examples": [
+        "2023-01-01"
+      ]
+    },
+    "to": {
+      "type": "string",
+      "description": "Requested later snapshot date in YYYY-MM-DD format.",
+      "examples": [
+        "2024-01-01"
+      ]
+    }
+  }
+}
+```
+
+Request body fields:
+
+- url: string, required. Absolute http or https URL to compare.
+- from: string, required. Earlier requested snapshot date in YYYY-MM-DD format.
+- to: string, required. Later requested snapshot date in YYYY-MM-DD format.
+
+Example request:
+
+```http
+POST https://pagediff-api.hahavoid0.workers.dev/diff
+Content-Type: application/json
+
+{
+  "url": "https://example.com/",
+  "from": "2023-01-01",
+  "to": "2024-01-01"
+}
+```
+
+Example success response:
+
+```json
+{
+  "url": "https://example.com/",
+  "from_snapshot": {
+    "requested_date": "2023-01-01",
+    "timestamp": "20230101000000",
+    "original_url": "https://example.com/",
+    "archive_url": "https://web.archive.org/web/20230101000000id_/https://example.com/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "digest": "EXAMPLE"
+  },
+  "to_snapshot": {
+    "requested_date": "2024-01-01",
+    "timestamp": "20240101000000",
+    "original_url": "https://example.com/",
+    "archive_url": "https://web.archive.org/web/20240101000000id_/https://example.com/",
+    "statuscode": "200",
+    "mimetype": "text/html",
+    "digest": "EXAMPLE2"
+  },
+  "summary": {
+    "change_level": "low",
+    "added_count": 1,
+    "removed_count": 1,
+    "modified_count": 0
+  },
+  "added": [
+    "Updated example page content."
+  ],
+  "removed": [
+    "Original example page content."
+  ],
+  "modified": []
+}
+```
+
+Response notes:
+
+- from_snapshot and to_snapshot describe the nearest usable Wayback snapshots found for the requested dates.
+- summary.change_level is one of none, low, moderate, or high.
+- added contains text blocks present in the later snapshot but not the earlier snapshot.
+- removed contains text blocks present in the earlier snapshot but not the later snapshot.
+- modified contains paired before/after text blocks when PageDiff detects a changed block.
+
+Error behavior:
+
+- 402: payment required. Retry with a valid x402 payment header.
+- 400: invalid JSON, URL, or date input.
+- 404: no usable Wayback snapshot found for one or both requested dates.
+- 500: upstream Wayback or processing error. Failed requests do not settle payment.
+
+## Agent workflow
+
+1. If the task is about archived web page change detection, select POST https://pagediff-api.hahavoid0.workers.dev/diff.
+2. Validate that the user supplied a public http or https URL and two YYYY-MM-DD dates.
+3. If using AgentCash, run endpoint discovery or schema check before the first paid call:
+   - npx agentcash@latest discover https://pagediff-api.hahavoid0.workers.dev
+   - npx agentcash@latest check https://pagediff-api.hahavoid0.workers.dev/diff
+4. Execute the paid request with the JSON body above.
+5. Summarize the added, removed, and modified arrays for the user, and mention the exact snapshot timestamps used.
+
+## Minimal AgentCash call
+
+```bash
+npx agentcash@latest fetch https://pagediff-api.hahavoid0.workers.dev/diff -m POST -b '{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01"}'
+```
