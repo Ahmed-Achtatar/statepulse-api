@@ -1,7 +1,7 @@
 {
   "name": "pagediff-api",
-  "version": "1.0.0",
-  "description": "",
+  "version": "2.1.0",
+  "description": "Pay-per-call historical page-change evidence API for AI agents, powered by Wayback snapshots and x402 payments.",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
@@ -12,8 +12,17 @@
     "smoke:prod": "powershell -ExecutionPolicy Bypass -File ./test.ps1 https://pagediff-api.hahavoid0.workers.dev",
     "setup": "node setup-server.cjs"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "x402",
+    "mcp",
+    "ai-agents",
+    "wayback-machine",
+    "web-monitoring",
+    "competitive-intelligence",
+    "cloudflare-workers",
+    "usdc"
+  ],
+  "author": "Ahmed Achtatar",
   "license": "ISC",
   "dependencies": {
     "@coinbase/x402": "^2.1.0",

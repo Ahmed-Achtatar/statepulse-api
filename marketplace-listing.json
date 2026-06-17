@@ -1,0 +1,46 @@
+{
+  "name": "PageDiff API",
+  "short_description": "Historical page-change evidence for AI agents.",
+  "description": "PageDiff API checks Wayback snapshot availability, compares archived public pages, and generates raw diffs, persisted evidence reports, and batch report packages with source timestamps and shareable URLs. Paid per request with x402 on Base USDC.",
+  "homepage": "https://pagediff-api.hahavoid0.workers.dev",
+  "repository": "https://github.com/Ahmed-Achtatar/pagediff-api",
+  "logo": "https://pagediff-api.hahavoid0.workers.dev/logo.svg",
+  "openapi": "https://pagediff-api.hahavoid0.workers.dev/openapi.json",
+  "llms_txt": "https://pagediff-api.hahavoid0.workers.dev/llms.txt",
+  "x402": "https://pagediff-api.hahavoid0.workers.dev/.well-known/x402.json",
+  "mcp": "https://pagediff-api.hahavoid0.workers.dev/mcp",
+  "mcp_metadata": "https://pagediff-api.hahavoid0.workers.dev/.well-known/mcp.json",
+  "agent_card": "https://pagediff-api.hahavoid0.workers.dev/.well-known/agent-card.json",
+  "categories": ["Data", "Search", "Web Scraping", "Competitive Intelligence"],
+  "tags": ["x402", "mcp", "ai-agents", "wayback", "web-monitoring", "competitive-intelligence", "compliance-monitoring", "cloudflare-workers"],
+  "services": [
+    {
+      "name": "Web Page Diff",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/diff",
+      "method": "POST",
+      "price_usd": "0.05",
+      "description": "Compare two archived Wayback Machine snapshots for a public URL and return structured added, removed, and modified text blocks."
+    },
+    {
+      "name": "Historical Page-Change Report",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/report",
+      "method": "POST",
+      "price_usd": "0.50",
+      "description": "Generate a persisted evidence report from archived page changes, including headline, important changes, commercial impact, risks, confidence, source timestamps, and shareable URLs."
+    },
+    {
+      "name": "Batch Page-Change Reports",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/batch-report",
+      "method": "POST",
+      "price_usd": "2.00",
+      "description": "Generate up to five persisted historical page-change evidence reports in one paid request, with shareable report URLs and per-item failure reporting."
+    }
+  ],
+  "settlement": {
+    "network": "Base Mainnet",
+    "asset": "USDC",
+    "asset_contract": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "pay_to": "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE",
+    "facilitator": "https://api.cdp.coinbase.com/platform/v2/x402"
+  }
+}

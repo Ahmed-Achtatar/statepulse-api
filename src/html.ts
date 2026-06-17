@@ -3,7 +3,7 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PageDiff API - x402 web page content diffing</title>
+  <title>PageDiff API - historical page-change evidence</title>
   <!-- AI Agent & Protocol Discovery Specifications -->
   <link rel="alternate" type="text/markdown" title="LLM-friendly documentation" href="/llms.txt">
   <link rel="alternate" type="application/json" title="OpenAPI Specifications" href="/openapi.json">
@@ -371,17 +371,20 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
   <main class="wrap">
     <section class="hero">
       <div>
-        <h1>Archived web page diffs for monitoring agents</h1>
-        <p class="lead">Send a URL and two dates. PageDiff finds the closest usable Wayback snapshots, extracts readable page text, and returns structured added, removed, and modified blocks for pricing, policy, docs, staff, and competitor-page monitoring.</p>
+        <h1>Historical page-change evidence for AI agents</h1>
+        <p class="lead">Send URLs and dates. PageDiff checks Wayback snapshot availability, compares archived page text, and returns raw diffs, interpreted reports, or persisted batch evidence packages for pricing, policy, docs, legal terms, and competitor positioning changes.</p>
         <div class="actions">
-          <a href="/openapi.json" class="button primary">Explore Schema</a>
+          <a href="/try" class="button primary">Try Snapshot Check</a>
+          <a href="/openapi.json" class="button">Explore Schema</a>
           <button class="button" onclick="copyCurl()">Copy cURL</button>
         </div>
       </div>
 
       <div class="panel status">
-        <div class="metric"><span>Endpoint</span><strong>POST /diff</strong></div>
-        <div class="metric"><span>Price</span><strong>$0.050 USDC</strong></div>
+        <div class="metric"><span>Free Preflight</span><strong>POST /snapshot-check</strong></div>
+        <div class="metric"><span>Raw Diff</span><strong>$0.050 USDC</strong></div>
+        <div class="metric"><span>Report</span><strong>$0.500 USDC</strong></div>
+        <div class="metric"><span>Batch Report</span><strong>$2.000 USDC</strong></div>
         <div class="metric"><span>Network</span><strong>Base EIP-155:8453</strong></div>
         <div class="metric"><span>Wallet</span><strong class="mono">${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}</strong></div>
         <div class="metric"><span>x402 Settlements</span><strong>${paymentSettled} Succeeded</strong></div>
@@ -401,6 +404,10 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
         <div class="use-case">
           <h3>Competitor research</h3>
           <p>Track product catalog, positioning, hiring, and staff-page changes over time.</p>
+        </div>
+        <div class="use-case">
+          <h3>Evidence reports</h3>
+          <p>Generate source-timestamped summaries with important changes, impact, risks, and confidence.</p>
         </div>
       </div>
 
@@ -436,7 +443,7 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
     <section class="panel docs">
       <h2>Integration</h2>
       <div class="notice">
-        <strong>Protocol standard:</strong> Submit a JSON request to <code>/diff</code>. Without payment, the API returns HTTP 402 and a standard x402 payment challenge. A wallet or facilitator signs the payment payload and retries with <code>X-Payment</code>.
+        <strong>Protocol standard:</strong> Submit a free JSON request to <code>/snapshot-check</code>, then buy <code>/diff</code> for raw changes, <code>/report</code> for interpreted evidence, or <code>/batch-report</code> for up to five persisted reports. Paid endpoints return HTTP 402 and a standard x402 payment challenge until a wallet or facilitator retries with <code>X-Payment</code>.
       </div>
       <pre id="curl-code"></pre>
     </section>
@@ -465,7 +472,7 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
     }
 
     function updateCurl() {
-      curlCode.textContent = \`curl -i -X POST "${baseUrl}/diff" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify(payload())}'\`;
+      curlCode.textContent = \`curl -i -X POST "${baseUrl}/snapshot-check" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify(payload())}'\\n\\n# Paid interpreted report\\ncurl -i -X POST "${baseUrl}/report" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify({ ...payload(), report_type: "pricing_intelligence" })}'\\n\\n# Paid batch report\\ncurl -i -X POST "${baseUrl}/batch-report" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify({ report_type: "pricing_intelligence", items: [{ ...payload(), report_type: "pricing_intelligence" }] })}'\`;
     }
 
     async function fetchChallenge() {

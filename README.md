@@ -1,68 +1,92 @@
-# PageDiff API 🤖⚡
+# PageDiff API
 
-Pay-per-call archived web page content diffing for monitoring agents. Provide a URL and two dates to compare Wayback Machine snapshots and receive structured added, removed, and modified text blocks.
+Historical page-change evidence for AI agents. PageDiff checks Wayback snapshot availability, compares archived public pages, and returns either raw diffs or interpreted reports with important changes, impact, risks, confidence, and source timestamps.
 
-## 🌟 Agent-First Architecture
+## Commercial Endpoints
 
-This API is built specifically for autonomous AI agents, implementing multiple machine-to-machine interaction and payment protocols out-of-the-box.
+| Endpoint | Price | Purpose |
+|---|---:|---|
+| `POST /snapshot-check` | Free | Check whether usable Wayback HTML snapshots exist before paying. |
+| `POST /diff` | `$0.050` USDC | Return structured added, removed, and modified text blocks. |
+| `POST /report` | `$0.500` USDC | Return a persisted business-readable evidence report for pricing, policy, docs, legal terms, positioning, or general change analysis. |
+| `POST /batch-report` | `$2.000` USDC | Generate up to five persisted evidence reports in one paid request. |
 
-### Supported Agent Protocols & Specifications
+## Agent-First Architecture
 
-| Protocol | Description | Spec Location / Endpoint |
-|----------|-------------|--------------------------|
-| **LLMs Text** | LLM-friendly plain text documentation describing the API's capabilities and usage | [`llms.txt`](llms.txt) / `/llms.txt` |
-| **OpenAPI 3.1.0** | Machine-readable API schema and endpoints | [`openapi.json`](openapi.json) / `/openapi.json` |
-| **x402** | HTTP 402 Pay-Per-Call protocol (Base Network, USDC) | `/.well-known/x402.json` |
-| **MCP** | Model Context Protocol server configuration for LLM tools | `/.well-known/mcp.json` / `/mcp` |
-| **A2A** | Agent-to-Agent interface specifications | `/.well-known/agent-card.json` / `/a2a` |
-| **OASF** | Open Agent Service Format specifications | `/.well-known/oasf.json` / `/oasf` |
-| **EIP-8004** | Trustless Agent Reputation and Identity Registry metadata | [`agenterc-metadata.json`](agenterc-metadata.json) / `/.well-known/agent-registration.json` |
+| Protocol | Spec Location / Endpoint |
+|---|---|
+| LLMs Text | `llms.txt` / `/llms.txt` |
+| OpenAPI 3.1.0 | `openapi.json` / `/openapi.json` |
+| x402 | `/.well-known/x402.json` |
+| MCP | `/.well-known/mcp.json` / `/mcp` |
+| A2A | `/.well-known/agent-card.json` / `/a2a` |
+| OASF | `/.well-known/oasf.json` / `/oasf` |
+| EIP-8004 | `agenterc-metadata.json` / `/.well-known/agent-registration.json` |
 
----
+## Local Development
 
-## 🛠️ Getting Started
+```bash
+npm install
+npm run dev
+npm run smoke
+```
 
-### Prerequisites
+## Deployment
 
-- [Node.js](https://nodejs.org/) (v18+)
-- [Cloudflare Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-setup/) (for deployment)
+```bash
+npm run setup
+```
 
-### Local Development
+Or deploy directly:
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the local development server:
-   ```bash
-   npm run dev
-   ```
-3. Run smoke and integration tests:
-   ```bash
-   npm run smoke
-   ```
+```bash
+npm run deploy
+```
 
-### Deployment
+## Payment
 
-1. Run the interactive deployment wizard to configure your MetaMask wallet address (Base Network) and deploy to Cloudflare Workers:
-   ```bash
-   npm run setup
-   ```
-   *This starts a local dashboard at `http://localhost:8088`.*
+Paid endpoints use x402 on Base with USDC. Unpaid requests to paid routes return `HTTP 402 Payment Required` with a standard payment challenge.
 
-2. Alternatively, deploy directly using:
-   ```bash
-   npm run deploy
-   ```
+Use the free preflight before payment:
 
----
+```bash
+curl -X POST https://pagediff-api.hahavoid0.workers.dev/snapshot-check \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01"}'
+```
 
-## 🔒 Pay-per-Call Integration (`x402`)
+Example paid report:
 
-All main processing endpoints require micro-payments. If an agent calls a paid route without paying, the server responds with `HTTP 402 Payment Required` and a challenge header. 
+```bash
+npx agentcash@latest fetch https://pagediff-api.hahavoid0.workers.dev/report -m POST -b '{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01","report_type":"pricing_intelligence"}'
+```
 
-To test payments locally, see the instructions in the [PageDiff API Buyer Guide](buyer/README.md).
+Example paid batch:
 
-## 📄 License
+```bash
+npx agentcash@latest fetch https://pagediff-api.hahavoid0.workers.dev/batch-report -m POST -b '{"report_type":"pricing_intelligence","items":[{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01"},{"url":"https://example.com/pricing","from":"2025-01-01","to":"2026-01-01"}]}'
+```
 
-This project is licensed under the ISC License. See `package.json` for details.
+Reports and batches are stored for 90 days and return shareable HTML and JSON URLs.
+
+See `buyer/README.md` for local x402 buyer testing.
+
+## Optional Gemini Reports
+
+`POST /report` works without external AI, but becomes sharper when `GEMINI_API_KEY` is configured. With a key, PageDiff asks Gemini to interpret the raw diff and falls back to the built-in rule report if Gemini fails.
+
+Configure production:
+
+```bash
+wrangler secret put GEMINI_API_KEY
+wrangler secret put GEMINI_MODEL
+```
+
+`GEMINI_MODEL` is optional. The default is `gemini-2.0-flash`.
+
+For local development, add this to `.dev.vars`:
+
+```text
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-2.0-flash
+```

@@ -1,7 +1,7 @@
 {
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "PageDiff API",
-  "description": "Pay-per-call web page content diffing for monitoring agents. Provide a URL and two dates to compare Wayback Machine snapshots and receive structured added, removed, and modified text blocks.",
+  "description": "Pay-per-call historical page-change evidence for AI agents. Check Wayback snapshot availability, compare archived pages, and generate raw diffs, persisted reports, and batch evidence packages with source timestamps.",
   "image": "https://pagediff-api.hahavoid0.workers.dev/logo.svg",
   "services": [
     {
@@ -20,8 +20,8 @@
       "endpoint": "https://pagediff-api.hahavoid0.workers.dev/oasf",
       "metadata": "https://pagediff-api.hahavoid0.workers.dev/.well-known/oasf.json",
       "version": "1.0.0",
-      "skills": ["tool_interaction", "web_page_diffing", "change_monitoring"],
-      "domains": ["web-monitoring", "compliance-monitoring", "competitive-intelligence"]
+      "skills": ["tool_interaction", "web_page_diffing", "change_monitoring", "evidence_reporting", "batch_reporting"],
+      "domains": ["web-monitoring", "compliance-monitoring", "competitive-intelligence", "web-intelligence"]
     },
     {
       "name": "OpenAPI",
@@ -34,6 +34,16 @@
       "version": "2"
     },
     {
+      "name": "PageDiff Report",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/report",
+      "version": "2.1.0"
+    },
+    {
+      "name": "PageDiff Batch Report",
+      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/batch-report",
+      "version": "2.1.0"
+    },
+    {
       "name": "Website",
       "endpoint": "https://pagediff-api.hahavoid0.workers.dev"
     },
@@ -42,6 +52,7 @@
       "endpoint": "eip155:8453:0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"
     }
   ],
-  "tags": ["x402", "a2a", "mcp", "oasf", "web-diff", "wayback", "monitoring"],
-  "license": "ISC"
+  "tags": ["x402", "a2a", "mcp", "oasf", "web-diff", "wayback", "monitoring", "competitive-intelligence", "batch-report"],
+  "license": "ISC",
+  "updatedAt": "2026-06-17T00:00:00Z"
 }
