@@ -1,7 +1,7 @@
 {
-  "name": "pagediff-api",
-  "version": "2.1.0",
-  "description": "Pay-per-call historical page-change evidence API for AI agents, powered by Wayback snapshots and x402 payments.",
+  "name": "statepulse-api",
+  "version": "1.0.0",
+  "description": "Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents, paid for with x402 USDC on Base.",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
@@ -9,16 +9,23 @@
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "smoke": "powershell -ExecutionPolicy Bypass -File ./test.ps1",
-    "smoke:prod": "powershell -ExecutionPolicy Bypass -File ./test.ps1 https://pagediff-api.hahavoid0.workers.dev",
+    "smoke:prod": "powershell -ExecutionPolicy Bypass -File ./test.ps1 https://statepulse-api.hahavoid0.workers.dev",
     "setup": "node setup-server.cjs"
   },
   "keywords": [
     "x402",
     "mcp",
     "ai-agents",
-    "wayback-machine",
-    "web-monitoring",
-    "competitive-intelligence",
+    "pay-per-call",
+    "lookups",
+    "calculators",
+    "tenant-rights",
+    "landlord-tenant",
+    "rental-property",
+    "small-business",
+    "food",
+    "pet-safety",
+    "official-source",
     "cloudflare-workers",
     "usdc"
   ],

@@ -84,7 +84,7 @@ const html = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PageDiff API - Local Setup Wizard</title>
+  <title>StatePulse API - Local Setup Wizard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
@@ -273,7 +273,7 @@ const html = `<!DOCTYPE html>
 <body>
   <div class="container">
     <header>
-      <h1>PageDiff API</h1>
+      <h1>StatePulse API</h1>
       <p class="subtitle">Cloudflare Worker Deployment Wizard</p>
     </header>
 

@@ -1,6 +1,6 @@
-# PageDiff API Buyer
+# StatePulse API Buyer
 
-Use this folder to make a real x402 purchase against the deployed PageDiff API.
+Use this folder to make a real x402 purchase against the deployed StatePulse API.
 
 ## 1. Prepare MetaMask
 
@@ -9,7 +9,7 @@ Use a fresh burner MetaMask account, not your main wallet.
 Fund it on Base Mainnet with:
 
 - A small amount of ETH for gas
-- At least 0.05 USDC for `POST /diff`
+- At least 0.05 USDC for testing paid endpoints
 
 ## 2. Configure
 
@@ -23,7 +23,7 @@ notepad .env
 Optional values:
 
 ```text
-API_URL=https://pagediff-api.hahavoid0.workers.dev/diff
+API_URL=https://statepulse-api.hahavoid0.workers.dev/weather/anomaly
 TARGET_URL=https://example.com/
 FROM_DATE=2023-01-01
 TO_DATE=2024-01-01

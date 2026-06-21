@@ -1,47 +1,492 @@
-# PageDiff API
+# StatePulse API
 
-Pay-per-call historical page-change evidence for AI agents. Check Wayback snapshot availability, compare archived pages, and generate structured reports with important changes, impact, risks, source timestamps, and shareable report URLs.
-
-## When to use this API
-
-Use PageDiff when you need to detect, summarize, or interpret text changes between two historical versions of a public web page. It is best for competitor pricing changes, terms and privacy policy monitoring, documentation drift, product positioning changes, compliance page audits, and historical evidence packs for AI agents.
-
-Do not use PageDiff for live scraping, crawling many pages, JavaScript-rendered screenshots, or private/authenticated pages. Results depend on Internet Archive Wayback snapshot availability.
+Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents. No account setup required, pay per request with x402 USDC on Base.
 
 ## Base URL
 
-https://pagediff-api.hahavoid0.workers.dev
+https://statepulse-api.hahavoid0.workers.dev
 
-## Endpoints
+## Authentication and payment
 
-- `POST /snapshot-check`: free preflight. Checks whether usable Wayback HTML snapshots exist.
-- `POST /diff`: $0.050. Returns raw added, removed, and modified text blocks.
-- `POST /report`: $0.500. Returns one persisted interpreted report with `report_url` and `json_url`.
-- `POST /batch-report`: $2.000. Returns up to five persisted interpreted reports plus a persisted batch URL.
+Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Required with standard x402 payment instructions in response headers.
 
-Paid endpoints require x402 payment on Base mainnet with USDC.
-
-## Report types
-
-`pricing_intelligence`, `policy_change`, `competitor_positioning`, `docs_drift`, `legal_terms_change`, or `general`.
-
-If `GEMINI_API_KEY` is configured by the service owner, `/report` and `/batch-report` use Gemini to interpret diffs. If Gemini is unavailable or not configured, PageDiff falls back to a deterministic rule-based report.
+- Network: Base mainnet, eip155:8453
+- Asset: USDC, 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
+- Facilitator: https://api.cdp.coinbase.com/platform/v2/x402
+- x402 metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json
+- OpenAPI schema: https://statepulse-api.hahavoid0.workers.dev/openapi.json
+- Agent card: https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json
+- MCP metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json
 
 ## Agent workflow
 
-1. Call `/snapshot-check` before paid calls.
-2. If snapshots are unavailable, ask for a wider date range or different URL.
-3. Use `/diff` for raw text changes.
-4. Use `/report` for one interpreted evidence report.
-5. Use `/batch-report` for multiple pages.
-6. Cite exact snapshot timestamps and include returned report URLs.
+1. Pick the narrowest endpoint that matches the user's task from the list below.
+2. Validate required fields client-side before paying; each endpoint documents its required JSON fields.
+3. If using AgentCash, you can discover and check schemas first:
+   - npx agentcash@latest discover https://statepulse-api.hahavoid0.workers.dev
+   - npx agentcash@latest check https://statepulse-api.hahavoid0.workers.dev/product/barcode
+4. Execute the request with the JSON body shown for that endpoint.
+5. Every response includes a confidence/disclaimer field where relevant (legal, tax, or safety topics) — surface that to the end user, do not present results as certain legal or medical fact.
 
-## Minimal AgentCash calls
+## Endpoint: Universal Barcode & Retail Product Metadata Lookup
 
-```bash
-npx agentcash@latest fetch https://pagediff-api.hahavoid0.workers.dev/report -m POST -b '{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01","report_type":"pricing_intelligence"}'
+POST https://statepulse-api.hahavoid0.workers.dev/product/barcode
+
+Price: $0.030
+
+When to use: Use when an agent needs to turn a raw barcode number into rich product details, title, and metadata.
+
+Do not use for: Do not use for live in-store stock checking at local retail counters.
+
+Request body example:
+
+```json
+{
+  "barcode": "9780140449136"
+}
 ```
 
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "title": "The Odyssey",
+    "brand": "Penguin Classics",
+    "category": "Books",
+    "image": "https://covers.openlibrary.org/b/id/8240502-M.jpg",
+    "metadata": {
+      "page_count": 560,
+      "author": "Homer"
+    }
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
 ```bash
-npx agentcash@latest fetch https://pagediff-api.hahavoid0.workers.dev/batch-report -m POST -b '{"report_type":"pricing_intelligence","items":[{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01"},{"url":"https://example.com/pricing","from":"2025-01-01","to":"2026-01-01"}]}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/product/barcode -m POST -b '{"barcode":"9780140449136"}'
+```
+
+## Endpoint: Global Air Traffic & Flight State Vectors
+
+POST https://statepulse-api.hahavoid0.workers.dev/airspace/track
+
+Price: $0.030
+
+When to use: Use when an agent needs live flight tracking coordinate details (lat, lng, altitude, speed) for an aircraft.
+
+Do not use for: Do not use for flight ticket bookings or airport arrival terminal gate lookups.
+
+Request body example:
+
+```json
+{
+  "icao24": "3c6444"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "icao24": "3c6444",
+    "callsign": "DLH456",
+    "origin_country": "Germany",
+    "longitude": -122.301,
+    "latitude": 47.443,
+    "altitude_m": 11200,
+    "on_ground": false,
+    "velocity_mps": 242.5,
+    "heading": 184
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/airspace/track -m POST -b '{"icao24":"3c6444"}'
+```
+
+## Endpoint: Hyperlocal Air Quality & Environmental Conditions
+
+POST https://statepulse-api.hahavoid0.workers.dev/environment/air-quality
+
+Price: $0.030
+
+When to use: Use when an agent needs the local air quality index (AQI) or specific PM2.5 counts for a coordinate location.
+
+Do not use for: Do not use for indoor air quality sensor details or weather precipitation radar.
+
+Request body example:
+
+```json
+{
+  "lat": 34.05,
+  "lng": -118.24
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "aqi": 42,
+    "label": "Good",
+    "coordinates": {
+      "lat": 34.05,
+      "lng": -118.24
+    },
+    "measurements": [
+      {
+        "parameter": "pm25",
+        "value": 9.8,
+        "unit": "µg/m³"
+      }
+    ]
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/air-quality -m POST -b '{"lat":34.05,"lng":-118.24}'
+```
+
+## Endpoint: Global Public Transit Alerts & Delays
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/status
+
+Price: $0.030
+
+When to use: Use when an agent needs real-world transit status or delays for trip scheduling.
+
+Do not use for: Do not use for direct ticket buying or booking private taxis.
+
+Request body example:
+
+```json
+{
+  "city": "nyc",
+  "line": "L"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "city": "nyc",
+    "line": "L",
+    "status": "Good Service",
+    "delays": false,
+    "alerts": []
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/status -m POST -b '{"city":"nyc","line":"L"}'
+```
+
+## Endpoint: Dark Sky / Open-Meteo Historic Weather Anomalies
+
+POST https://statepulse-api.hahavoid0.workers.dev/weather/anomaly
+
+Price: $0.030
+
+When to use: Use when an agricultural, energy-trading, or supply-chain agent needs to detect unusual local temperatures.
+
+Do not use for: Do not use as a simple rain/snow forecast for daily commuter alerts.
+
+Request body example:
+
+```json
+{
+  "lat": 40.71,
+  "lng": -74
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "current_temp_c": 24.2,
+    "historical_mean_temp_c": 21,
+    "deviation_percentage": 15.2,
+    "anomaly_status": "above_average"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/weather/anomaly -m POST -b '{"lat":40.71,"lng":-74}'
+```
+
+## Endpoint: Live Radio & Podcast Stream Audio Extraction
+
+POST https://statepulse-api.hahavoid0.workers.dev/radio/stream-url
+
+Price: $0.010
+
+When to use: Use when a monitoring or translation agent needs a live audio streaming source URL for news scraping.
+
+Do not use for: Do not use for downloading static MP3 files of individual podcast episodes.
+
+Request body example:
+
+```json
+{
+  "country": "Morocco",
+  "genre": "news"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "station_name": "Chada FM",
+    "stream_url": "http://stream.chadafm.ma:8000/;",
+    "bitrate": 128
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/radio/stream-url -m POST -b '{"country":"Morocco","genre":"news"}'
+```
+
+## Endpoint: DNS Watch / Dig-Web-Interface Record Checker
+
+POST https://statepulse-api.hahavoid0.workers.dev/network/dns-propagation
+
+Price: $0.010
+
+When to use: Use when verifying TXT/MX records during server setup or routing updates.
+
+Do not use for: Do not use for managing domain registrations or renewing host names.
+
+Request body example:
+
+```json
+{
+  "domain": "google.com",
+  "type": "MX"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "domain": "google.com",
+    "type": "MX",
+    "records": [
+      "10 smtp.google.com"
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/dns-propagation -m POST -b '{"domain":"google.com","type":"MX"}'
+```
+
+## Endpoint: Canva / Brandfetch Color & Logo Scraper
+
+POST https://statepulse-api.hahavoid0.workers.dev/brand/assets
+
+Price: $0.030
+
+When to use: Use when an agent needs SVG/PNG logo links and brand hex colors for frontend component layout generation.
+
+Do not use for: Do not use for registering trademarks or searching copyright catalogs.
+
+Request body example:
+
+```json
+{
+  "domain": "spotify.com"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "logo": "https://logo.clearbit.com/spotify.com",
+    "colors": [
+      "#1db954"
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/brand/assets -m POST -b '{"domain":"spotify.com"}'
+```
+
+## Endpoint: PredictIt / ElectionBettingOdds Market Tracker
+
+POST https://statepulse-api.hahavoid0.workers.dev/prediction/odds
+
+Price: $0.030
+
+When to use: Use when hedging geopolitical or macro indicators in trading pipelines.
+
+Do not use for: Do not use for placing real bets or registering online gaming balances.
+
+Request body example:
+
+```json
+{
+  "market_id": 7000
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "market_name": "U.S. General Election Outcome",
+    "contracts": [
+      {
+        "name": "Democratic Party",
+        "price": 0.52
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/prediction/odds -m POST -b '{"market_id":7000}'
+```
+
+## Endpoint: USGS WaterData River Level Tracker
+
+POST https://statepulse-api.hahavoid0.workers.dev/water/streamflow
+
+Price: $0.030
+
+When to use: Use when planning irrigation or identifying flood alerts for asset positioning.
+
+Do not use for: Do not use for checking local city drinking tap water quality details.
+
+Request body example:
+
+```json
+{
+  "state": "CA"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "state": "CA",
+    "stations": [
+      {
+        "name": "Sacramento River",
+        "flow_cfs": 9400,
+        "height_ft": 12.2
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/streamflow -m POST -b '{"state":"CA"}'
+```
+
+## Endpoint: Nager.Date National Bank Holiday Lookup
+
+POST https://statepulse-api.hahavoid0.workers.dev/calendar/holidays
+
+Price: $0.010
+
+When to use: Use when validating if a day is a working day before triggering B2B schedules.
+
+Do not use for: Do not use for personal family anniversary or appointment calendar entries.
+
+Request body example:
+
+```json
+{
+  "year": 2026,
+  "country_code": "US"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "holidays": [
+      {
+        "date": "2026-01-01",
+        "name": "New Year's Day"
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/calendar/holidays -m POST -b '{"year":2026,"country_code":"US"}'
 ```

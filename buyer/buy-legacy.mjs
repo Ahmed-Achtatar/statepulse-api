@@ -15,7 +15,7 @@ function loadEnv() {
 }
 
 const env = loadEnv();
-const apiUrl = env.API_URL || "https://pagediff-api.hahavoid0.workers.dev/diff";
+const apiUrl = env.API_URL || "https://statepulse-api.hahavoid0.workers.dev/weather/anomaly";
 const targetUrl = env.TARGET_URL || "https://example.com/";
 const from = env.FROM_DATE || "2023-01-01";
 const to = env.TO_DATE || "2024-01-01";

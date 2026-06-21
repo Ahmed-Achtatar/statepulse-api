@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================"
-Write-Host "  PageDiff API - Deployment Setup"
+Write-Host "  StatePulse API - Deployment Setup"
 Write-Host "========================================"
 Write-Host ""
 

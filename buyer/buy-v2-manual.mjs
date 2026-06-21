@@ -19,11 +19,9 @@ function b64(value) {
 }
 
 const env = loadEnv();
-const apiUrl = env.API_URL || "https://pagediff-api.hahavoid0.workers.dev/diff";
-const targetUrl = env.TARGET_URL || "https://example.com/";
-const from = env.FROM_DATE || "2023-01-01";
-const to = env.TO_DATE || "2024-01-01";
-const privateKey = env.EVM_PRIVATE_KEY;
+const apiUrl = process.env.API_URL || env.API_URL || "https://statepulse-api.hahavoid0.workers.dev/weather/anomaly";
+const bodyInput = process.env.BODY_INPUT ? JSON.parse(process.env.BODY_INPUT) : (env.BODY_INPUT ? JSON.parse(env.BODY_INPUT) : { lat: 40.71, lng: -74.00 });
+const privateKey = process.env.EVM_PRIVATE_KEY || env.EVM_PRIVATE_KEY;
 
 if (!privateKey || privateKey.includes("YOUR_PRIVATE")) {
   throw new Error("Set EVM_PRIVATE_KEY in buyer/.env first.");
@@ -37,7 +35,7 @@ console.log("Requesting challenge...");
 const firstResponse = await fetch(apiUrl, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ url: targetUrl, from, to })
+  body: JSON.stringify(bodyInput)
 });
 
 const challenge = await firstResponse.json();
@@ -111,7 +109,7 @@ const paidResponse = await fetch(apiUrl, {
     "X-PAYMENT": b64(paymentPayload),
     "PAYMENT-SIGNATURE": b64(paymentPayload)
   },
-  body: JSON.stringify({ url: targetUrl, from, to })
+  body: JSON.stringify(bodyInput)
 });
 
 console.log("status:", paidResponse.status);

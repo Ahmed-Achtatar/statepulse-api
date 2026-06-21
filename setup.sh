@@ -11,7 +11,7 @@ trap 'error_exit' ERR
 
 echo ""
 echo "========================================"
-echo "  PageDiff API - Deployment Setup"
+echo "  StatePulse API - Deployment Setup"
 echo "========================================"
 echo ""
 

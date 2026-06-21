@@ -4,10 +4,8 @@ import { wrapFetchWithPayment } from "@x402/fetch";
 import { x402Client } from "@x402/core/client";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 
-const apiUrl = process.env.API_URL || "https://pagediff-api.hahavoid0.workers.dev/diff";
-const targetUrl = process.env.TARGET_URL || "https://example.com/";
-const from = process.env.FROM_DATE || "2023-01-01";
-const to = process.env.TO_DATE || "2024-01-01";
+const apiUrl = process.env.API_URL || "https://statepulse-api.hahavoid0.workers.dev/weather/anomaly";
+const bodyInput = process.env.BODY_INPUT ? JSON.parse(process.env.BODY_INPUT) : { lat: 40.71, lng: -74.00 };
 const privateKey = process.env.EVM_PRIVATE_KEY;
 
 if (!privateKey || privateKey.includes("YOUR_BURNER")) {
@@ -20,9 +18,7 @@ const account = privateKeyToAccount(
 
 console.log("Buyer wallet:", account.address);
 console.log("Endpoint:", apiUrl);
-console.log("Target URL:", targetUrl);
-console.log("From:", from);
-console.log("To:", to);
+console.log("Body payload:", JSON.stringify(bodyInput));
 
 const client = new x402Client();
 client.register("eip155:*", new ExactEvmScheme(account));
@@ -32,7 +28,7 @@ const fetchWithPayment = wrapFetchWithPayment(fetch, client);
 const response = await fetchWithPayment(apiUrl, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ url: targetUrl, from, to })
+  body: JSON.stringify(bodyInput)
 });
 
 console.log("status:", response.status);

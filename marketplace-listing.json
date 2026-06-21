@@ -1,39 +1,95 @@
 {
-  "name": "PageDiff API",
-  "short_description": "Historical page-change evidence for AI agents.",
-  "description": "PageDiff API checks Wayback snapshot availability, compares archived public pages, and generates raw diffs, persisted evidence reports, and batch report packages with source timestamps and shareable URLs. Paid per request with x402 on Base USDC.",
-  "homepage": "https://pagediff-api.hahavoid0.workers.dev",
-  "repository": "https://github.com/Ahmed-Achtatar/pagediff-api",
-  "logo": "https://pagediff-api.hahavoid0.workers.dev/logo.svg",
-  "openapi": "https://pagediff-api.hahavoid0.workers.dev/openapi.json",
-  "llms_txt": "https://pagediff-api.hahavoid0.workers.dev/llms.txt",
-  "x402": "https://pagediff-api.hahavoid0.workers.dev/.well-known/x402.json",
-  "mcp": "https://pagediff-api.hahavoid0.workers.dev/mcp",
-  "mcp_metadata": "https://pagediff-api.hahavoid0.workers.dev/.well-known/mcp.json",
-  "agent_card": "https://pagediff-api.hahavoid0.workers.dev/.well-known/agent-card.json",
-  "categories": ["Data", "Search", "Web Scraping", "Competitive Intelligence"],
-  "tags": ["x402", "mcp", "ai-agents", "wayback", "web-monitoring", "competitive-intelligence", "compliance-monitoring", "cloudflare-workers"],
+  "name": "StatePulse API",
+  "short_description": "Pay-per-call live telemetry and utilities for AI agents.",
+  "description": "StatePulse API exposes narrow, machine-readable live telemetry, environmental metrics, transit state vectors, and real-time utilities AI agents can call instead of guessing: coordinates, speed, air quality, weather deviations, DNS, and calendar holidays. Paid per request with x402 on Base USDC. Served from the same worker as the former PageDiff API.",
+  "homepage": "https://statepulse-api.hahavoid0.workers.dev",
+  "repository": "https://github.com/Ahmed-Achtatar/statepulse-api",
+  "logo": "https://statepulse-api.hahavoid0.workers.dev/logo.svg",
+  "openapi": "https://statepulse-api.hahavoid0.workers.dev/openapi.json",
+  "llms_txt": "https://statepulse-api.hahavoid0.workers.dev/llms.txt",
+  "x402": "https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json",
+  "mcp": "https://statepulse-api.hahavoid0.workers.dev/mcp",
+  "mcp_metadata": "https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json",
+  "agent_card": "https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json",
+  "categories": ["Data", "Logistics", "Utilities"],
+  "tags": ["x402", "mcp", "ai-agents", "pay-per-call", "telemetry", "weather", "dns", "transit", "cloudflare-workers"],
   "services": [
     {
-      "name": "Web Page Diff",
-      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/diff",
+      "name": "Barcode Lookup",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/product/barcode",
       "method": "POST",
-      "price_usd": "0.05",
-      "description": "Compare two archived Wayback Machine snapshots for a public URL and return structured added, removed, and modified text blocks."
+      "price_usd": "0.03",
+      "description": "Resolves a UPC/EAN or ISBN barcode into detailed product metadata."
     },
     {
-      "name": "Historical Page-Change Report",
-      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/report",
+      "name": "Flight Tracker",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/airspace/track",
       "method": "POST",
-      "price_usd": "0.50",
-      "description": "Generate a persisted evidence report from archived page changes, including headline, important changes, commercial impact, risks, confidence, source timestamps, and shareable URLs."
+      "price_usd": "0.03",
+      "description": "Track live airspace state vectors for a specific ICAO24 hex code."
     },
     {
-      "name": "Batch Page-Change Reports",
-      "endpoint": "https://pagediff-api.hahavoid0.workers.dev/batch-report",
+      "name": "Air Quality Index",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/air-quality",
       "method": "POST",
-      "price_usd": "2.00",
-      "description": "Generate up to five persisted historical page-change evidence reports in one paid request, with shareable report URLs and per-item failure reporting."
+      "price_usd": "0.03",
+      "description": "Retrieves live localized air quality indices (AQI) and pollutant levels."
+    },
+    {
+      "name": "Transit Alerts & Delays",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/status",
+      "method": "POST",
+      "price_usd": "0.03",
+      "description": "Check transit delays, active alerts, and schedule status updates for supported cities."
+    },
+    {
+      "name": "Weather Anomaly Checker",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/weather/anomaly",
+      "method": "POST",
+      "price_usd": "0.03",
+      "description": "Compares current weather conditions with a 10-year historical average."
+    },
+    {
+      "name": "Radio Stream Finder",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/radio/stream-url",
+      "method": "POST",
+      "price_usd": "0.01",
+      "description": "Resolves direct Shoutcast/Icecast streaming URLs from an open directory."
+    },
+    {
+      "name": "DNS Propagation Check",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/dns-propagation",
+      "method": "POST",
+      "price_usd": "0.01",
+      "description": "Checks global MX, TXT, A, and CNAME propagation status using Cloudflare DoH."
+    },
+    {
+      "name": "Brand Colors & Asset Grabber",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/brand/assets",
+      "method": "POST",
+      "price_usd": "0.03",
+      "description": "Extracts brand logos and theme colors for any public business URL."
+    },
+    {
+      "name": "Geopolitical Prediction Odds",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/prediction/odds",
+      "method": "POST",
+      "price_usd": "0.03",
+      "description": "Retrieves live betting market contract odds from PredictIt."
+    },
+    {
+      "name": "USGS River Gauge Flow",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/water/streamflow",
+      "method": "POST",
+      "price_usd": "0.03",
+      "description": "Queries live US river level and streamflow gauge height metrics using USGS NWIS."
+    },
+    {
+      "name": "Public Bank Holiday Check",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/calendar/holidays",
+      "method": "POST",
+      "price_usd": "0.01",
+      "description": "Retrieves local bank and public holidays across 100+ countries."
     }
   ],
   "settlement": {

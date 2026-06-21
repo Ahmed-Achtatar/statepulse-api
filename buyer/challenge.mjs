@@ -1,12 +1,10 @@
-const apiUrl = process.env.API_URL || "https://pagediff-api.hahavoid0.workers.dev/diff";
-const targetUrl = process.env.TARGET_URL || "https://example.com/";
-const from = process.env.FROM_DATE || "2023-01-01";
-const to = process.env.TO_DATE || "2024-01-01";
+const apiUrl = process.env.API_URL || "https://statepulse-api.hahavoid0.workers.dev/weather/anomaly";
+const bodyInput = process.env.BODY_INPUT ? JSON.parse(process.env.BODY_INPUT) : { lat: 40.71, lng: -74.00 };
 
 const response = await fetch(apiUrl, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ url: targetUrl, from, to })
+  body: JSON.stringify(bodyInput)
 });
 
 const paymentRequired = response.headers.get("Payment-Required") || response.headers.get("payment-required");

@@ -1,9 +1,11 @@
+import { ENDPOINTS, paidEndpoints } from "./endpoints/registry"
+
 export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSettled: number) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PageDiff API - historical page-change evidence</title>
+  <title>StatePulse API - pay-per-call live telemetry and utilities for AI agents</title>
   <!-- AI Agent & Protocol Discovery Specifications -->
   <link rel="alternate" type="text/markdown" title="LLM-friendly documentation" href="/llms.txt">
   <link rel="alternate" type="application/json" title="OpenAPI Specifications" href="/openapi.json">
@@ -356,7 +358,7 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
           <path d="M31 79h58v18H31z" fill="#22c55e"/>
           <path d="M94 57l13 13-13 13" fill="none" stroke="#facc15" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span>PageDiff API</span>
+        <span>StatePulse API</span>
       </a>
       <nav>
         <a href="/openapi.json" target="_blank">OpenAPI</a>
@@ -371,20 +373,18 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
   <main class="wrap">
     <section class="hero">
       <div>
-        <h1>Historical page-change evidence for AI agents</h1>
-        <p class="lead">Send URLs and dates. PageDiff checks Wayback snapshot availability, compares archived page text, and returns raw diffs, interpreted reports, or persisted batch evidence packages for pricing, policy, docs, legal terms, and competitor positioning changes.</p>
+        <h1>Pay-per-call telemetry and utilities for AI agents</h1>
+        <p class="lead">One API, many narrow telemetry and utility endpoints: flight vectors, environmental air quality, weather anomalies, DNS propagation, and regional holidays. No account, no API key &mdash; pay per call with x402 on Base USDC.</p>
         <div class="actions">
-          <a href="/try" class="button primary">Try Snapshot Check</a>
+          <a href="/try" class="button primary">Try an Endpoint</a>
           <a href="/openapi.json" class="button">Explore Schema</a>
           <button class="button" onclick="copyCurl()">Copy cURL</button>
         </div>
       </div>
 
       <div class="panel status">
-        <div class="metric"><span>Free Preflight</span><strong>POST /snapshot-check</strong></div>
-        <div class="metric"><span>Raw Diff</span><strong>$0.050 USDC</strong></div>
-        <div class="metric"><span>Report</span><strong>$0.500 USDC</strong></div>
-        <div class="metric"><span>Batch Report</span><strong>$2.000 USDC</strong></div>
+        <div class="metric"><span>Endpoints</span><strong>${ENDPOINTS.length} live</strong></div>
+        ${paidEndpoints().slice(0, 4).map((endpoint) => `<div class="metric"><span>${endpoint.summary}</span><strong>$${endpoint.priceUsd} USDC</strong></div>`).join("\n        ")}
         <div class="metric"><span>Network</span><strong>Base EIP-155:8453</strong></div>
         <div class="metric"><span>Wallet</span><strong class="mono">${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}</strong></div>
         <div class="metric"><span>x402 Settlements</span><strong>${paymentSettled} Succeeded</strong></div>
@@ -393,49 +393,34 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
 
     <section class="grid">
       <div class="panel use-cases">
-        <div class="use-case">
-          <h3>Pricing monitors</h3>
-          <p>Catch plan, limit, and packaging changes between archived versions of a pricing page.</p>
-        </div>
-        <div class="use-case">
-          <h3>Policy watchers</h3>
-          <p>Compare terms, privacy, docs, and compliance pages without setting up an account.</p>
-        </div>
-        <div class="use-case">
-          <h3>Competitor research</h3>
-          <p>Track product catalog, positioning, hiring, and staff-page changes over time.</p>
-        </div>
-        <div class="use-case">
-          <h3>Evidence reports</h3>
-          <p>Generate source-timestamped summaries with important changes, impact, risks, and confidence.</p>
-        </div>
+        ${ENDPOINTS.map((endpoint) => `<div class="use-case">
+          <h3>${endpoint.summary}</h3>
+          <p>${endpoint.whenToUse}</p>
+          <p><code>POST ${endpoint.path}</code> &mdash; ${endpoint.free ? "free" : `$${endpoint.priceUsd} USDC`}</p>
+        </div>`).join("\n        ")}
       </div>
 
       <div class="panel console">
-        <h2>Payment Challenge Inspector</h2>
+        <h2>Endpoint Console</h2>
         <div class="form-grid">
           <div class="form-group full">
-            <label>URL</label>
-            <input type="url" id="url-input" value="https://example.com/">
+            <label>Endpoint</label>
+            <select id="endpoint-select">${ENDPOINTS.map((endpoint) => `<option value="${endpoint.path}">${endpoint.path} (${endpoint.free ? "free" : `$${endpoint.priceUsd}`})</option>`).join("")}</select>
           </div>
-          <div class="form-group">
-            <label>From Date</label>
-            <input type="date" id="from-input" value="2023-01-01">
-          </div>
-          <div class="form-group">
-            <label>To Date</label>
-            <input type="date" id="to-input" value="2024-01-01">
+          <div class="form-group full">
+            <label>Request body (JSON)</label>
+            <textarea id="body-input" rows="6" style="width:100%;font-family:monospace;background:#08111f;color:#f6f8fb;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px"></textarea>
           </div>
         </div>
 
         <div class="console-actions">
-          <button class="button primary" onclick="fetchChallenge()">Fetch Unpaid Challenge</button>
+          <button class="button primary" onclick="fetchChallenge()">Send Request</button>
           <button class="button" onclick="updateCurl()">Refresh cURL</button>
         </div>
 
         <div class="form-group">
-          <label>Challenge Output</label>
-          <pre id="console-output">Click "Fetch Unpaid Challenge" to inspect the x402 payment requirements for /diff.</pre>
+          <label>Output</label>
+          <pre id="console-output">Pick an endpoint, edit the body if needed, then click "Send Request".</pre>
         </div>
       </div>
     </section>
@@ -443,7 +428,7 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
     <section class="panel docs">
       <h2>Integration</h2>
       <div class="notice">
-        <strong>Protocol standard:</strong> Submit a free JSON request to <code>/snapshot-check</code>, then buy <code>/diff</code> for raw changes, <code>/report</code> for interpreted evidence, or <code>/batch-report</code> for up to five persisted reports. Paid endpoints return HTTP 402 and a standard x402 payment challenge until a wallet or facilitator retries with <code>X-Payment</code>.
+        <strong>Protocol standard:</strong> Each endpoint is documented in <code>/openapi.json</code> and <code>/llms.txt</code> with its exact price. Paid endpoints return HTTP 402 and a standard x402 payment challenge until a wallet or facilitator retries with <code>X-Payment</code>.
       </div>
       <pre id="curl-code"></pre>
     </section>
@@ -451,28 +436,30 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
 
   <footer>
     <div class="wrap">
-      <span>&copy; 2026 PageDiff API. All rights reserved.</span>
-      <span>Contact: <a href="mailto:support@pagediff.dev">support@pagediff.dev</a></span>
+      <span>&copy; 2026 StatePulse API. All rights reserved.</span>
+      <span>Contact: <a href="mailto:support@statepulse.dev">support@statepulse.dev</a></span>
     </div>
   </footer>
 
   <script>
-    const urlInput = document.getElementById("url-input");
-    const fromInput = document.getElementById("from-input");
-    const toInput = document.getElementById("to-input");
+    const ENDPOINT_EXAMPLES = ${JSON.stringify(Object.fromEntries(ENDPOINTS.map((e) => [e.path, e.exampleInput()])))};
+    const endpointSelect = document.getElementById("endpoint-select");
+    const bodyInput = document.getElementById("body-input");
     const consoleOutput = document.getElementById("console-output");
     const curlCode = document.getElementById("curl-code");
 
+    function loadExample() {
+      bodyInput.value = JSON.stringify(ENDPOINT_EXAMPLES[endpointSelect.value] || {}, null, 2);
+    }
+    endpointSelect.addEventListener("change", loadExample);
+    loadExample();
+
     function payload() {
-      return {
-        url: urlInput.value,
-        from: fromInput.value,
-        to: toInput.value
-      };
+      try { return JSON.parse(bodyInput.value); } catch { return {}; }
     }
 
     function updateCurl() {
-      curlCode.textContent = \`curl -i -X POST "${baseUrl}/snapshot-check" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify(payload())}'\\n\\n# Paid interpreted report\\ncurl -i -X POST "${baseUrl}/report" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify({ ...payload(), report_type: "pricing_intelligence" })}'\\n\\n# Paid batch report\\ncurl -i -X POST "${baseUrl}/batch-report" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify({ report_type: "pricing_intelligence", items: [{ ...payload(), report_type: "pricing_intelligence" }] })}'\`;
+      curlCode.textContent = \`curl -i -X POST "${baseUrl}\${endpointSelect.value}" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify(payload())}'\`;
     }
 
     async function fetchChallenge() {
@@ -481,7 +468,7 @@ export const getHtmlContent = (walletAddress: string, baseUrl: string, paymentSe
       consoleOutput.textContent = "Negotiating payment challenge with resource server...";
 
       try {
-        const response = await fetch("/diff", {
+        const response = await fetch(endpointSelect.value, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload())

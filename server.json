@@ -1,16 +1,16 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/server.schema.json",
-  "name": "io.github.ahmed-achtatar/pagediff-api",
-  "version": "2.1.0",
-  "description": "Pay-per-call historical page-change evidence for AI agents. Check Wayback snapshots, compare archived pages, and generate raw diffs, persisted reports, and batch evidence packages with x402 payments.",
-  "homepage": "https://pagediff-api.hahavoid0.workers.dev",
+  "name": "io.github.ahmed-achtatar/statepulse-api",
+  "version": "1.0.0",
+  "description": "Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents, paid with x402.",
+  "homepage": "https://statepulse-api.hahavoid0.workers.dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Ahmed-Achtatar/pagediff-api.git"
+    "url": "https://github.com/Ahmed-Achtatar/statepulse-api.git"
   },
   "transport": {
     "type": "streamable_http",
-    "url": "https://pagediff-api.hahavoid0.workers.dev/mcp"
+    "url": "https://statepulse-api.hahavoid0.workers.dev/mcp"
   },
   "capabilities": {
     "tools": true,

@@ -129,6 +129,20 @@ function Test-PaymentChallenge {
 Write-Host "Testing $Url"
 Write-Host ""
 
+$ExpectedEndpointPaths = @(
+  "/product/barcode",
+  "/airspace/track",
+  "/environment/air-quality",
+  "/transit/status",
+  "/weather/anomaly",
+  "/radio/stream-url",
+  "/network/dns-propagation",
+  "/brand/assets",
+  "/prediction/odds",
+  "/water/streamflow",
+  "/calendar/holidays"
+)
+
 Write-Host "1. Health check"
 Test-Status "homepage" "/"
 Test-Status "try page" "/try"
@@ -154,42 +168,42 @@ Test-Status "oasf.json" "/.well-known/oasf.json"
 Test-Status "llms.txt" "/llms.txt"
 Test-Status "well-known llms.txt" "/.well-known/llms.txt"
 Test-Status "openapi.json" "/openapi.json"
-Test-Status "snapshot-check info" "/snapshot-check"
-Test-Status "pricing use case" "/use-cases/compare-competitor-pricing-pages"
-Test-Status "pricing example" "/examples/pricing-page-autopsy"
+foreach ($path in $ExpectedEndpointPaths) {
+  Test-Status "endpoint info $path" $path
+}
 Test-Status "a2a service GET" "/a2a"
 Test-Status "a2a card GET" "/a2a/card"
 Test-Status "mcp service GET" "/mcp"
 Test-Status "oasf service GET" "/oasf"
-Test-Contains "homepage" "/" "PageDiff API"
-Test-Contains "openapi" "/openapi.json" "/diff"
-Test-Contains "openapi" "/openapi.json" "/report"
-Test-Contains "openapi" "/openapi.json" "/batch-report"
-Test-Contains "openapi" "/openapi.json" "/snapshot-check"
-Test-Contains "x402 metadata" "/.well-known/x402.json" "50000"
-Test-Contains "x402 metadata" "/.well-known/x402.json" "500000"
-Test-Contains "x402 metadata" "/.well-known/x402.json" "2000000"
-Test-Contains "llms.txt" "/llms.txt" "POST $Url/diff"
-Test-Contains "llms.txt" "/llms.txt" "POST $Url/report"
-Test-Contains "llms.txt" "/llms.txt" "POST $Url/batch-report"
-Test-Contains "llms.txt" "/llms.txt" "POST $Url/snapshot-check"
-Test-Contains "llms.txt" "/llms.txt" 'Price: $0.050'
-Test-Contains "llms.txt" "/llms.txt" 'Price: $0.500'
-Test-Contains "llms.txt" "/llms.txt" 'Price: $2.000'
-Test-Contains "well-known llms.txt" "/.well-known/llms.txt" "npx agentcash@latest check"
-Test-Contains "agent-card" "/.well-known/agent-card.json" "diff_web_page_snapshots"
-Test-Contains "agent-card" "/.well-known/agent-card.json" "report_web_page_changes"
-Test-Contains "agent-card" "/.well-known/agent-card.json" "batch_report_web_page_changes"
+Test-Contains "homepage" "/" "StatePulse API"
+Test-Contains "openapi" "/openapi.json" "/weather/anomaly"
+Test-Contains "openapi" "/openapi.json" "/product/barcode"
+foreach ($path in $ExpectedEndpointPaths) {
+  Test-Contains "openapi endpoint $path" "/openapi.json" $path
+  Test-Contains "llms endpoint $path" "/llms.txt" "POST $Url$path"
+}
+Test-Contains "x402 metadata" "/.well-known/x402.json" "30000"
+Test-Contains "llms.txt" "/llms.txt" "POST $Url/weather/anomaly"
+Test-Contains "llms.txt" "/llms.txt" 'Price: $0.030'
+Test-Contains "agent-card" "/.well-known/agent-card.json" "lookup_barcode"
+Test-Contains "agent-card" "/.well-known/agent-card.json" "track_airspace"
 Test-Contains "mcp.json" "/.well-known/mcp.json" "2025-06-18"
 Test-Contains "oasf.json" "/.well-known/oasf.json" "schema_version"
+Test-NotContains "openapi" "/openapi.json" "/diff"
 Test-NotContains "openapi" "/openapi.json" "/enrich"
-Test-NotContains "x402 metadata" "/.well-known/x402.json" "/score/lead"
 Write-Host ""
 
 Write-Host "4. Payment challenge"
-Test-PaymentChallenge "page diff" "/diff" '{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01"}' "50000"
-Test-PaymentChallenge "page report" "/report" '{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01","report_type":"pricing_intelligence"}' "500000"
-Test-PaymentChallenge "batch report" "/batch-report" '{"report_type":"pricing_intelligence","items":[{"url":"https://example.com/","from":"2023-01-01","to":"2024-01-01"}]}' "2000000"
+Test-PaymentChallenge "weather anomaly" "/weather/anomaly" '{"lat":40.71,"lng":-74.00}' "30000"
+Test-PaymentChallenge "barcode lookup" "/product/barcode" '{"barcode":"9780140449136"}' "30000"
+foreach ($path in $ExpectedEndpointPaths) {
+  # Special pricing for $0.010 endpoints
+  $expectedPrice = "30000"
+  if ($path -eq "/radio/stream-url" -or $path -eq "/network/dns-propagation" -or $path -eq "/calendar/holidays") {
+    $expectedPrice = "10000"
+  }
+  Test-PaymentChallenge "payment challenge $path" $path '{}' $expectedPrice
+}
 Write-Host ""
 
 if ($failures -gt 0) {
