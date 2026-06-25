@@ -1,1 +1,115 @@
-{"type":"https://eips.ethereum.org/EIPS/eip-8004#registration-v1","name":"StatePulse API","description":"Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents. No account setup required, pay per request with x402 USDC on Base.","image":"https://statepulse-api.hahavoid0.workers.dev/logo.svg","services":[{"name":"A2A","endpoint":"https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json","version":"0.3.0"},{"name":"MCP","endpoint":"https://statepulse-api.hahavoid0.workers.dev/mcp","metadata":"https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json","version":"2025-06-18"},{"name":"OASF","endpoint":"https://statepulse-api.hahavoid0.workers.dev/oasf","metadata":"https://statepulse-api.hahavoid0.workers.dev/.well-known/oasf.json","version":"1.0.0","skills":["lookup_barcode","track_airspace","get_air_quality","get_transit_status","get_weather_anomaly","get_radio_stream","check_dns_propagation","get_brand_assets","get_prediction_odds","get_water_streamflow","get_holidays"],"domains":["commerce","logistics","environment","transit","utilities","media","design","market","agriculture"]},{"name":"OpenAPI","endpoint":"https://statepulse-api.hahavoid0.workers.dev/openapi.json","version":"3.1.0"},{"name":"x402","endpoint":"https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json","version":"2"},{"name":"Website","endpoint":"https://statepulse-api.hahavoid0.workers.dev"},{"name":"agentWallet","endpoint":"eip155:8453:0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"}],"registrations":[{"agentRegistry":"eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432","agentId":"55014"}],"tags":["x402","a2a","mcp","oasf","agent-tools","lookups","calculators"],"license":"ISC","updatedAt":"2026-06-19T00:00:00Z"}
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "StatePulse API",
+  "description": "Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents. No account setup required, pay per request with x402 USDC on Base.",
+  "image": "https://statepulse-api.hahavoid0.workers.dev/logo.svg",
+  "services": [
+    {
+      "name": "A2A",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json",
+      "version": "0.3.0"
+    },
+    {
+      "name": "MCP",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/mcp",
+      "metadata": "https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json",
+      "version": "2025-06-18"
+    },
+    {
+      "name": "OASF",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/oasf",
+      "metadata": "https://statepulse-api.hahavoid0.workers.dev/.well-known/oasf.json",
+      "version": "1.0.0",
+      "skills": [
+        "get_radio_stream",
+        "check_dns_propagation",
+        "get_holidays",
+        "get_recent_earthquakes",
+        "get_wildfires",
+        "get_space_weather",
+        "get_pollen_count",
+        "get_marine_conditions",
+        "get_flood_warnings",
+        "get_uv_index",
+        "get_lightning_potential",
+        "track_marine_vessel",
+        "get_rail_status",
+        "get_toll_cost",
+        "get_ev_chargers",
+        "get_route_duration",
+        "get_airport_board",
+        "get_faa_delays",
+        "get_sales_tax",
+        "get_patent_status",
+        "check_trademark",
+        "get_market_halts",
+        "get_fed_rate",
+        "get_contract_abi",
+        "simulate_transaction",
+        "get_gas_history",
+        "get_wallet_balances",
+        "get_funding_rates",
+        "audit_dns_security",
+        "check_ssl_expiry",
+        "audit_security_headers",
+        "check_timezone",
+        "get_stream_temperature"
+      ],
+      "domains": [
+        "commerce",
+        "logistics",
+        "environment",
+        "transit",
+        "utilities",
+        "media",
+        "design",
+        "market",
+        "agriculture",
+        "blockchain",
+        "legal",
+        "finance",
+        "weather",
+        "seismic",
+        "safety",
+        "water",
+        "network",
+        "location"
+      ]
+    },
+    {
+      "name": "OpenAPI",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/openapi.json",
+      "version": "3.1.0"
+    },
+    {
+      "name": "x402",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json",
+      "version": "2"
+    },
+    {
+      "name": "Website",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev"
+    },
+    {
+      "name": "agentWallet",
+      "endpoint": "eip155:8453:0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"
+    }
+  ],
+  "registrations": [
+    {
+      "agentRegistry": "eip155:8453:0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "agentId": "55014"
+    }
+  ],
+  "tags": [
+    "x402",
+    "a2a",
+    "mcp",
+    "oasf",
+    "agent-tools",
+    "lookups",
+    "calculators"
+  ],
+  "license": "ISC",
+  "updatedAt": "2026-06-19T00:00:00Z"
+}

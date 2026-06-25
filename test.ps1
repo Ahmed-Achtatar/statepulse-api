@@ -202,7 +202,21 @@ foreach ($path in $ExpectedEndpointPaths) {
   if ($path -eq "/radio/stream-url" -or $path -eq "/network/dns-propagation" -or $path -eq "/calendar/holidays") {
     $expectedPrice = "10000"
   }
-  Test-PaymentChallenge "payment challenge $path" $path '{}' $expectedPrice
+  
+  $payload = '{}'
+  if ($path -eq "/product/barcode") { $payload = '{"barcode":"9780140449136"}' }
+  elseif ($path -eq "/airspace/track") { $payload = '{"icao24":"a8677c"}' }
+  elseif ($path -eq "/environment/air-quality") { $payload = '{"lat":40.7128,"lng":-74.0060}' }
+  elseif ($path -eq "/transit/status") { $payload = '{"city":"nyc","line":"L"}' }
+  elseif ($path -eq "/weather/anomaly") { $payload = '{"lat":40.7128,"lng":-74.0060}' }
+  elseif ($path -eq "/radio/stream-url") { $payload = '{"country":"Morocco","genre":"news"}' }
+  elseif ($path -eq "/network/dns-propagation") { $payload = '{"domain":"google.com","type":"MX"}' }
+  elseif ($path -eq "/brand/assets") { $payload = '{"domain":"google.com"}' }
+  elseif ($path -eq "/prediction/odds") { $payload = '{"contract_id":"1234"}' }
+  elseif ($path -eq "/water/streamflow") { $payload = '{"state":"CA"}' }
+  elseif ($path -eq "/calendar/holidays") { $payload = '{"year":2026,"country_code":"US"}' }
+
+  Test-PaymentChallenge "payment challenge $path" $path $payload $expectedPrice
 }
 Write-Host ""
 

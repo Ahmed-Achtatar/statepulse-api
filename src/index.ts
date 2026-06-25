@@ -8,6 +8,7 @@ import { bazaarResourceServerExtension, declareDiscoveryExtension } from "@x402/
 import { getHtmlContent } from "./html"
 import { ENDPOINTS, ENDPOINTS_BY_PATH, paidEndpoints } from "./endpoints/registry"
 import type { EndpointDef } from "./endpoints/types"
+import { validateSchema } from "./endpoints/utils"
 
 type Env = {
   WALLET_ADDRESS: string
@@ -200,6 +201,40 @@ Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Req
 - Agent card: ${baseUrl}/.well-known/agent-card.json
 - MCP metadata: ${baseUrl}/.well-known/mcp.json
 
+## Preflight Parameter Validation (Free)
+
+Before submitting a paid request, you can validate your request arguments completely **free** to check for format compatibility (e.g. valid EVM address format, 5-digit ZIP validation, coordinates boundary limits):
+
+POST ${baseUrl}/preflight
+
+Example Body payload:
+\`\`\`json
+{
+  "path": "/finance/sales-tax",
+  "body": {
+    "zip_code": "90210"
+  }
+}
+\`\`\`
+
+Response output:
+\`\`\`json
+{
+  "valid": true,
+  "error": null
+}
+\`\`\`
+
+If parameters fail constraints:
+\`\`\`json
+{
+  "valid": false,
+  "error": "ZIP code must be exactly 5 digits"
+}
+\`\`\`
+
+Note: The payment gateway middleware will also run these validation checks automatically and return HTTP 400 Bad Request *before* requesting any payment. You will never be charged for invalid requests.
+
 ## Agent workflow
 
 1. Pick the narrowest endpoint that matches the user's task from the list below.
@@ -378,47 +413,110 @@ function agentCard(payTo: string, baseUrl: string) {
   }
 }
 
-function createOfficialX402Routes(payTo: string, baseUrl: string) {
-  return Object.fromEntries(paidEndpoints().map((endpoint) => [
-    endpoint.path,
-    {
-      accepts: {
-        scheme: "exact",
-        payTo,
-        price: `$${endpoint.priceUsd}`,
-        network: "eip155:8453",
-        maxTimeoutSeconds: 120,
-        extra: {
-          name: "USD Coin",
-          version: "2"
+async function getGasMultiplier(env: Env): Promise<number> {
+  if (!env.CACHE) return 1.0
+
+  try {
+    const cached = await env.CACHE.get("congestion_multiplier")
+    if (cached) {
+      return parseFloat(cached)
+    }
+  } catch (e) {
+    console.error("Failed to read congestion_multiplier from cache:", e)
+  }
+
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 800)
+    const res = await fetch("https://mainnet.base.org", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_gasPrice", params: [] }),
+      signal: controller.signal
+    })
+    clearTimeout(timeoutId)
+    if (res.ok) {
+      const data: any = await res.json()
+      if (data.result) {
+        const gasPriceWei = parseInt(data.result, 16)
+        const gasPriceGwei = gasPriceWei / 1_000_000_000
+
+        // Base congestion rules:
+        // <= 0.5 Gwei: 1.0x
+        // > 0.5 Gwei and <= 2.0 Gwei: 1.25x
+        // > 2.0 Gwei: 1.5x
+        let multiplier = 1.0
+        if (gasPriceGwei > 2.0) {
+          multiplier = 1.5
+        } else if (gasPriceGwei > 0.5) {
+          multiplier = 1.25
         }
-      },
-      resource: `${baseUrl}${endpoint.path}`,
-      description: endpoint.description,
-      mimeType: "application/json",
-      serviceName: SERVICE_NAME,
-      tags: [...endpoint.tags],
-      iconUrl: `${baseUrl}/logo.svg`,
-      extensions: {
-        ...declareDiscoveryExtension({
-          input: endpoint.exampleInput(),
-          inputSchema: endpoint.requestSchema,
-          bodyType: "json",
-          output: {
-            example: endpoint.exampleOutput(),
-            schema: endpoint.responseSchema
+
+        try {
+          await env.CACHE.put("congestion_multiplier", String(multiplier), { expirationTtl: 120 })
+        } catch (e) {
+          console.error("Failed to write congestion_multiplier to cache:", e)
+        }
+        return multiplier
+      }
+    }
+  } catch (err) {
+    console.error("Failed to fetch Base gas price for dynamic pricing:", err)
+  }
+  return 1.0
+}
+
+function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1.0, requestBody: any = null) {
+  return Object.fromEntries(paidEndpoints().map((endpoint) => {
+    let basePrice = Number(endpoint.priceUsd)
+    if (requestBody && endpoint.path === "/blockchain/simulate") {
+      const dataStr = String(requestBody.data || "")
+      if (dataStr.length > 500) {
+        basePrice = 0.200 // Heavy simulation tracing surcharge
+      }
+    }
+    let finalPrice = Number((basePrice * multiplier).toFixed(3))
+    return [
+      endpoint.path,
+      {
+        accepts: {
+          scheme: "exact",
+          payTo,
+          price: `$${finalPrice.toFixed(3)}`,
+          network: "eip155:8453",
+          maxTimeoutSeconds: 120,
+          extra: {
+            name: "USD Coin",
+            version: "2"
+          }
+        },
+        resource: `${baseUrl}${endpoint.path}`,
+        description: endpoint.description,
+        mimeType: "application/json",
+        serviceName: SERVICE_NAME,
+        tags: [...endpoint.tags],
+        iconUrl: `${baseUrl}/logo.svg`,
+        extensions: {
+          ...declareDiscoveryExtension({
+            input: endpoint.exampleInput(),
+            inputSchema: endpoint.requestSchema,
+            bodyType: "json",
+            output: {
+              example: endpoint.exampleOutput(),
+              schema: endpoint.responseSchema
+            }
+          })
+        },
+        settlementFailedResponseBody: () => ({
+          contentType: "application/json",
+          body: {
+            error: "Payment settlement failed",
+            message: "The x402 facilitator could not settle this payment."
           }
         })
-      },
-      settlementFailedResponseBody: () => ({
-        contentType: "application/json",
-        body: {
-          error: "Payment settlement failed",
-          message: "The x402 facilitator could not settle this payment."
-        }
-      })
-    }
-  ]))
+      }
+    ]
+  }))
 }
 
 function createResourceServer(env: Env) {
@@ -472,9 +570,7 @@ function createResourceServer(env: Env) {
 }
 
 const officialX402Middleware = (path: string) => async (c: any, next: any) => {
-  const xPayment = c.req.header("x-payment") || c.req.header("X-Payment") || c.req.header("payment-signature") || c.req.header("PAYMENT-SIGNATURE")
   const bypassToken = c.req.header("x-dev-bypass-token")
-
   if (c.env.DEV_BYPASS_TOKEN && bypassToken && bypassToken === c.env.DEV_BYPASS_TOKEN) {
     track(c, "dev_bypass", path)
     c.header("X-Dev-Bypass", "accepted")
@@ -482,22 +578,118 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
     return
   }
 
+  // Preflight schema and formatting validation check (Rule 5)
+  const endpoint = ENDPOINTS_BY_PATH[path]
+  if (endpoint && endpoint.requestSchema) {
+    try {
+      const bodyText = await c.req.raw.clone().text()
+      if (bodyText) {
+        const body = JSON.parse(bodyText)
+        const check = validateSchema(endpoint.requestSchema, body)
+        if (!check.valid) {
+          track(c, "endpoint_bad_request", path)
+          return c.json({ error: check.error }, 400)
+        }
+        c.set("paidBodyText", bodyText)
+      }
+    } catch (err: any) {
+      track(c, "endpoint_bad_request", path)
+      return c.json({ error: "Invalid JSON body: " + err.message }, 400)
+    }
+  }
+
+  let body: any = {}
+  try {
+    const cachedBodyText = c.get("paidBodyText")
+    if (cachedBodyText) {
+      body = JSON.parse(cachedBodyText)
+    } else {
+      const bodyText = await c.req.raw.clone().text()
+      if (bodyText) {
+        body = JSON.parse(bodyText)
+        c.set("paidBodyText", bodyText)
+      }
+    }
+  } catch {}
+
+  const authHeader = c.req.header("Authorization")
+  if (authHeader && authHeader.startsWith("Bearer sp_")) {
+    const apiKey = authHeader.substring(7).trim()
+    const keyData = await c.env.CACHE.get(`apikey:${apiKey}`)
+    if (keyData) {
+      const keyObj = JSON.parse(keyData)
+      let basePrice = Number(endpoint.priceUsd)
+      if (endpoint.path === "/blockchain/simulate" && body) {
+        const dataStr = String(body.data || "")
+        if (dataStr.length > 500) {
+          basePrice = 0.200
+        }
+      }
+
+      const multiplier = await getGasMultiplier(c.env)
+      const finalPrice = Number((basePrice * multiplier).toFixed(3))
+
+      if (keyObj.balance >= finalPrice) {
+        keyObj.balance = Number((keyObj.balance - finalPrice).toFixed(3))
+        await c.env.CACHE.put(`apikey:${apiKey}`, JSON.stringify(keyObj))
+
+        const revKey = `analytics:total_revenue`
+        const currentRev = parseFloat(await c.env.CACHE.get(revKey) || "0")
+        await c.env.CACHE.put(revKey, String((currentRev + finalPrice).toFixed(3)))
+
+        const referrerAddr = c.req.header("X-Referrer-Address") || keyObj.referrer
+        if (referrerAddr && /^0x[a-fA-F0-9]{40}$/.test(referrerAddr)) {
+          const refShare = Number((finalPrice * 0.05).toFixed(4))
+          const refKey = `referrer:${referrerAddr.toLowerCase()}:balance`
+          const currentRefBal = parseFloat(await c.env.CACHE.get(refKey) || "0")
+          await c.env.CACHE.put(refKey, String((currentRefBal + refShare).toFixed(4)))
+        }
+
+        c.set("prepaidBypassed", true)
+        c.header("X-Prepaid-Billing", "accepted")
+        c.header("X-Prepaid-Key-Balance", String(keyObj.balance))
+        if (multiplier !== 1.0) {
+          c.header("X-Congestion-Multiplier", String(multiplier))
+        }
+
+        track(c, "endpoint_success", path)
+        await next()
+        return
+      } else {
+        c.header("X-Prepaid-Error", "Insufficient credit balance")
+      }
+    } else {
+      c.header("X-Prepaid-Error", "Invalid API key")
+    }
+  }
+
   if (!cdpConfigured(c.env)) {
     track(c, "payment_processing_error", path)
     return c.json(facilitatorNotConfiguredBody(), 503)
   }
 
-  if (xPayment) {
-    try {
-      c.set("paidBodyText", await c.req.raw.clone().text())
-    } catch {}
-  }
-
+  const xPayment = c.req.header("x-payment") || c.req.header("X-Payment") || c.req.header("payment-signature") || c.req.header("PAYMENT-SIGNATURE")
   if (!xPayment) track(c, "payment_challenge", path)
 
   const payTo = c.env.WALLET_ADDRESS || "0x0000000000000000000000000000000000000000"
   const baseUrl = getBaseUrl(c)
-  const middleware = paymentMiddleware(createOfficialX402Routes(payTo, baseUrl) as any, createResourceServer(c.env))
+  
+  const multiplier = await getGasMultiplier(c.env)
+  if (multiplier !== 1.0) {
+    c.header("X-Congestion-Multiplier", String(multiplier))
+  }
+
+  let basePrice = Number(endpoint.priceUsd)
+  if (endpoint.path === "/blockchain/simulate" && body) {
+    const dataStr = String(body.data || "")
+    if (dataStr.length > 500) {
+      basePrice = 0.200
+    }
+  }
+  const finalPrice = Number((basePrice * multiplier).toFixed(3))
+  c.set("appliedPrice", finalPrice)
+
+  const middleware = paymentMiddleware(createOfficialX402Routes(payTo, baseUrl, multiplier, body) as any, createResourceServer(c.env))
   return middleware(c, next)
 }
 
@@ -657,10 +849,16 @@ app.get("/", async (c) => {
   const wallet = c.env.WALLET_ADDRESS || "0x0000000000000000000000000000000000000000"
   const baseUrl = getBaseUrl(c)
   let paymentSettled = 0
+  let totalRevenue = 0
+  let totalDeposits = 0
   if (kvAnalyticsEnabled(c.env)) {
     paymentSettled = await readCounter(c.env, "analytics:total:payment_settled")
   }
-  return c.html(getHtmlContent(wallet, baseUrl, paymentSettled))
+  try {
+    totalRevenue = parseFloat(await c.env.CACHE.get("analytics:total_revenue") || "0")
+    totalDeposits = parseFloat(await c.env.CACHE.get("analytics:total_deposits") || "0")
+  } catch (e) {}
+  return c.html(getHtmlContent(wallet, baseUrl, paymentSettled, totalRevenue, totalDeposits))
 })
 
 app.get("/health", (c) => {
@@ -700,6 +898,152 @@ app.get("/sitemap.xml", (c) => {
 app.get("/try", (c) => {
   track(c, "try_page_visit")
   return c.html(tryPage(getBaseUrl(c)))
+})
+
+app.post("/preflight", async (c) => {
+  let body: any = {}
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400)
+  }
+
+  const { path, body: requestBody } = body
+  if (!path) {
+    return c.json({ error: "Required field 'path' is missing" }, 400)
+  }
+
+  const endpoint = ENDPOINTS_BY_PATH[path]
+  if (!endpoint) {
+    return c.json({ error: `Unknown endpoint path: ${path}` }, 400)
+  }
+
+  const check = validateSchema(endpoint.requestSchema, requestBody || {})
+  if (!check.valid) {
+    return c.json({ valid: false, available: false, error: check.error }, 200)
+  }
+
+  if (endpoint.preflightCheck) {
+    try {
+      const availCheck = await endpoint.preflightCheck(requestBody || {}, c)
+      return c.json({
+        valid: true,
+        available: availCheck.available,
+        error: availCheck.error || null
+      }, 200)
+    } catch (err: any) {
+      return c.json({
+        valid: true,
+        available: false,
+        error: `Availability check error: ${err.message}`
+      }, 200)
+    }
+  }
+
+  return c.json({ valid: true, available: true, error: null }, 200)
+})
+
+app.post("/credits/deposit", async (c) => {
+  let body: any = {}
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400)
+  }
+
+  const { txHash, wallet, referrer } = body
+  if (!txHash || !wallet) {
+    return c.json({ error: "txHash and wallet address are required" }, 400)
+  }
+
+  if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+    return c.json({ error: "Invalid transaction hash format" }, 400)
+  }
+
+  if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+    return c.json({ error: "Invalid wallet address format" }, 400)
+  }
+
+  const hashUsed = await c.env.CACHE.get(`tx:${txHash}:used`)
+  if (hashUsed) {
+    return c.json({ error: "Transaction hash has already been claimed" }, 400)
+  }
+
+  try {
+    const rpcUrl = "https://mainnet.base.org"
+    const txRes = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "eth_getTransactionReceipt",
+        params: [txHash]
+      })
+    })
+
+    if (!txRes.ok) {
+      return c.json({ error: "Failed to fetch transaction receipt from Base RPC" }, 502)
+    }
+
+    const txData: any = await txRes.json()
+    const receipt = txData?.result
+    if (!receipt) {
+      return c.json({ error: "Transaction receipt not found. Ensure the transaction is confirmed on Base." }, 400)
+    }
+
+    if (receipt.status !== "0x1") {
+      return c.json({ error: "Transaction failed on-chain" }, 400)
+    }
+
+    const usdcContract = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+    const ourWalletTopic = "0x0000000000000000000000004a82f147c8a4339409c9097adc1eedfd56e85bfe"
+    const transferEventTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+    let depositAmount = 0
+    const logs = receipt.logs || []
+    for (const log of logs) {
+      if (
+        log.address?.toLowerCase() === usdcContract.toLowerCase() &&
+        log.topics?.[0]?.toLowerCase() === transferEventTopic &&
+        log.topics?.[2]?.toLowerCase() === ourWalletTopic
+      ) {
+        const valueHex = log.data
+        const rawAmount = parseInt(valueHex, 16)
+        depositAmount += rawAmount / 1_000_000
+      }
+    }
+
+    if (depositAmount <= 0) {
+      return c.json({ error: "No valid USDC transfer to our settlement wallet found in transaction logs" }, 400)
+    }
+
+    const apiKey = "sp_" + crypto.randomUUID().replace(/-/g, "")
+    
+    const keyData = {
+      wallet: wallet.toLowerCase(),
+      balance: depositAmount,
+      referrer: referrer ? referrer.toLowerCase() : null,
+      created_at: new Date().toISOString()
+    }
+
+    await c.env.CACHE.put(`apikey:${apiKey}`, JSON.stringify(keyData))
+    await c.env.CACHE.put(`tx:${txHash}:used`, "true")
+
+    const depKey = `analytics:total_deposits`
+    const currentDep = parseFloat(await c.env.CACHE.get(depKey) || "0")
+    await c.env.CACHE.put(depKey, String((currentDep + depositAmount).toFixed(3)))
+
+    return c.json({
+      success: true,
+      apiKey,
+      balance: depositAmount,
+      wallet: wallet.toLowerCase(),
+      message: "Deposit verified. API Key successfully generated."
+    }, 200)
+  } catch (err: any) {
+    return c.json({ error: "Failed to verify deposit: " + err.message }, 500)
+  }
 })
 
 app.get("/use-cases/:slug", (c) => {
@@ -1031,11 +1375,63 @@ app.post("/a2a", async (c) => {
 app.get("/openapi.json", (c) => {
   track(c, "openapi_view")
   const baseUrl = getBaseUrl(c)
-  const paths = Object.fromEntries(ENDPOINTS.map((endpoint) => [
-    endpoint.path,
-    {
+  const paths = {
+    "/preflight": {
       post: {
-        operationId: endpoint.operationId,
+        operationId: "validatePreflight",
+        summary: "Free Request Schema & Format Validator",
+        description: "Allows agents to dry-run parameter validation on any paid or free endpoint path without spending USDC. Returns whether the body payload satisfies format constraints.",
+        tags: ["utilities"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["path"],
+                properties: {
+                  path: { type: "string", description: "Target endpoint path (e.g. /blockchain/simulate)" },
+                  body: { type: "object", description: "The JSON request body to dry-run validate" }
+                }
+              },
+              examples: {
+                default: {
+                  value: {
+                    path: "/finance/sales-tax",
+                    body: { zip_code: "90210" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    valid: { type: "boolean", description: "True if parameters satisfy validations" },
+                    error: { type: "string", description: "Detailed validation error description, if invalid" }
+                  }
+                },
+                examples: {
+                  valid: { value: { valid: true, error: null } },
+                  invalid: { value: { valid: false, error: "ZIP code must be exactly 5 digits" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    ...Object.fromEntries(ENDPOINTS.map((endpoint) => [
+      endpoint.path,
+      {
+        post: {
+          operationId: endpoint.operationId,
         summary: endpoint.summary,
         description: endpoint.description,
         tags: [...endpoint.tags],
@@ -1081,6 +1477,7 @@ app.get("/openapi.json", (c) => {
       }
     }
   ]))
+  }
 
   return c.json({
     openapi: "3.1.0",
@@ -1179,6 +1576,58 @@ app.get("/.well-known/x402.json", (c) => {
   }, 200, metadataHeaders())
 })
 
+app.get("/analytics/referrals", async (c) => {
+  if (c.env.ANALYTICS_TOKEN) {
+    const token = c.req.query("token") || c.req.header("x-analytics-token")
+    if (token !== c.env.ANALYTICS_TOKEN) return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  const list = await c.env.CACHE.list({ prefix: "referrer:" })
+  const referrers: Record<string, number> = {}
+
+  for (const keyObj of list.keys) {
+    const key = keyObj.name
+    if (key.endsWith(":balance")) {
+      const parts = key.split(":")
+      const address = parts[1]
+      const val = parseFloat(await c.env.CACHE.get(key) || "0")
+      if (val > 0) {
+        referrers[address] = val
+      }
+    }
+  }
+
+  return c.json({ referrers }, 200)
+})
+
+app.post("/analytics/referrals/clear", async (c) => {
+  if (c.env.ANALYTICS_TOKEN) {
+    const token = c.req.query("token") || c.req.header("x-analytics-token")
+    if (token !== c.env.ANALYTICS_TOKEN) return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  let body: any = {}
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400)
+  }
+
+  const { referrers } = body
+  if (!Array.isArray(referrers)) {
+    return c.json({ error: "referrers must be an array of addresses" }, 400)
+  }
+
+  for (const address of referrers) {
+    if (/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      const key = `referrer:${address.toLowerCase()}:balance`
+      await c.env.CACHE.delete(key)
+    }
+  }
+
+  return c.json({ success: true, cleared: referrers }, 200)
+})
+
 app.get("/analytics", async (c) => {
   if (c.env.ANALYTICS_TOKEN) {
     const token = c.req.query("token") || c.req.header("x-analytics-token")
@@ -1237,6 +1686,25 @@ for (const endpoint of ENDPOINTS) {
 
       const data = await endpoint.logic(body, c)
       track(c, "endpoint_success", endpoint.path)
+
+      if (!endpoint.free && !c.get("prepaidBypassed")) {
+        const appliedPrice = c.get("appliedPrice") || Number(endpoint.priceUsd)
+        
+        // Update stats
+        const revKey = `analytics:total_revenue`
+        const currentRev = parseFloat(await c.env.CACHE.get(revKey) || "0")
+        await c.env.CACHE.put(revKey, String((currentRev + appliedPrice).toFixed(3)))
+
+        // Handle referrals
+        const referrerAddr = c.req.header("X-Referrer-Address")
+        if (referrerAddr && /^0x[a-fA-F0-9]{40}$/.test(referrerAddr)) {
+          const refShare = Number((appliedPrice * 0.05).toFixed(4))
+          const refKey = `referrer:${referrerAddr.toLowerCase()}:balance`
+          const currentRefBal = parseFloat(await c.env.CACHE.get(refKey) || "0")
+          await c.env.CACHE.put(refKey, String((currentRefBal + refShare).toFixed(4)))
+        }
+      }
+
       return c.json(data, 200)
     } catch (error: any) {
       const status = error.status || 500

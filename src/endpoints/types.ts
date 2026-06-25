@@ -28,6 +28,7 @@ export type EndpointDef = {
   skillId: string
   skillName: string
   skillExamples: string[]
+  preflightCheck?: (args: Record<string, unknown>, c?: any) => Promise<{ available: boolean; error?: string }> | { available: boolean; error?: string }
 }
 
 export function priceToAtomic(priceUsd: string): string {

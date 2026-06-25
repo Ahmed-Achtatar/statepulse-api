@@ -19,13 +19,6 @@
     "pay-per-call",
     "lookups",
     "calculators",
-    "tenant-rights",
-    "landlord-tenant",
-    "rental-property",
-    "small-business",
-    "food",
-    "pet-safety",
-    "official-source",
     "cloudflare-workers",
     "usdc"
   ],
