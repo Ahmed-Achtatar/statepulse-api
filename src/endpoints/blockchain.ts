@@ -103,7 +103,7 @@ export const simulateEndpoint = createEndpoint({
   operationId: "simulateTransaction",
   summary: "EVM Transaction Execution Simulator",
   description: "Runs eth_call state simulation against the Base blockchain RPC to check for transaction reverts. Matches: EVM revert checks, test contract call, inspect transaction failure, dry-run solidity method, gas estimator, test token swap failure, simulate multisig transaction execution.",
-  priceUsd: "0.100",
+  priceUsd: "0.150",
   requestSchema: {
     type: "object",
     required: ["to", "data"],

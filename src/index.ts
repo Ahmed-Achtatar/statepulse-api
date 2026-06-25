@@ -321,7 +321,41 @@ function publicMetadata(payTo: string, baseUrl: string) {
       "weather anomaly",
       "USGS streamflow",
       "brand assets",
-      "prediction odds"
+      "prediction odds",
+      "seismic",
+      "wildfire",
+      "space-weather",
+      "pollen",
+      "marine-buoy",
+      "flood-warnings",
+      "uv-index",
+      "lightning",
+      "vessel-tracker",
+      "rail-status",
+      "toll-road",
+      "ev-charger",
+      "route-duration",
+      "airport-board",
+      "faa-delays",
+      "sales-tax",
+      "patent",
+      "trademark",
+      "market-halts",
+      "fed-rate",
+      "blockchain",
+      "abi",
+      "simulation",
+      "gas",
+      "balances",
+      "funding-rates",
+      "dns-security",
+      "ssl-expiry",
+      "security-headers",
+      "timezone",
+      "stream-temp",
+      "whois",
+      "ip-lookup",
+      "company-lookup"
     ],
     cheapestEndpoints: cheapestEndpoints().map((endpoint) => ({
       path: endpoint.path,
@@ -355,7 +389,7 @@ function agentRegistrationMetadata(payTo: string, baseUrl: string) {
       { name: "agentWallet", endpoint: `eip155:8453:${payTo}` }
     ],
     registrations: [{ agentRegistry: ERC8004_REGISTRY_BASE, agentId: ERC8004_AGENT_ID }],
-    tags: ["x402", "a2a", "mcp", "oasf", "agent-tools", "lookups", "calculators", "bank-holidays", "dns-propagation", "radio-streams", "barcode", "airspace", "air-quality", "weather", "transit", "streamflow"],
+    tags: ["x402", "a2a", "mcp", "oasf", "agent-tools", "lookups", "calculators", "bank-holidays", "dns-propagation", "radio-streams", "barcode", "airspace", "air-quality", "weather", "transit", "streamflow", "seismic", "wildfire", "space-weather", "pollen", "marine-buoy", "flood-warnings", "uv-index", "lightning", "vessel-tracker", "rail-status", "toll-road", "ev-charger", "route-duration", "airport-board", "faa-delays", "sales-tax", "patent", "trademark", "market-halts", "fed-rate", "blockchain", "abi", "simulation", "gas", "balances", "funding-rates", "dns-security", "ssl-expiry", "security-headers", "timezone", "stream-temp", "whois", "ip-lookup", "company-lookup"],
     license: "ISC",
     updatedAt: "2026-06-19T00:00:00Z"
   }
@@ -561,7 +595,18 @@ function createResourceServer(env: Env) {
         throw error
       }
     },
-    getSupported: () => facilitatorClient.getSupported()
+    getSupported: async () => {
+      try {
+        return await facilitatorClient.getSupported()
+      } catch (error: any) {
+        console.warn("x402 getSupported failed, using local mock fallback:", error?.message || error)
+        return {
+          kinds: [{ x402Version: 2, scheme: "exact", network: "eip155:8453", extra: {} }],
+          extensions: ["bazaar"],
+          signers: {}
+        } as any
+      }
+    }
   }
 
   return new x402ResourceServer(resilientFacilitatorClient)

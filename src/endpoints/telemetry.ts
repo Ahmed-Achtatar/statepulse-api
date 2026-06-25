@@ -56,6 +56,7 @@ function createEndpoint(input: Omit<EndpointDef, "priceUsd" | "free"> & { priceU
 // ==========================================
 export const barcodeEndpoint = createEndpoint({
   path: "/product/barcode",
+  priceUsd: "0.020",
   operationId: "lookupBarcode",
   summary: "Universal Barcode & Retail Product Metadata Lookup",
   description: "Resolves a UPC/EAN or ISBN barcode into detailed product metadata using OpenLibrary and UPCitemdb free search endpoints.",
@@ -676,6 +677,7 @@ export const dnsEndpoint = createEndpoint({
 // ==========================================
 export const brandEndpoint = createEndpoint({
   path: "/brand/assets",
+  priceUsd: "0.020",
   operationId: "getBrandAssets",
   summary: "Canva / Brandfetch Color & Logo Scraper",
   description: "Extracts brand logos and theme colors for any public business URL using Clearbit and HTML parsing.",
@@ -737,6 +739,7 @@ export const brandEndpoint = createEndpoint({
 // ==========================================
 export const predictionEndpoint = createEndpoint({
   path: "/prediction/odds",
+  priceUsd: "0.020",
   operationId: "getPredictionOdds",
   summary: "PredictIt / ElectionBettingOdds Market Tracker",
   description: "Retrieves live betting market prices and contract odds for global geopolitical events using PredictIt.",

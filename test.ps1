@@ -140,7 +140,10 @@ $ExpectedEndpointPaths = @(
   "/brand/assets",
   "/prediction/odds",
   "/water/streamflow",
-  "/calendar/holidays"
+  "/calendar/holidays",
+  "/network/whois",
+  "/network/ip-lookup",
+  "/finance/company-lookup"
 )
 
 Write-Host "1. Health check"
@@ -182,7 +185,7 @@ foreach ($path in $ExpectedEndpointPaths) {
   Test-Contains "openapi endpoint $path" "/openapi.json" $path
   Test-Contains "llms endpoint $path" "/llms.txt" "POST $Url$path"
 }
-Test-Contains "x402 metadata" "/.well-known/x402.json" "30000"
+Test-Contains "x402 metadata" "/.well-known/x402.json" "20000"
 Test-Contains "llms.txt" "/llms.txt" "POST $Url/weather/anomaly"
 Test-Contains "llms.txt" "/llms.txt" 'Price: $0.030'
 Test-Contains "agent-card" "/.well-known/agent-card.json" "lookup_barcode"
@@ -195,12 +198,18 @@ Write-Host ""
 
 Write-Host "4. Payment challenge"
 Test-PaymentChallenge "weather anomaly" "/weather/anomaly" '{"lat":40.71,"lng":-74.00}' "30000"
-Test-PaymentChallenge "barcode lookup" "/product/barcode" '{"barcode":"9780140449136"}' "30000"
+Test-PaymentChallenge "barcode lookup" "/product/barcode" '{"barcode":"9780140449136"}' "20000"
 foreach ($path in $ExpectedEndpointPaths) {
-  # Special pricing for $0.010 endpoints
+  # Special pricing mapping
   $expectedPrice = "30000"
   if ($path -eq "/radio/stream-url" -or $path -eq "/network/dns-propagation" -or $path -eq "/calendar/holidays") {
     $expectedPrice = "10000"
+  } elseif ($path -eq "/product/barcode" -or $path -eq "/brand/assets" -or $path -eq "/prediction/odds" -or $path -eq "/network/ip-lookup") {
+    $expectedPrice = "20000"
+  } elseif ($path -eq "/network/whois") {
+    $expectedPrice = "40000"
+  } elseif ($path -eq "/finance/company-lookup") {
+    $expectedPrice = "100000"
   }
   
   $payload = '{}'
@@ -215,6 +224,9 @@ foreach ($path in $ExpectedEndpointPaths) {
   elseif ($path -eq "/prediction/odds") { $payload = '{"contract_id":"1234"}' }
   elseif ($path -eq "/water/streamflow") { $payload = '{"state":"CA"}' }
   elseif ($path -eq "/calendar/holidays") { $payload = '{"year":2026,"country_code":"US"}' }
+  elseif ($path -eq "/network/whois") { $payload = '{"domain":"google.com"}' }
+  elseif ($path -eq "/network/ip-lookup") { $payload = '{"ip":"8.8.8.8"}' }
+  elseif ($path -eq "/finance/company-lookup") { $payload = '{"company_name":"Apple"}' }
 
   Test-PaymentChallenge "payment challenge $path" $path $payload $expectedPrice
 }

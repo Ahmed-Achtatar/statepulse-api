@@ -29,291 +29,312 @@
   ],
   "services": [
     {
-      "name": "Barcode Lookup",
+      "name": "Product Barcode",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/product/barcode",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Resolves a UPC/EAN or ISBN barcode into detailed product metadata."
+      "price_usd": "0.020",
+      "description": "Resolves a UPC/EAN or ISBN barcode into detailed product metadata using OpenLibrary and UPCitemdb free search endpoints."
     },
     {
-      "name": "Flight Tracker",
+      "name": "Airspace Track",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/airspace/track",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Track live airspace state vectors for a specific ICAO24 hex code."
+      "price_usd": "0.030",
+      "description": "Queries live airspace vectors for a specific aircraft ICAO24 hex identifier or a regional bounding box using OpenSky Network."
     },
     {
-      "name": "Air Quality Index",
+      "name": "Environment Air quality",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/air-quality",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Retrieves live localized air quality indices (AQI) and pollutant levels."
+      "price_usd": "0.030",
+      "description": "Retrieves live localized air quality indices (AQI) and pollutant levels for a given latitude/longitude using OpenAQ."
     },
     {
-      "name": "Transit Alerts & Delays",
+      "name": "Transit Status",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/status",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Check transit delays, active alerts, and schedule status updates for supported cities."
+      "price_usd": "0.030",
+      "description": "Check transit delays, active alerts, and schedule status updates for supported cities and lines."
     },
     {
-      "name": "Weather Anomaly Checker",
+      "name": "Weather Anomaly",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/weather/anomaly",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Compares current weather conditions with a 10-year historical average."
+      "price_usd": "0.030",
+      "description": "Compares current weather conditions with a 10-year historical average to flag climate anomalies."
     },
     {
-      "name": "Radio Stream Finder",
+      "name": "Radio Stream url",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/radio/stream-url",
       "method": "POST",
-      "price_usd": "0.01",
-      "description": "Resolves direct Shoutcast/Icecast streaming URLs from an open directory."
+      "price_usd": "0.010",
+      "description": "Resolves direct Shoutcast/Icecast streaming URLs from an open-source radio station database by country or tag."
     },
     {
-      "name": "DNS Propagation Check",
+      "name": "Network Dns propagation",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/dns-propagation",
       "method": "POST",
-      "price_usd": "0.01",
-      "description": "Checks global MX, TXT, A, and CNAME propagation status using Cloudflare DoH."
+      "price_usd": "0.010",
+      "description": "Checks global MX, TXT, A, and CNAME propagation status using Cloudflare DoH endpoints."
     },
     {
-      "name": "Brand Colors & Asset Grabber",
+      "name": "Brand Assets",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/brand/assets",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Extracts brand logos and theme colors for any public business URL."
+      "price_usd": "0.020",
+      "description": "Extracts brand logos and theme colors for any public business URL using Clearbit and HTML parsing."
     },
     {
-      "name": "Geopolitical Prediction Odds",
+      "name": "Prediction Odds",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/prediction/odds",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Retrieves live betting market contract odds from PredictIt."
+      "price_usd": "0.020",
+      "description": "Retrieves live betting market prices and contract odds for global geopolitical events using PredictIt."
     },
     {
-      "name": "USGS River Gauge Flow",
+      "name": "Water Streamflow",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/water/streamflow",
       "method": "POST",
-      "price_usd": "0.03",
-      "description": "Queries live US river level and streamflow gauge height metrics using USGS NWIS."
+      "price_usd": "0.030",
+      "description": "Queries live US river level, streamflow gauge height, and flow velocity metrics using the USGS National Water Information System."
     },
     {
-      "name": "Public Bank Holiday Check",
+      "name": "Calendar Holidays",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/calendar/holidays",
       "method": "POST",
-      "price_usd": "0.01",
-      "description": "Retrieves local bank and public holidays across 100+ countries."
+      "price_usd": "0.010",
+      "description": "Retrieves local bank and public holidays across 100+ countries to verify business days."
     },
     {
-      "name": "USGS Live Earthquake Seismic Activity Tracker",
+      "name": "Environment Earthquake",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/earthquake",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Queries the USGS Earthquake Hazards API for recent earthquakes exceeding a minimum magnitude."
     },
     {
-      "name": "NASA FIRMS Satellite Active Forest Fire Detector",
+      "name": "Environment Wildfire",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/wildfire",
       "method": "POST",
       "price_usd": "0.050",
       "description": "Scans active wildfire reports and incidents via public NASA FIRMS satellite active fire alert feeds to locate active blazes. Matches: active wildfire detector, NASA FIRMS fire coordinates, forest fire satellite alert, wildfire tracking map, satellite burn zones detector."
     },
     {
-      "name": "NOAA Live Solar Storm & Geomagnetic Alert System",
+      "name": "Environment Space weather",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/space-weather",
       "method": "POST",
       "price_usd": "0.050",
       "description": "Retrieves the current planetary K-Index and active solar storms from NOAA SWPC. Matches: space weather solar storm alert, planetary k-index monitor, geomagnetic activity tracker, solar flare satellite warnings, coronal mass ejection tracking."
     },
     {
-      "name": "Hyperlocal Pollen & Allergen Live Forecast",
+      "name": "Environment Pollen",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/pollen",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Queries pollen allergen index counts (grass, birch, oak) by coordinate using Open-Meteo."
     },
     {
-      "name": "NOAA NDBC Wave Height & Sea Temperature Tracker",
+      "name": "Water Marine conditions",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/water/marine-conditions",
       "method": "POST",
       "price_usd": "0.030",
       "description": "Fetches live observation data for a specific NOAA marine buoy station."
     },
     {
-      "name": "USGS Streamflow River Gauge Height & Flood Alert System",
+      "name": "Water Flood warnings",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/water/flood-warnings",
       "method": "POST",
       "price_usd": "0.050",
       "description": "Scans active USGS gauge heights in a US state for potential river flooding. Matches: streamflow flood alerts, USGS gauge height warnings, river level flood checker, water streamflow warnings, river overflow stage alerts."
     },
     {
-      "name": "Open-Meteo Current UV Index & Sun-Safety Triage",
+      "name": "Environment Uv index",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/uv-index",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Retrieves the current solar UV Index and calculates sun safety burn times."
     },
     {
-      "name": "Open-Meteo Current Lightning Strike Potential",
+      "name": "Environment Lightning density",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/lightning-density",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Queries the hourly lightning potential indices for coordinates."
     },
     {
-      "name": "Global AIS Cargo Ship & Vessel Location Tracker",
+      "name": "Transit Marine vessel",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/marine-vessel",
       "method": "POST",
-      "price_usd": "0.100",
+      "price_usd": "0.150",
       "description": "Resolves the current coordinate telemetry and voyage details for a cargo ship by MMSI number. Matches: cargo ship location tracker, AIS transponder coordinate lookup, find container vessel by MMSI, ocean logistics cargo positioning, track shipping container vessel, sea lanes transit tracker."
     },
     {
-      "name": "OpenData European Railway Station Board & Delays",
+      "name": "Transit Rail status",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/rail-status",
       "method": "POST",
-      "price_usd": "0.030",
+      "price_usd": "0.020",
       "description": "Queries live train departures and schedule delays for European transit hubs using transport.opendata.ch."
     },
     {
-      "name": "US/EU Toll Road Route Fee Calculator",
+      "name": "Transit Toll cost",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/toll-cost",
       "method": "POST",
       "price_usd": "0.080",
       "description": "Estimates the approximate toll road costs for a route based on distance and state-level averages. Matches: toll road pricing, toll calculator, toll highway fees, driving trip expense calculator, truck route toll cost checker, logistics delivery overhead."
     },
     {
-      "name": "Open Charge Map EV Charging Station Live Finder",
+      "name": "Transit Ev charger",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/ev-charger",
       "method": "POST",
-      "price_usd": "0.030",
+      "price_usd": "0.020",
       "description": "Locates public electric vehicle charging stations within a given radius using Open Charge Map."
     },
     {
-      "name": "OpenStreetMap OSRM Driving Distance & Duration Calculator",
+      "name": "Transit Route duration",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/route-duration",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Computes the shortest driving distance and duration between two coordinates using the public OSRM engine."
     },
     {
-      "name": "OpenSky Network Live Airport Flight Board",
+      "name": "Transit Airport board",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/airport-board",
       "method": "POST",
       "price_usd": "0.050",
       "description": "Retrieves the recent live arrivals list for a specific airport by ICAO code. Matches: airport arrivals board list, check arriving aircraft, OpenSky schedule flight landing board, flight terminal details."
     },
     {
-      "name": "FAA US Airport Live Ground Stop & Delay Checker",
+      "name": "Transit Faa delays",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/faa-delays",
       "method": "POST",
       "price_usd": "0.050",
       "description": "Queries the FAA public API for active delays, ground stops, and weather statuses for a US airport. Matches: air traffic control delays, US airport ground stops, flight weather delays, FAA flight restrictions, airport layout status."
     },
     {
-      "name": "US State & County Sales Tax Rate Triage",
+      "name": "Finance Sales tax",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/sales-tax",
       "method": "POST",
       "price_usd": "0.040",
       "description": "Locates the combined sales tax rate (state, county, local) for a US ZIP code using Zippopotam. Matches: sales tax rate calculator, zip code tax lookup, commercial sales tax checker, e-commerce tax estimator, state county city tax rates."
     },
     {
-      "name": "USPTO PatentsView Database Live Search",
+      "name": "Intellectual property Patent",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/intellectual-property/patent",
       "method": "POST",
-      "price_usd": "0.100",
+      "price_usd": "0.120",
       "description": "Queries the official public USPTO PatentsView database to fetch status and info for a patent. Matches: USPTO patent lookup, search patent number info, patent inventor checker, patent filing date tracker, technology patent registry search."
     },
     {
-      "name": "USPTO Trademark Registry Brand Name Checker",
+      "name": "Intellectual property Trademark",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark",
       "method": "POST",
-      "price_usd": "0.080",
+      "price_usd": "0.100",
       "description": "Performs a preliminary conflict check on a word against public trademark registries. Matches: trademark check, brand conflict check, domain availability name checker, intellectual property brand screening."
     },
     {
-      "name": "Nasdaq Stock Exchange Circuit Breaker & Halts Tracker",
+      "name": "Finance Halts",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/halts",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Parses the Nasdaq Trader RSS feed for active or recent stock trading halts."
     },
     {
-      "name": "Federal Reserve Current Target & Discount Rate",
+      "name": "Finance Fed rate",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/fed-rate",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Retrieves the current federal funds target interest rate."
     },
     {
-      "name": "Etherscan/Basescan Verified Contract ABI Resolver",
+      "name": "Finance Company lookup",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup",
+      "method": "POST",
+      "price_usd": "0.100",
+      "description": "Searches public business registries (e.g. OpenCorporates and SEC EDGAR databases) to retrieve registered address, incorporation date, jurisdiction, and official status. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup."
+    },
+    {
+      "name": "Blockchain Abi",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/abi",
       "method": "POST",
       "price_usd": "0.030",
       "description": "Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser."
     },
     {
-      "name": "EVM Transaction Execution Simulator",
+      "name": "Blockchain Simulate",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/simulate",
       "method": "POST",
-      "price_usd": "0.100",
+      "price_usd": "0.150",
       "description": "Runs eth_call state simulation against the Base blockchain RPC to check for transaction reverts. Matches: EVM revert checks, test contract call, inspect transaction failure, dry-run solidity method, gas estimator, test token swap failure, simulate multisig transaction execution."
     },
     {
-      "name": "Base Blockchain Gas Fee History & Trend Tracker",
+      "name": "Blockchain Gas history",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/gas-history",
       "method": "POST",
       "price_usd": "0.010",
       "description": "Scans recent block gas details to estimate the minimum, average, and maximum base fee."
     },
     {
-      "name": "Multi-Chain Wallet Token Balance Scanner",
+      "name": "Blockchain Balances",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/balances",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Scans native balance and ERC-20 token balances for a wallet address on Base or Ethereum."
     },
     {
-      "name": "Binance Futures Live Perp Funding Rates Ticker",
+      "name": "Blockchain Funding rates",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Queries current pricing and funding rate margins for perpetual swap contracts from Binance."
     },
     {
-      "name": "DNSSEC & CAA Record Security Auditor",
+      "name": "Network Dns security",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/dns-security",
       "method": "POST",
-      "price_usd": "0.020",
+      "price_usd": "0.010",
       "description": "Queries DNSSEC (DS) and Certification Authority Authorization (CAA) records for a domain using Cloudflare DoH."
     },
     {
-      "name": "SSL Certificate Handshake Expiration Monitor",
+      "name": "Network Ssl expiry",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/ssl-expiry",
       "method": "POST",
       "price_usd": "0.010",
       "description": "Extracts certificate validity dates and expiration countdown for a domain using CertSpotter logs."
     },
     {
-      "name": "HTTP Security Header Quality Auditor",
+      "name": "Network Security headers",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/security-headers",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Fetches target URL headers to score configurations (HSTS, CSP, X-Frame-Options)."
     },
     {
-      "name": "Geocoding City Timezone & Local Time Checker",
+      "name": "Location Timezone checker",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/location/timezone-checker",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Resolves the local time, offset, and daylight savings status for a city name using Open-Meteo Geocoding."
     },
     {
-      "name": "USGS Streamflow River Water Temperature Monitor",
+      "name": "Water Stream temp",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/water/stream-temp",
       "method": "POST",
       "price_usd": "0.020",
       "description": "Queries live stream water temperature telemetry from active USGS gauges in a US state."
+    },
+    {
+      "name": "Network Whois",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/whois",
+      "method": "POST",
+      "price_usd": "0.040",
+      "description": "Queries the global RDAP bootstrap directory for domain registration details, registrar name, creation date, and expiration timestamp. Matches: domain registration checker, WHOIS lookup tool, check domain owner registry, check website expiry date."
+    },
+    {
+      "name": "Network Ip lookup",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/ip-lookup",
+      "method": "POST",
+      "price_usd": "0.020",
+      "description": "Scans an IPv4 or IPv6 address using public geodata to resolve location, country, ISP, autonomous system, and hosting flags. Matches: geolocate IP address, check client IP country, query ISP metadata, threat intelligence proxy check, hosting provider detector."
     }
   ],
   "settlement": {

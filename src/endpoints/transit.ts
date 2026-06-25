@@ -14,7 +14,7 @@ export const marineVesselEndpoint = createEndpoint({
   operationId: "trackMarineVessel",
   summary: "Global AIS Cargo Ship & Vessel Location Tracker",
   description: "Resolves the current coordinate telemetry and voyage details for a cargo ship by MMSI number. Matches: cargo ship location tracker, AIS transponder coordinate lookup, find container vessel by MMSI, ocean logistics cargo positioning, track shipping container vessel, sea lanes transit tracker.",
-  priceUsd: "0.100",
+  priceUsd: "0.150",
   requestSchema: {
     type: "object",
     required: ["mmsi"],
@@ -80,7 +80,7 @@ export const railStatusEndpoint = createEndpoint({
   operationId: "getRailStatus",
   summary: "OpenData European Railway Station Board & Delays",
   description: "Queries live train departures and schedule delays for European transit hubs using transport.opendata.ch.",
-  priceUsd: "0.030",
+  priceUsd: "0.020",
   requestSchema: {
     type: "object",
     required: ["station"],
@@ -202,7 +202,7 @@ export const evChargerEndpoint = createEndpoint({
   operationId: "getEvChargers",
   summary: "Open Charge Map EV Charging Station Live Finder",
   description: "Locates public electric vehicle charging stations within a given radius using Open Charge Map.",
-  priceUsd: "0.030",
+  priceUsd: "0.020",
   requestSchema: {
     type: "object",
     required: ["lat", "lng"],

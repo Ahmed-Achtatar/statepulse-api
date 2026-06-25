@@ -1,6 +1,6 @@
 # StatePulse API
 
-Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents. No account setup required, pay per request with x402 USDC on Base.
+Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base.
 
 ## Base URL
 
@@ -18,6 +18,40 @@ Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Req
 - Agent card: https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json
 - MCP metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json
 
+## Preflight Parameter Validation (Free)
+
+Before submitting a paid request, you can validate your request arguments completely **free** to check for format compatibility (e.g. valid EVM address format, 5-digit ZIP validation, coordinates boundary limits):
+
+POST https://statepulse-api.hahavoid0.workers.dev/preflight
+
+Example Body payload:
+```json
+{
+  "path": "/finance/sales-tax",
+  "body": {
+    "zip_code": "90210"
+  }
+}
+```
+
+Response output:
+```json
+{
+  "valid": true,
+  "error": null
+}
+```
+
+If parameters fail constraints:
+```json
+{
+  "valid": false,
+  "error": "ZIP code must be exactly 5 digits"
+}
+```
+
+Note: The payment gateway middleware will also run these validation checks automatically and return HTTP 400 Bad Request *before* requesting any payment. You will never be charged for invalid requests.
+
 ## Agent workflow
 
 1. Pick the narrowest endpoint that matches the user's task from the list below.
@@ -28,11 +62,28 @@ Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Req
 4. Execute the request with the JSON body shown for that endpoint.
 5. Every response includes a confidence/disclaimer field where relevant (legal, tax, or safety topics) — surface that to the end user, do not present results as certain legal or medical fact.
 
+## Cheapest endpoints for agent tests
+
+The cheapest paid endpoints cost $0.010 USDC:
+
+- /radio/stream-url: Live Radio & Podcast Stream Audio Extraction. Use for use when a monitoring or translation agent needs a live audio streaming source url for news scraping.
+- /network/dns-propagation: DNS Watch / Dig-Web-Interface Record Checker. Use for use when verifying txt/mx records during server setup or routing updates.
+- /calendar/holidays: Nager.Date National Bank Holiday Lookup. Use for use when validating if a day is a working day before triggering b2b schedules.
+- /blockchain/gas-history: Base Blockchain Gas Fee History & Trend Tracker. Use for use when an agent wants to find cheap gas fee windows to execute heavy transactions.
+- /network/dns-security: DNSSEC & CAA Record Security Auditor. Use for use to verify domain name security signing and certificate issuance policies.
+- /network/ssl-expiry: SSL Certificate Handshake Expiration Monitor. Use for use when an it monitor agent checks if website certificates are valid or close to expiration.
+
+To prove the API works as an agent with the smallest spend, discover the origin, check the schema, then call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/calendar/holidays -m POST -b '{"year":2026,"country_code":"US"}' --payment-protocol x402 --payment-network base --max-amount 0.02
+```
+
 ## Endpoint: Universal Barcode & Retail Product Metadata Lookup
 
 POST https://statepulse-api.hahavoid0.workers.dev/product/barcode
 
-Price: $0.030
+Price: $0.020
 
 When to use: Use when an agent needs to turn a raw barcode number into rich product details, title, and metadata.
 
@@ -329,7 +380,7 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/
 
 POST https://statepulse-api.hahavoid0.workers.dev/brand/assets
 
-Price: $0.030
+Price: $0.020
 
 When to use: Use when an agent needs SVG/PNG logo links and brand hex colors for frontend component layout generation.
 
@@ -368,7 +419,7 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/brand/as
 
 POST https://statepulse-api.hahavoid0.workers.dev/prediction/odds
 
-Price: $0.030
+Price: $0.020
 
 When to use: Use when hedging geopolitical or macro indicators in trading pipelines.
 
@@ -490,3 +541,1344 @@ AgentCash call:
 ```bash
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/calendar/holidays -m POST -b '{"year":2026,"country_code":"US"}'
 ```
+
+## Endpoint: USGS Live Earthquake Seismic Activity Tracker
+
+POST https://statepulse-api.hahavoid0.workers.dev/environment/earthquake
+
+Price: $0.020
+
+When to use: Use when an agent needs to check for recent earthquake activity or assess local seismic threats.
+
+Do not use for: Do not use for historical geological studies spanning decades or predicting future earthquakes.
+
+Request body example:
+
+```json
+{
+  "min_magnitude": 4
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "earthquakes": [
+      {
+        "title": "M 4.2 - 10km E of Ojai, CA",
+        "magnitude": 4.2,
+        "place": "10km E of Ojai, CA",
+        "time": "2026-06-24T18:32:00.000Z",
+        "lat": 34.448,
+        "lng": -119.141
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/earthquake -m POST -b '{"min_magnitude":4}'
+```
+
+## Endpoint: NASA FIRMS Satellite Active Forest Fire Detector
+
+POST https://statepulse-api.hahavoid0.workers.dev/environment/wildfire
+
+Price: $0.050
+
+When to use: Use when evaluating if active wildfire hazards or forest fires disrupt agricultural assets, logistics cargo shipping routes, or real estate listings.
+
+Do not use for: Do not use for managing live fire containment lines or structural fire calls.
+
+Request body example:
+
+```json
+{
+  "state": "CA"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "wildfires": [
+      {
+        "name": "Bridge Fire",
+        "location": "Angeles National Forest",
+        "percent_contained": 15,
+        "updated": "2026-06-24T22:10:00Z"
+      }
+    ]
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/wildfire -m POST -b '{"state":"CA"}'
+```
+
+## Endpoint: NOAA Live Solar Storm & Geomagnetic Alert System
+
+POST https://statepulse-api.hahavoid0.workers.dev/environment/space-weather
+
+Price: $0.050
+
+When to use: Use when checking solar flare alerts, geomagnetic solar storm warnings, or K-index spikes that can cause GPS telemetry drift or radio communications anomalies.
+
+Do not use for: Do not use for local weather forecast predictions.
+
+Request body example:
+
+```json
+{}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "kp_index": 3.2,
+    "storm_alert": false,
+    "status": "Quiet"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/space-weather -m POST -b '{}'
+```
+
+## Endpoint: Hyperlocal Pollen & Allergen Live Forecast
+
+POST https://statepulse-api.hahavoid0.workers.dev/environment/pollen
+
+Price: $0.020
+
+When to use: Use when checking environmental allergen profiles for health or ventilation assistant agents.
+
+Do not use for: Do not use for diagnosing individual allergy medical symptoms.
+
+Request body example:
+
+```json
+{
+  "lat": 34.05,
+  "lng": -118.24
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "grass_pollen": 2.1,
+    "birch_pollen": 0.5,
+    "ragweed_pollen": 1.2,
+    "risk_level": "low"
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/pollen -m POST -b '{"lat":34.05,"lng":-118.24}'
+```
+
+## Endpoint: NOAA NDBC Wave Height & Sea Temperature Tracker
+
+POST https://statepulse-api.hahavoid0.workers.dev/water/marine-conditions
+
+Price: $0.030
+
+When to use: Use when an offshore or drone-boat navigation agent needs wave height, wave period, or water temp metrics.
+
+Do not use for: Do not use for fresh inland lake or swimming pool assessments.
+
+Request body example:
+
+```json
+{
+  "buoy_id": "41002"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "station_id": "41002",
+    "wave_height_m": 1.8,
+    "wave_period_sec": 9,
+    "water_temp_c": 24.5
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/marine-conditions -m POST -b '{"buoy_id":"41002"}'
+```
+
+## Endpoint: USGS Streamflow River Gauge Height & Flood Alert System
+
+POST https://statepulse-api.hahavoid0.workers.dev/water/flood-warnings
+
+Price: $0.050
+
+When to use: Use when evaluating river flood alerts, USGS streamflow warnings, or gauge height alerts for inland assets, agricultural positioning, or real estate risk triage.
+
+Do not use for: Do not use for coastal tide tables or sewer overflow alerts.
+
+Request body example:
+
+```json
+{
+  "state": "CA"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "state": "CA",
+    "alerts": [
+      {
+        "station_name": "Sacramento River near Red Bluff",
+        "gauge_height_ft": 14.8
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/flood-warnings -m POST -b '{"state":"CA"}'
+```
+
+## Endpoint: Open-Meteo Current UV Index & Sun-Safety Triage
+
+POST https://statepulse-api.hahavoid0.workers.dev/environment/uv-index
+
+Price: $0.020
+
+When to use: Use to dynamically triage sunburn hazards and solar radiation index levels.
+
+Do not use for: Do not use for general temperature or weather rainfall forecast alerts.
+
+Request body example:
+
+```json
+{
+  "lat": 34.05,
+  "lng": -118.24
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "uv_index": 8.5,
+    "safe_minutes_fair_skin": 15,
+    "classification": "Very High"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/uv-index -m POST -b '{"lat":34.05,"lng":-118.24}'
+```
+
+## Endpoint: Open-Meteo Current Lightning Strike Potential
+
+POST https://statepulse-api.hahavoid0.workers.dev/environment/lightning-density
+
+Price: $0.020
+
+When to use: Use when validating if lightning threat risks interfere with drone operations or outdoor activities.
+
+Do not use for: Do not use for downloading static lightning map radar graphics.
+
+Request body example:
+
+```json
+{
+  "lat": 34.05,
+  "lng": -118.24
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "lightning_potential_index": 12.5,
+    "strike_hazard": "medium"
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/lightning-density -m POST -b '{"lat":34.05,"lng":-118.24}'
+```
+
+## Endpoint: Global AIS Cargo Ship & Vessel Location Tracker
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/marine-vessel
+
+Price: $0.150
+
+When to use: Use when a shipping agent or logistics bot needs to verify the real-time position, speed, destination port, or current heading of an ocean cargo container vessel using AIS global transponder feeds.
+
+Do not use for: Do not use for yacht bookings or private recreational vessel communications.
+
+Request body example:
+
+```json
+{
+  "mmsi": "205792000"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "mmsi": "205792000",
+    "vessel_name": "MSC AMBRA",
+    "latitude": 35.122,
+    "longitude": 140.231,
+    "speed_knots": 14.2,
+    "course_degrees": 92,
+    "destination": "TOKYO"
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/marine-vessel -m POST -b '{"mmsi":"205792000"}'
+```
+
+## Endpoint: OpenData European Railway Station Board & Delays
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/rail-status
+
+Price: $0.020
+
+When to use: Use when scheduling business trips or verifying train connection delays for travelers.
+
+Do not use for: Do not use for buying train tickets or local subway tracking.
+
+Request body example:
+
+```json
+{
+  "station": "Zurich HB"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "station": "Zurich HB",
+    "trains": [
+      {
+        "departure": "2026-06-25T08:30:00Z",
+        "name": "IR 37",
+        "direction": "Basel SBB",
+        "delay_minutes": 2
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/rail-status -m POST -b '{"station":"Zurich HB"}'
+```
+
+## Endpoint: US/EU Toll Road Route Fee Calculator
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/toll-cost
+
+Price: $0.080
+
+When to use: Use when planning overland shipping routes and verifying travel toll costs for logistics budgeting or autonomous vehicle dispatching.
+
+Do not use for: Do not use for paying tolls online or registering transponders.
+
+Request body example:
+
+```json
+{
+  "state": "NY",
+  "distance_miles": 80
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "state": "NY",
+    "estimated_toll_usd": 6.4,
+    "confidence_interval": "medium"
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/toll-cost -m POST -b '{"state":"NY","distance_miles":80}'
+```
+
+## Endpoint: Open Charge Map EV Charging Station Live Finder
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/ev-charger
+
+Price: $0.020
+
+When to use: Use to route autonomous electric delivery cars or robotic agents to active charging stations.
+
+Do not use for: Do not use for booking or paying for a charging slot.
+
+Request body example:
+
+```json
+{
+  "lat": 34.05,
+  "lng": -118.24
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "chargers": [
+      {
+        "name": "City Hall Parking",
+        "lat": 34.052,
+        "lng": -118.243,
+        "distance_miles": 0.3,
+        "connections": [
+          "Type 2",
+          "CCS"
+        ]
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/ev-charger -m POST -b '{"lat":34.05,"lng":-118.24}'
+```
+
+## Endpoint: OpenStreetMap OSRM Driving Distance & Duration Calculator
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/route-duration
+
+Price: $0.020
+
+When to use: Use to estimate driving times and distances for delivery dispatches or travel planning agents.
+
+Do not use for: Do not use for step-by-step driving turn-by-turn nav prompts.
+
+Request body example:
+
+```json
+{
+  "start_lat": 34.05,
+  "start_lng": -118.24,
+  "end_lat": 34.14,
+  "end_lng": -118.14
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "distance_km": 18.5,
+    "duration_minutes": 22.4
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/route-duration -m POST -b '{"start_lat":34.05,"start_lng":-118.24,"end_lat":34.14,"end_lng":-118.14}'
+```
+
+## Endpoint: OpenSky Network Live Airport Flight Board
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/airport-board
+
+Price: $0.050
+
+When to use: Use when an automated dispatch agent monitors airport arrival status to verify landing timestamps of passenger or cargo flights.
+
+Do not use for: Do not use for terminal baggage claim gates or buying airplane tickets.
+
+Request body example:
+
+```json
+{
+  "airport_icao": "EDDF"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "airport": "EDDF",
+    "arrivals": [
+      {
+        "callsign": "DLH123",
+        "est_arrival_time": "2026-06-25T08:45:00Z",
+        "departure_airport": "KJFK"
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/airport-board -m POST -b '{"airport_icao":"EDDF"}'
+```
+
+## Endpoint: FAA US Airport Live Ground Stop & Delay Checker
+
+POST https://statepulse-api.hahavoid0.workers.dev/transit/faa-delays
+
+Price: $0.050
+
+When to use: Use when flight cargo routes or travelers need to check active ground stops, delays, or air traffic control weather halts at a US airport.
+
+Do not use for: Do not use for flight parking booking or checking luggage weight limits.
+
+Request body example:
+
+```json
+{
+  "airport_code": "SFO"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "IATA": "SFO",
+    "delay": true,
+    "delay_type": "Ground Delay",
+    "reason": "Weather",
+    "avg_delay_minutes": 45
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/faa-delays -m POST -b '{"airport_code":"SFO"}'
+```
+
+## Endpoint: US State & County Sales Tax Rate Triage
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/sales-tax
+
+Price: $0.040
+
+When to use: Use to calculate sales tax percentages before finalizing a checkout, invoice, or billing statement in e-commerce workflows.
+
+Do not use for: Do not use for filing state/federal tax returns or local business tax receipts.
+
+Request body example:
+
+```json
+{
+  "zip_code": "90210"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "zip_code": "90210",
+    "state": "CA",
+    "city": "Beverly Hills",
+    "estimated_sales_tax_rate": 0.095
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/sales-tax -m POST -b '{"zip_code":"90210"}'
+```
+
+## Endpoint: USPTO PatentsView Database Live Search
+
+POST https://statepulse-api.hahavoid0.workers.dev/intellectual-property/patent
+
+Price: $0.120
+
+When to use: Use when an agent needs to verify patent filing details, status, title, assignee, or inventors for technology scouting and competitor research.
+
+Do not use for: Do not use for formal legal search clearance opinions or filing applications.
+
+Request body example:
+
+```json
+{
+  "patent_number": "10000000"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "patent_number": "10000000",
+    "title": "Coherent Light Source",
+    "date": "2018-06-19",
+    "inventors": [
+      "Smith"
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/intellectual-property/patent -m POST -b '{"patent_number":"10000000"}'
+```
+
+## Endpoint: USPTO Trademark Registry Brand Name Checker
+
+POST https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark
+
+Price: $0.100
+
+When to use: Use when an agent needs to perform a first-pass, automated conflict check before naming products, registering domains, or launching brands.
+
+Do not use for: Do not use for final trademark filings or litigation opinions.
+
+Request body example:
+
+```json
+{
+  "word": "Apple"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "word": "Apple",
+    "trademarked": true,
+    "possible_matches": [
+      "Apple Inc."
+    ]
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark -m POST -b '{"word":"Apple"}'
+```
+
+## Endpoint: Nasdaq Stock Exchange Circuit Breaker & Halts Tracker
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/halts
+
+Price: $0.020
+
+When to use: Use to evaluate if an active stock ticker has had trading halted due to news or volatility.
+
+Do not use for: Do not use for downloading historical intraday tick trades.
+
+Request body example:
+
+```json
+{}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "halts": [
+      {
+        "ticker": "XYZ",
+        "halt_time": "10:14:02",
+        "reason_code": "LUDP"
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/halts -m POST -b '{}'
+```
+
+## Endpoint: Federal Reserve Current Target & Discount Rate
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/fed-rate
+
+Price: $0.020
+
+When to use: Use when interest rate pricing is needed for smart contract borrowing or financial calculations.
+
+Do not use for: Do not use for individual bank deposit interest rates.
+
+Request body example:
+
+```json
+{}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "fed_funds_rate_percentage": 5.25,
+    "discount_rate_percentage": 5.5
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/fed-rate -m POST -b '{}'
+```
+
+## Endpoint: Company & Corporate Registry Information Finder
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup
+
+Price: $0.100
+
+When to use: Use when an agent or B2B compliance checker needs to verify that a business is active, lookup its registered corporate office address, or retrieve its incorporation/registration ID.
+
+Do not use for: Do not use for downloading detailed credit history report files or auditing full corporate tax filings.
+
+Request body example:
+
+```json
+{
+  "company_name": "Apple",
+  "country_code": "us"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "name": "APPLE INC.",
+    "company_number": "C0802245",
+    "jurisdiction": "us_ca",
+    "company_status": "Active",
+    "date_of_creation": "1977-01-03",
+    "registered_address": "One Apple Park Way, Cupertino, CA 95014"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup -m POST -b '{"company_name":"Apple","country_code":"us"}'
+```
+
+## Endpoint: Etherscan/Basescan Verified Contract ABI Resolver
+
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/abi
+
+Price: $0.030
+
+When to use: Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically.
+
+Do not use for: Do not use for unverified contracts or generating private contract code.
+
+Request body example:
+
+```json
+{
+  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+  "chain": "base"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "chain": "base",
+    "abi": "[...]"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/abi -m POST -b '{"address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","chain":"base"}'
+```
+
+## Endpoint: EVM Transaction Execution Simulator
+
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/simulate
+
+Price: $0.150
+
+When to use: Use when an on-chain coding agent or auto-trader needs to check if a contract transaction (e.g. Uniswap swap, lending deposit, claim tokens) will succeed, revert, or fail before paying network transaction gas fees.
+
+Do not use for: Do not use for actually submitting signed transactions to the pool.
+
+Request body example:
+
+```json
+{
+  "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+  "data": "0x70a082310000000000000000000000000000000000000000000000000000000000000000"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "reverted": false,
+    "output_hex": "0x0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/simulate -m POST -b '{"to":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","data":"0x70a082310000000000000000000000000000000000000000000000000000000000000000"}'
+```
+
+## Endpoint: Base Blockchain Gas Fee History & Trend Tracker
+
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/gas-history
+
+Price: $0.010
+
+When to use: Use when an agent wants to find cheap gas fee windows to execute heavy transactions.
+
+Do not use for: Do not use for calculating exact gas limits for individual calls.
+
+Request body example:
+
+```json
+{
+  "blocks": 20
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "min_base_fee_gwei": 0.1,
+    "avg_base_fee_gwei": 0.15,
+    "max_base_fee_gwei": 0.3
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/gas-history -m POST -b '{"blocks":20}'
+```
+
+## Endpoint: Multi-Chain Wallet Token Balance Scanner
+
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/balances
+
+Price: $0.020
+
+When to use: Use when an agent needs to monitor the stablecoin or native asset balance of a wallet.
+
+Do not use for: Do not use for signing balance transfers or modifying wallet ownership.
+
+Request body example:
+
+```json
+{
+  "wallet": "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "wallet": "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE",
+    "chain": "base",
+    "native_balance": "0.42",
+    "usdc_balance": "12.50"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/balances -m POST -b '{"wallet":"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"}'
+```
+
+## Endpoint: Binance Futures Live Perp Funding Rates Ticker
+
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates
+
+Price: $0.020
+
+When to use: Use when calculating delta-neutral yield margins or perp arbitrage funding offsets.
+
+Do not use for: Do not use for placing leverage orders or managing collateral margins.
+
+Request body example:
+
+```json
+{
+  "symbol": "BTCUSDT"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "symbol": "BTCUSDT",
+    "mark_price": "64230.12",
+    "index_price": "64228.45",
+    "funding_rate_percentage": 0.01,
+    "next_funding_time": "2026-06-25T16:00:00.000Z"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates -m POST -b '{"symbol":"BTCUSDT"}'
+```
+
+## Endpoint: DNSSEC & CAA Record Security Auditor
+
+POST https://statepulse-api.hahavoid0.workers.dev/network/dns-security
+
+Price: $0.010
+
+When to use: Use to verify domain name security signing and certificate issuance policies.
+
+Do not use for: Do not use for managing DNS zone files or configuring nameservers.
+
+Request body example:
+
+```json
+{
+  "domain": "google.com"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "domain": "google.com",
+    "dnssec_enabled": true,
+    "caa_records": [
+      "0 issue \"pki.goog\""
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/dns-security -m POST -b '{"domain":"google.com"}'
+```
+
+## Endpoint: SSL Certificate Handshake Expiration Monitor
+
+POST https://statepulse-api.hahavoid0.workers.dev/network/ssl-expiry
+
+Price: $0.010
+
+When to use: Use when an IT monitor agent checks if website certificates are valid or close to expiration.
+
+Do not use for: Do not use for downloading certificate private keys.
+
+Request body example:
+
+```json
+{
+  "domain": "google.com"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "domain": "google.com",
+    "not_after": "2026-09-14T00:00:00.000Z",
+    "days_remaining": 81,
+    "expired": false
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/ssl-expiry -m POST -b '{"domain":"google.com"}'
+```
+
+## Endpoint: HTTP Security Header Quality Auditor
+
+POST https://statepulse-api.hahavoid0.workers.dev/network/security-headers
+
+Price: $0.020
+
+When to use: Use when an auditor or system integration agent evaluates web host settings.
+
+Do not use for: Do not use for downloading target webpage content bodies.
+
+Request body example:
+
+```json
+{
+  "url": "https://google.com"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "url": "https://google.com",
+    "security_score": 60,
+    "headers": {
+      "Strict_Transport_Security": true,
+      "Content_Security_Policy": false
+    }
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/security-headers -m POST -b '{"url":"https://google.com"}'
+```
+
+## Endpoint: Geocoding City Timezone & Local Time Checker
+
+POST https://statepulse-api.hahavoid0.workers.dev/location/timezone-checker
+
+Price: $0.020
+
+When to use: Use when scheduling notifications or execution scripts to prevent calls during late local hours.
+
+Do not use for: Do not use for downloading static map coordinate files.
+
+Request body example:
+
+```json
+{
+  "city": "Tokyo"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "city": "Tokyo",
+    "timezone": "Asia/Tokyo",
+    "current_local_time": "2026-06-25T10:14:02.000Z",
+    "gmt_offset_hours": 9
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/location/timezone-checker -m POST -b '{"city":"Tokyo"}'
+```
+
+## Endpoint: USGS Streamflow River Water Temperature Monitor
+
+POST https://statepulse-api.hahavoid0.workers.dev/water/stream-temp
+
+Price: $0.020
+
+When to use: Use when an agricultural, aquacultural, or cooling agent needs live water temperature checks.
+
+Do not use for: Do not use for household tap water quality checking.
+
+Request body example:
+
+```json
+{
+  "state": "CA"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "state": "CA",
+    "gauges": [
+      {
+        "station_name": "Sacramento River",
+        "temp_celsius": 14.5
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/stream-temp -m POST -b '{"state":"CA"}'
+```
+
+## Endpoint: Domain WHOIS & Registry Expiration Checker
+
+POST https://statepulse-api.hahavoid0.workers.dev/network/whois
+
+Price: $0.040
+
+When to use: Use when an IT monitor agent or security bot needs to verify domain registration dates, registrar details, or check if a domain is close to expiration.
+
+Do not use for: Do not use for registering domain names or performing bulk domain auction searches.
+
+Request body example:
+
+```json
+{
+  "domain": "google.com"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "domain": "google.com",
+    "registrar": "MarkMonitor Inc.",
+    "created_date": "1997-09-15T04:00:00Z",
+    "expires_date": "2028-09-14T04:00:00Z",
+    "status": [
+      "active"
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/whois -m POST -b '{"domain":"google.com"}'
+```
+
+## Endpoint: IP Geolocation & Threat Intelligence Scanner
+
+POST https://statepulse-api.hahavoid0.workers.dev/network/ip-lookup
+
+Price: $0.020
+
+When to use: Use when an automated security agent or crawler checks geolocation, ISP ASN info, or hosting provider tags to identify scraping bots or proxy traffic.
+
+Do not use for: Do not use for looking up domain DNS records or local subnet router tables.
+
+Request body example:
+
+```json
+{
+  "ip": "8.8.8.8"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "ip": "8.8.8.8",
+    "country": "United States",
+    "country_code": "US",
+    "region": "California",
+    "city": "Mountain View",
+    "zip": "94043",
+    "lat": 37.422,
+    "lng": -122.084,
+    "timezone": "America/Los_Angeles",
+    "isp": "Google LLC",
+    "org": "Google LLC",
+    "asn": "AS15169 Google LLC",
+    "hosting": true
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/ip-lookup -m POST -b '{"ip":"8.8.8.8"}'
+```
+
