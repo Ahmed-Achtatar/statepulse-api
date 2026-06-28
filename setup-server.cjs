@@ -292,6 +292,19 @@ const html = `<!DOCTYPE html>
           </span>
         </div>
 
+        <div class="form-group">
+          <label for="cdp-key-id">Coinbase CDP API Key ID (Optional)</label>
+          <input type="text" id="cdp-key-id" placeholder="organizations/.../apiKeys/...">
+        </div>
+
+        <div class="form-group">
+          <label for="cdp-key-secret">Coinbase CDP API Key Secret (Optional)</label>
+          <input type="password" id="cdp-key-secret" placeholder="Paste your key secret...">
+          <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.4; display: block;">
+            Required to verify and settle direct on-chain x402 payments. Generate keys in the <a href="https://portal.cdp.coinbase.com/" target="_blank" style="color: var(--accent-light); text-decoration: underline;">Coinbase Developer Platform portal</a>.
+          </span>
+        </div>
+
         <button type="submit" id="submit-btn" class="btn">Deploy to Cloudflare</button>
       </form>
 
@@ -310,13 +323,15 @@ const html = `<!DOCTYPE html>
       
       const wallet = document.getElementById('wallet-address').value.trim();
       const token = document.getElementById('cloudflare-token').value.trim();
+      const cdpKeyId = document.getElementById('cdp-key-id').value.trim();
+      const cdpKeySecret = document.getElementById('cdp-key-secret').value.trim();
       
       document.getElementById('submit-btn').disabled = true;
       document.getElementById('status-text').style.display = 'block';
       
       const consoleBox = document.getElementById('console');
       consoleBox.style.display = 'block';
-      consoleBox.innerText = 'Connecting to setup server...\\n';
+      consoleBox.innerText = 'Connecting to setup server...\n';
 
       try {
         const response = await fetch('/api/deploy', {
@@ -324,7 +339,12 @@ const html = `<!DOCTYPE html>
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ walletAddress: wallet, cloudflareToken: token })
+          body: JSON.stringify({ 
+            walletAddress: wallet, 
+            cloudflareToken: token,
+            cdpKeyId: cdpKeyId,
+            cdpKeySecret: cdpKeySecret
+          })
         });
 
         // Set up streaming response reader
@@ -340,7 +360,7 @@ const html = `<!DOCTYPE html>
         }
 
         // Find the URL in console logs
-        const match = consoleBox.innerText.match(/https:\\/\\/[^ ]*workers\\.dev/);
+        const match = consoleBox.innerText.match(/https:\/\/([^ ]*)\.workers\.dev/);
         if (match) {
           const url = match[0];
           document.getElementById('live-url').innerText = url;
@@ -352,7 +372,7 @@ const html = `<!DOCTYPE html>
         }
 
       } catch (err) {
-        consoleBox.innerText += '\\n[Error] Deployment failed: ' + err.message;
+        consoleBox.innerText += '\n[Error] Deployment failed: ' + err.message;
         document.getElementById('status-text').innerText = 'Deployment Failed';
         document.getElementById('submit-btn').disabled = false;
       }
@@ -373,7 +393,7 @@ const server = http.createServer((req, res) => {
     req.on('data', chunk => body += chunk);
     req.on('end', async () => {
       try {
-        const { walletAddress, cloudflareToken } = JSON.parse(body);
+        const { walletAddress, cloudflareToken, cdpKeyId, cdpKeySecret } = JSON.parse(body);
 
         if (!walletAddress || !cloudflareToken) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -393,6 +413,13 @@ const server = http.createServer((req, res) => {
         try {
           // 1. Set secrets
           await setSecret('WALLET_ADDRESS', walletAddress, cloudflareToken, logCallback);
+          
+          if (cdpKeyId) {
+            await setSecret('CDP_API_KEY_ID', cdpKeyId, cloudflareToken, logCallback);
+          }
+          if (cdpKeySecret) {
+            await setSecret('CDP_API_KEY_SECRET', cdpKeySecret, cloudflareToken, logCallback);
+          }
 
           // 2. Run Deploy
           await runDeploy(cloudflareToken, logCallback);

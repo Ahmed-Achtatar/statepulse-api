@@ -17,6 +17,7 @@ type Env = {
   ENABLE_KV_ANALYTICS?: string
   CDP_API_KEY_ID?: string
   CDP_API_KEY_SECRET?: string
+  BASE_RPC_URL?: string
   CACHE: KVNamespace
 }
 
@@ -193,6 +194,7 @@ ${baseUrl}
 
 Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Required with standard x402 payment instructions in response headers.
 
+### Option 1: Direct x402 Payment
 - Network: Base mainnet, eip155:8453
 - Asset: USDC, ${USDC_BASE}
 - Facilitator: ${FACILITATOR_URL}
@@ -200,6 +202,19 @@ Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Req
 - OpenAPI schema: ${baseUrl}/openapi.json
 - Agent card: ${baseUrl}/.well-known/agent-card.json
 - MCP metadata: ${baseUrl}/.well-known/mcp.json
+
+### Option 2: Prepaid API Credits (Recommended Fallback)
+If you prefer not to sign on-chain transactions for individual calls, you can generate a prepaid API key:
+1. Send Base USDC to the settlement address: \`0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE\`.
+2. Call \`POST \${baseUrl}/credits/deposit\` with your wallet address and the transaction hash:
+   \`\`\`json
+   {
+     "txHash": "0x...",
+     "wallet": "0x..."
+   }
+   \`\`\`
+3. Receive your \`sp_...\` API key. Use it via the standard Authorization header:
+   \`Authorization: Bearer sp_...\`
 
 ## Preflight Parameter Validation (Free)
 
@@ -500,10 +515,10 @@ async function getGasMultiplier(env: Env): Promise<number> {
   return 1.0
 }
 
-function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1.0, requestBody: any = null) {
+function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1.0, requestBody: any = null, isMockMode = false) {
   return Object.fromEntries(paidEndpoints().map((endpoint) => {
-    let basePrice = Number(endpoint.priceUsd)
-    if (requestBody && endpoint.path === "/blockchain/simulate") {
+    let basePrice = isMockMode ? 0.001 : Number(endpoint.priceUsd)
+    if (!isMockMode && requestBody && endpoint.path === "/blockchain/simulate") {
       const dataStr = String(requestBody.data || "")
       if (dataStr.length > 500) {
         basePrice = 0.200 // Heavy simulation tracing surcharge
@@ -518,6 +533,7 @@ function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1
           payTo,
           price: `$${finalPrice.toFixed(3)}`,
           network: "eip155:8453",
+          asset: USDC_BASE,
           maxTimeoutSeconds: 120,
           extra: {
             name: "USD Coin",
@@ -553,11 +569,31 @@ function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1
   }))
 }
 
+function getPathFromResource(resource?: any): string | undefined {
+  if (!resource) return undefined
+  const urlStr = typeof resource === "string" ? resource : (resource.url || "")
+  if (!urlStr) return undefined
+  try {
+    const url = new URL(urlStr)
+    return url.pathname
+  } catch {
+    if (urlStr.startsWith("http")) {
+      const parts = urlStr.split("/")
+      if (parts.length > 3) return "/" + parts.slice(3).join("/")
+    }
+    return undefined
+  }
+}
+
 function createResourceServer(env: Env) {
   const facilitatorConfig = createFacilitatorConfig(env.CDP_API_KEY_ID, env.CDP_API_KEY_SECRET)
   const facilitatorClient = new HTTPFacilitatorClient(facilitatorConfig)
   const resilientFacilitatorClient = {
     verify: async (paymentPayload: any, paymentRequirements: any) => {
+      if (env.CDP_API_KEY_ID === "mock-key-id" || env.CDP_API_KEY_ID?.startsWith("mock-")) {
+        console.log("x402 mock verify success (local test mode)")
+        return { isValid: true }
+      }
       try {
         return await facilitatorClient.verify(paymentPayload, paymentRequirements)
       } catch (error: any) {
@@ -569,10 +605,48 @@ function createResourceServer(env: Env) {
           payTo: paymentRequirements?.payTo,
           cdpConfigured: Boolean(env.CDP_API_KEY_ID && env.CDP_API_KEY_SECRET)
         }))
+
+        // Telemetry tracking
+        try {
+          const today = dayKey()
+          const msg = String(error?.message || "").toLowerCase()
+          const isInvalid = msg.includes("invalid") || msg.includes("malformed") || msg.includes("schema") || msg.includes("parameter")
+          const event = isInvalid ? "payment_invalid" : "payment_verify_failed"
+          
+          await incrementCounter(env, `analytics:total:${event}`)
+          await incrementCounter(env, `analytics:day:${today}:${event}`)
+          
+          const routePath = getPathFromResource(paymentPayload?.resource || paymentRequirements?.resource)
+          if (routePath) {
+            await incrementCounter(env, `analytics:route:${routePath}:${event}`)
+            await incrementCounter(env, `analytics:route-day:${today}:${routePath}:${event}`)
+          }
+        } catch (telemetryErr) {
+          console.error("Verification telemetry failed", telemetryErr)
+        }
+
         throw error
       }
     },
     settle: async (paymentPayload: any, paymentRequirements: any) => {
+      if (env.CDP_API_KEY_ID === "mock-key-id" || env.CDP_API_KEY_ID?.startsWith("mock-")) {
+        console.log("x402 mock settle success (local test mode)")
+        const result = { success: true, transaction: "0xmocktransactionhashforlocaltesting" }
+        try {
+          const today = dayKey()
+          await incrementCounter(env, `analytics:total:payment_settled`)
+          await incrementCounter(env, `analytics:day:${today}:payment_settled`)
+          
+          const routePath = getPathFromResource(paymentPayload?.resource || paymentRequirements?.resource)
+          if (routePath) {
+            await incrementCounter(env, `analytics:route:${routePath}:payment_settled`)
+            await incrementCounter(env, `analytics:route-day:${today}:${routePath}:payment_settled`)
+          }
+        } catch (telemetryErr) {
+          console.error("Settlement telemetry failed", telemetryErr)
+        }
+        return result
+      }
       try {
         const result = await facilitatorClient.settle(paymentPayload, paymentRequirements)
         console.log("x402 settlement", JSON.stringify({
@@ -583,6 +657,23 @@ function createResourceServer(env: Env) {
           payTo: paymentRequirements?.payTo,
           transaction: result?.transaction
         }))
+
+        // Telemetry tracking
+        try {
+          const today = dayKey()
+          const event = result?.success ? "payment_settled" : "payment_settle_failed"
+          await incrementCounter(env, `analytics:total:${event}`)
+          await incrementCounter(env, `analytics:day:${today}:${event}`)
+          
+          const routePath = getPathFromResource(paymentPayload?.resource || paymentRequirements?.resource)
+          if (routePath) {
+            await incrementCounter(env, `analytics:route:${routePath}:${event}`)
+            await incrementCounter(env, `analytics:route-day:${today}:${routePath}:${event}`)
+          }
+        } catch (telemetryErr) {
+          console.error("Settlement telemetry failed", telemetryErr)
+        }
+
         return result
       } catch (error: any) {
         console.error("x402 settlement failed", JSON.stringify({
@@ -592,6 +683,23 @@ function createResourceServer(env: Env) {
           asset: paymentRequirements?.asset,
           payTo: paymentRequirements?.payTo
         }))
+
+        // Telemetry tracking
+        try {
+          const today = dayKey()
+          const event = "payment_settle_failed"
+          await incrementCounter(env, `analytics:total:${event}`)
+          await incrementCounter(env, `analytics:day:${today}:${event}`)
+          
+          const routePath = getPathFromResource(paymentPayload?.resource || paymentRequirements?.resource)
+          if (routePath) {
+            await incrementCounter(env, `analytics:route:${routePath}:${event}`)
+            await incrementCounter(env, `analytics:route-day:${today}:${routePath}:${event}`)
+          }
+        } catch (telemetryErr) {
+          console.error("Settlement error telemetry failed", telemetryErr)
+        }
+
         throw error
       }
     },
@@ -697,7 +805,6 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
           c.header("X-Congestion-Multiplier", String(multiplier))
         }
 
-        track(c, "endpoint_success", path)
         await next()
         return
       } else {
@@ -713,10 +820,18 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
     return c.json(facilitatorNotConfiguredBody(), 503)
   }
 
+  const payTo = c.env.WALLET_ADDRESS || "0x0000000000000000000000000000000000000000"
+  if (payTo === "0x0000000000000000000000000000000000000000") {
+    track(c, "payment_processing_error", path)
+    return c.json({
+      error: "WALLET_ADDRESS is not configured",
+      message: "Set the WALLET_ADDRESS secret on the Worker so direct payments can be routed to the correct destination."
+    }, 500)
+  }
+
   const xPayment = c.req.header("x-payment") || c.req.header("X-Payment") || c.req.header("payment-signature") || c.req.header("PAYMENT-SIGNATURE")
   if (!xPayment) track(c, "payment_challenge", path)
 
-  const payTo = c.env.WALLET_ADDRESS || "0x0000000000000000000000000000000000000000"
   const baseUrl = getBaseUrl(c)
   
   const multiplier = await getGasMultiplier(c.env)
@@ -724,8 +839,9 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
     c.header("X-Congestion-Multiplier", String(multiplier))
   }
 
-  let basePrice = Number(endpoint.priceUsd)
-  if (endpoint.path === "/blockchain/simulate" && body) {
+  const isMock = c.env.CDP_API_KEY_ID === "mock-key-id" || c.env.CDP_API_KEY_ID?.startsWith("mock-")
+  let basePrice = isMock ? 0.001 : Number(endpoint.priceUsd)
+  if (!isMock && endpoint.path === "/blockchain/simulate" && body) {
     const dataStr = String(body.data || "")
     if (dataStr.length > 500) {
       basePrice = 0.200
@@ -734,7 +850,7 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
   const finalPrice = Number((basePrice * multiplier).toFixed(3))
   c.set("appliedPrice", finalPrice)
 
-  const middleware = paymentMiddleware(createOfficialX402Routes(payTo, baseUrl, multiplier, body) as any, createResourceServer(c.env))
+  const middleware = paymentMiddleware(createOfficialX402Routes(payTo, baseUrl, multiplier, body, isMock) as any, createResourceServer(c.env))
   return middleware(c, next)
 }
 
@@ -1015,7 +1131,7 @@ app.post("/credits/deposit", async (c) => {
   }
 
   try {
-    const rpcUrl = "https://mainnet.base.org"
+    const rpcUrl = c.env.BASE_RPC_URL || "https://mainnet.base.org"
     const txRes = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1421,6 +1537,59 @@ app.get("/openapi.json", (c) => {
   track(c, "openapi_view")
   const baseUrl = getBaseUrl(c)
   const paths = {
+    "/credits/deposit": {
+      post: {
+        operationId: "depositCredits",
+        summary: "Claim Prepaid API Key via USDC Deposit",
+        description: "Submits a verified Base mainnet USDC transaction hash of a payment sent to the API settlement address, and returns a new prepaid API Key (sp_...) loaded with the deposited balance.",
+        tags: ["utilities"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["txHash", "wallet"],
+                properties: {
+                  txHash: { type: "string", description: "Base transaction hash for the USDC transfer (0x followed by 64 hex characters)" },
+                  wallet: { type: "string", description: "EVM wallet address claiming the key (0x followed by 40 hex characters)" },
+                  referrer: { type: "string", description: "Optional referrer EVM address to receive 5% referral split on future usage" }
+                }
+              },
+              examples: {
+                default: {
+                  value: {
+                    txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+                    wallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                  }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Success",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    apiKey: { type: "string", description: "Generated prepaid API Key (sp_...)" },
+                    balance: { type: "number", description: "Credit balance in USDC loaded onto the key" },
+                    wallet: { type: "string" },
+                    message: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { description: "Invalid transaction hash, missing parameters, or already claimed hash" },
+          "502": { description: "Failed to verify transaction receipt on Base chain" }
+        }
+      }
+    },
     "/preflight": {
       post: {
         operationId: "validatePreflight",
@@ -1541,6 +1710,20 @@ app.get("/openapi.json", (c) => {
       }))
     },
     servers: [{ url: baseUrl }],
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "sp_...",
+          description: "Prepaid API key generated via `/credits/deposit` and passed in the `Authorization: Bearer sp_...` header."
+        }
+      }
+    },
+    security: [
+      {},
+      { ApiKeyAuth: [] }
+    ],
     externalDocs: {
       description: "x402 and A2A metadata",
       url: `${baseUrl}/.well-known/x402.json`

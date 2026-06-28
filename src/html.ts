@@ -676,35 +676,65 @@ export const getHtmlContent = (
         </div>
       </div>
 
-      <div class="panel status">
-        <div class="metric">
-          <span>Total Endpoints</span>
-          <strong>${ENDPOINTS.length} Live</strong>
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="panel status">
+          <div class="metric">
+            <span>Total Endpoints</span>
+            <strong>${ENDPOINTS.length} Live</strong>
+          </div>
+          ${paidEndpoints().slice(0, 4).map((endpoint) => `
+          <div class="metric">
+            <span>${endpoint.summary}</span>
+            <strong>$${endpoint.priceUsd} USDC</strong>
+          </div>`).join("")}
+          <div class="metric">
+            <span>Settlement Chain</span>
+            <strong>Base Mainnet (EIP-155:8453)</strong>
+          </div>
+          <div class="metric">
+            <span>Settlement Wallet</span>
+            <strong class="mono" style="font-size:0.85rem">${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}</strong>
+          </div>
+          <div class="metric">
+            <span>x402 Volume</span>
+            <strong>${paymentSettled} Settled Calls</strong>
+          </div>
+          <div class="metric">
+            <span>Credit Deposits</span>
+            <strong>$${totalDeposits.toFixed(3)} USDC</strong>
+          </div>
+          <div class="metric">
+            <span>Total API Revenue</span>
+            <strong>$${totalRevenue.toFixed(3)} USDC</strong>
+          </div>
         </div>
-        ${paidEndpoints().slice(0, 4).map((endpoint) => `
-        <div class="metric">
-          <span>${endpoint.summary}</span>
-          <strong>$${endpoint.priceUsd} USDC</strong>
-        </div>`).join("")}
-        <div class="metric">
-          <span>Settlement Chain</span>
-          <strong>Base Mainnet (EIP-155:8453)</strong>
-        </div>
-        <div class="metric">
-          <span>Settlement Wallet</span>
-          <strong class="mono" style="font-size:0.85rem">${walletAddress.slice(0, 8)}...${walletAddress.slice(-8)}</strong>
-        </div>
-        <div class="metric">
-          <span>x402 Volume</span>
-          <strong>${paymentSettled} Settled Calls</strong>
-        </div>
-        <div class="metric">
-          <span>Credit Deposits</span>
-          <strong>$${totalDeposits.toFixed(3)} USDC</strong>
-        </div>
-        <div class="metric">
-          <span>Total API Revenue</span>
-          <strong>$${totalRevenue.toFixed(3)} USDC</strong>
+
+        <div class="panel vault" style="border-left: 3px solid var(--accent-2); display: flex; flex-direction: column; gap: 14px;">
+          <h3 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-2);">Prepaid Key Vault</h3>
+          <p style="font-size: 0.88rem; color: var(--muted); line-height: 1.45;">
+            Send Base USDC to the Settlement Wallet to purchase API credits, then claim your key below:
+          </p>
+          
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 0.7rem; font-weight: 800; color: var(--muted);">Deposit TxHash</label>
+            <input type="text" id="vault-txhash" placeholder="0x..." style="width: 100%; background: var(--code); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem;">
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <label style="font-size: 0.7rem; font-weight: 800; color: var(--muted);">Your Wallet Address</label>
+            <input type="text" id="vault-wallet" placeholder="0x..." style="width: 100%; background: var(--code); color: white; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem;">
+          </div>
+
+          <button class="button" style="background: var(--accent-2); border-color: var(--accent-2); color: #060913; font-weight: 700; box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25); min-height: 38px; width: 100%; font-size: 0.9rem;" onclick="claimApiKey()">Claim API Key</button>
+          
+          <div id="vault-result" style="display: none; flex-direction: column; gap: 6px; margin-top: 6px;">
+            <label style="font-size: 0.7rem; font-weight: 800; color: var(--accent-2);">Your Prepaid Key</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <input type="text" id="vault-key" readonly style="flex: 1; background: var(--code); color: #bef264; border: 1px solid rgba(190, 242, 100, 0.2); border-radius: 8px; padding: 8px 12px; font-size: 0.85rem;" onclick="this.select()">
+              <button class="button" style="min-height: 34px; padding: 0 10px; font-size: 0.8rem;" onclick="copyVaultKey()">Copy</button>
+            </div>
+            <span id="vault-balance" style="font-size: 0.8rem; color: var(--muted);"></span>
+          </div>
         </div>
       </div>
     </section>
@@ -902,7 +932,9 @@ export const getHtmlContent = (
     }
 
     function updateCurl() {
-      curlCode.textContent = \`curl -i -X POST "${baseUrl}\${endpointSelect.value}" \\\\\\n  -H "Content-Type: application/json" \\\\\\n  -d '\${JSON.stringify(payload())}'\`
+      const savedKey = localStorage.getItem("statepulse_api_key")
+      const authHeaderStr = savedKey ? \`  -H "Authorization: Bearer \${savedKey}" \\\\\\n\` : ""
+      curlCode.textContent = \`curl -i -X POST "\${baseUrl}\${endpointSelect.value}" \\\\\\n  -H "Content-Type: application/json" \\\\\\n\${authHeaderStr}  -d '\${JSON.stringify(payload())}'\`
     }
 
     async function fetchChallenge() {
@@ -911,12 +943,22 @@ export const getHtmlContent = (
       consoleOutput.textContent = "Negotiating payment challenge with resource server..."
 
       try {
+        const headers = { "Content-Type": "application/json" }
+        const savedKey = localStorage.getItem("statepulse_api_key")
+        if (savedKey) {
+          headers["Authorization"] = \`Bearer \${savedKey}\`
+        }
+
         const response = await fetch(endpointSelect.value, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: headers,
           body: JSON.stringify(payload())
         })
         const challengeHeader = response.headers.get("payment-required") || response.headers.get("Payment-Required")
+        const prepaidBalance = response.headers.get("X-Prepaid-Key-Balance")
+        if (prepaidBalance && document.getElementById("vault-balance")) {
+          document.getElementById("vault-balance").textContent = \`Prepaid Balance: \$\${prepaidBalance} USDC\`
+        }
 
         if (response.status === 402 && challengeHeader) {
           consoleOutput.className = "response-challenge"
@@ -950,6 +992,64 @@ export const getHtmlContent = (
     }
 
     updateCurl()
+
+    // Vault Key claim logic
+    async function claimApiKey() {
+      const txHash = document.getElementById("vault-txhash").value.trim()
+      const wallet = document.getElementById("vault-wallet").value.trim()
+      const resultDiv = document.getElementById("vault-result")
+      const keyInput = document.getElementById("vault-key")
+      const balSpan = document.getElementById("vault-balance")
+
+      if (!txHash || !wallet) {
+        alert("Please enter both the deposit Transaction Hash and Wallet Address.")
+        return
+      }
+
+      balSpan.textContent = "Verifying deposit on Base chain..."
+      resultDiv.style.display = "flex"
+
+      try {
+        const res = await fetch("/credits/deposit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ txHash, wallet })
+        })
+
+        const data = await res.json()
+        if (!res.ok || data.error) {
+          balSpan.textContent = "Error: " + (data.error || "Failed to verify deposit")
+          keyInput.value = ""
+          return
+        }
+
+        localStorage.setItem("statepulse_api_key", data.apiKey)
+        keyInput.value = data.apiKey
+        balSpan.textContent = \`Prepaid Balance: \$\${Number(data.balance).toFixed(3)} USDC\`
+        updateCurl()
+      } catch (err) {
+        balSpan.textContent = "Connection Error: " + err.message
+        keyInput.value = ""
+      }
+    }
+
+    function copyVaultKey() {
+      const keyInput = document.getElementById("vault-key")
+      if (keyInput.value) {
+        navigator.clipboard.writeText(keyInput.value)
+        alert("Prepaid API Key copied to clipboard. It will be automatically used in playground requests.")
+      }
+    }
+
+    // Load saved API Key on load
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedKey = localStorage.getItem("statepulse_api_key")
+      if (savedKey) {
+        document.getElementById("vault-result").style.display = "flex"
+        document.getElementById("vault-key").value = savedKey
+        document.getElementById("vault-balance").textContent = "Prepaid key loaded from browser."
+      }
+    })
   </script>
 </body>
 </html>
