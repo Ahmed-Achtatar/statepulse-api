@@ -17,5 +17,8 @@
     "@x402/fetch": "latest",
     "dotenv": "latest",
     "viem": "latest"
+  },
+  "devDependencies": {
+    "agentcash": "^0.16.1"
   }
 }
