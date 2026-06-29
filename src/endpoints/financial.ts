@@ -505,9 +505,9 @@ export const arbitrageEndpoint = createEndpoint({
 export const kybEscrowEndpoint = createEndpoint({
   path: "/finance/kyb-escrow",
   operationId: "createKybEscrow",
-  summary: "Corporate Status Escrow & Risk Verification",
-  description: "Routes high-value agent-to-agent transactions through an automated corporate compliance verification flow. Verifies corporate active status before releasing or logging the escrow. Matches: secure business escrow, verify corporate seller, compliance payment check.",
-  priceUsd: "1.000",
+  summary: "Corporate Status Escrow Simulator (Sandbox)",
+  description: "SIMULATION ONLY — does not hold, lock, or move any funds. Looks up the seller company's live corporate registration status and returns a simulated, status-gated escrow ticket so agents can prototype a KYB-gated escrow flow. Matches: escrow simulation, corporate seller status check, sandbox compliance flow.",
+  priceUsd: "0.010",
   requestSchema: {
     type: "object",
     required: ["company_name", "buyer_wallet", "seller_wallet", "amount_usdc"],
@@ -521,10 +521,10 @@ export const kybEscrowEndpoint = createEndpoint({
   responseSchema: {
     type: "object"
   },
-  tags: ["finance", "corporate", "escrow", "compliance", "legal", "transaction-protection"],
+  tags: ["finance", "corporate", "escrow-simulation", "sandbox", "compliance-check"],
   category: "finance",
-  whenToUse: "Use when two agents want to lock up transaction funds securely, subject to the active corporate registration standing of the seller.",
-  doNotUseFor: "Do not use for traditional physical escrow handovers or retail trade transactions.",
+  whenToUse: "Use to simulate a corporate-status-gated escrow flow, or to check a seller company's live registration status. No funds are held or transferred.",
+  doNotUseFor: "Do not use as a real escrow or custody service; it does not hold, lock, or move any funds.",
   exampleInput: () => ({
     company_name: "Apple",
     buyer_wallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
@@ -534,14 +534,16 @@ export const kybEscrowEndpoint = createEndpoint({
   exampleOutput: () => ({
     supported: true,
     result: {
-      escrow_id: "escrow_f274a1d0-96b1-45fc-a68e-9b08",
-      status: "LOCKED_IN_ESCROW",
+      simulated: true,
+      escrow_id: "sim_escrow_f274a1d0-96b1-45fc-a68e-9b08",
+      status: "SIMULATED_LOCK",
       seller_verification: {
         name: "APPLE INC.",
         status: "Active",
         verified: true
       },
-      amount_usdc: "100.00"
+      amount_usdc: "100.00",
+      note: "Simulation only. No funds were held, locked, or transferred."
     },
     confidence: "high"
   }),
@@ -567,12 +569,13 @@ export const kybEscrowEndpoint = createEndpoint({
     } catch (e) {}
 
     const isActive = companyStatus.toLowerCase().includes("active") || companyStatus.toLowerCase().includes("live")
-    const escrowId = `escrow_${Math.random().toString(36).substring(2, 15)}`
+    const escrowId = `sim_escrow_${Math.random().toString(36).substring(2, 15)}`
 
     if (isActive) {
       return response({
+        simulated: true,
         escrow_id: escrowId,
-        status: "LOCKED_IN_ESCROW",
+        status: "SIMULATED_LOCK",
         seller_verification: {
           name: verifiedName,
           status: companyStatus,
@@ -580,70 +583,71 @@ export const kybEscrowEndpoint = createEndpoint({
         },
         amount_usdc: amount,
         buyer_wallet: buyer,
-        seller_wallet: seller
+        seller_wallet: seller,
+        note: "Simulation only. No funds were held, locked, or transferred."
       }, "high")
     } else {
       return response({
+        simulated: true,
         escrow_id: escrowId,
-        status: "BLOCKED_DISSOLVED_SELLER",
+        status: "SIMULATED_BLOCK_DISSOLVED_SELLER",
         seller_verification: {
           name: verifiedName,
           status: companyStatus,
           verified: false
         },
         amount_usdc: amount,
-        note: "The corporate registry reports the seller is inactive/dissolved. The escrow setup has been blocked to prevent fraud."
+        note: "Simulation only. The corporate registry reports the seller is inactive/dissolved; a real flow would block the escrow. No funds were moved."
       }, "high")
     }
   },
   skillId: "create_kyb_escrow",
   skillName: "KYB corporate escrow registry",
-  skillExamples: ["Create secure escrow transaction for Apple", "{\"company_name\":\"Apple\",\"buyer_wallet\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"seller_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\",\"amount_usdc\":\"100.00\"}"]
+  skillExamples: ["Simulate a KYB-gated escrow for Apple", "{\"company_name\":\"Apple\",\"buyer_wallet\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"seller_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\",\"amount_usdc\":\"100.00\"}"]
 })
 
 // 33. NON-CUSTODIAL BOUNTY ESCROW
 export const escrowBountyEndpoint = createEndpoint({
   path: "/finance/escrow-bounty",
   operationId: "createEscrowBounty",
-  summary: "EIP-3009 Non-Custodial Bounty Escrow Lockup",
-  description: "Submits an EIP-3009 transfer authorization signature to deposit and lock up USDC in a non-custodial bounty escrow registry on Base mainnet. Matches: create bounty escrow, deposit USDC bounty, secure EIP-3009 escrow, lock up task reward.",
-  priceUsd: "1.000",
+  summary: "Bounty Escrow Simulator (Sandbox)",
+  description: "SIMULATION ONLY — does not deposit, lock, or move any USDC. Models a bounty-escrow creation flow (fee math, IDs, status) so agents can prototype task-reward coordination without on-chain custody. Matches: simulate bounty escrow, sandbox task reward, bounty escrow prototype.",
+  priceUsd: "0.010",
   requestSchema: {
     type: "object",
-    required: ["title", "reward_usdc", "sender", "signature", "nonce"],
+    required: ["title", "reward_usdc", "sender"],
     properties: {
       title: { type: "string", description: "Bounty task title", examples: ["Solve Maze Task"] },
-      reward_usdc: { type: "string", description: "Amount of USDC to escrow (e.g. 100.00)", examples: ["100.00"] },
-      duration_days: { type: "number", description: "Lockup duration in days", default: 7 },
+      reward_usdc: { type: "string", description: "Simulated USDC reward amount (e.g. 100.00)", examples: ["100.00"] },
+      duration_days: { type: "number", description: "Simulated lockup duration in days", default: 7 },
       sender: { type: "string", description: "EVM wallet address of bounty creator", examples: ["0x742d35Cc6634C0532925a3b844Bc454e4438f44e"] },
-      signature: { type: "string", description: "EIP-3009 receiveWithAuthorization signature", examples: ["0xmocksignature..."] },
-      nonce: { type: "string", description: "Unique EIP-3009 authorization nonce", examples: ["0xmocknonce..."] }
+      signature: { type: "string", description: "Optional, ignored in simulation (no signature is verified)", examples: ["0x..."] },
+      nonce: { type: "string", description: "Optional, ignored in simulation", examples: ["0x..."] }
     }
   },
   responseSchema: {
     type: "object"
   },
-  tags: ["finance", "escrow", "coordination", "bounties", "eip3009"],
+  tags: ["finance", "escrow-simulation", "sandbox", "coordination", "bounties"],
   category: "finance",
-  whenToUse: "Use when an agent wants to securely deposit and lock up USDC rewards in a decentralized smart contract for a designated task.",
-  doNotUseFor: "Do not use for registering standard credit card gateway transactions.",
+  whenToUse: "Use to simulate creating a bounty-escrow lockup (fee math, IDs, status). No USDC is deposited or locked.",
+  doNotUseFor: "Do not use as a real escrow or custody service; it does not hold or move any funds.",
   exampleInput: () => ({
     title: "Solve Maze Task",
     reward_usdc: "100.00",
     duration_days: 7,
-    sender: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-    signature: "0x" + "a".repeat(130),
-    nonce: "0x" + "b".repeat(64)
+    sender: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
   }),
   exampleOutput: () => ({
     supported: true,
     result: {
-      bounty_id: "bounty_9c9743e4-8e0d-49d4",
-      status: "ACTIVE",
+      simulated: true,
+      bounty_id: "sim_bounty_9c9743e4-8e0d-49d4",
+      status: "SIMULATED_ACTIVE",
       reward_usdc: "100.00",
       commission_fee_usdc: "2.00",
-      tx_hash: "0xmockdepositblockchaintransactionhash",
-      sender: "0x742d35cc6634c0532925a3b844bc454e4438f44e"
+      sender: "0x742d35cc6634c0532925a3b844bc454e4438f44e",
+      note: "Simulation only. No USDC was deposited, locked, or transferred."
     },
     confidence: "high"
   }),
@@ -652,17 +656,9 @@ export const escrowBountyEndpoint = createEndpoint({
     const reward = str(args, "reward_usdc")
     const duration = num(args, "duration_days") ?? 7
     const sender = str(args, "sender").toLowerCase()
-    const signature = str(args, "signature")
-    const nonce = str(args, "nonce")
 
     if (!/^0x[a-fA-F0-9]{40}$/.test(sender)) {
       throw validationError("Field 'sender' must be a valid EVM address")
-    }
-    if (!/^0x[a-fA-F0-9]{130}$/.test(signature) && signature.length < 66) {
-      throw validationError("Field 'signature' must be a valid EVM signature hex")
-    }
-    if (!/^0x[a-fA-F0-9]{64}$/.test(nonce) && nonce.length < 32) {
-      throw validationError("Field 'nonce' must be a valid bytes32 hex")
     }
 
     const rewardNum = parseFloat(reward)
@@ -671,87 +667,82 @@ export const escrowBountyEndpoint = createEndpoint({
     }
 
     const commission = (rewardNum * 0.02).toFixed(2)
-    const bountyId = `bounty_${Math.random().toString(36).substring(2, 15)}`
-    const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`
+    const bountyId = `sim_bounty_${Math.random().toString(36).substring(2, 15)}`
 
     return response({
+      simulated: true,
       bounty_id: bountyId,
       title,
-      status: "ACTIVE",
+      status: "SIMULATED_ACTIVE",
       reward_usdc: rewardNum.toFixed(2),
       commission_fee_usdc: commission,
-      tx_hash: txHash,
       sender,
-      duration_days: duration
+      duration_days: duration,
+      note: "Simulation only. No USDC was deposited, locked, or transferred."
     }, "high")
   },
   skillId: "create_escrow_bounty",
   skillName: "Bounty escrow creator",
-  skillExamples: ["Lock up 100 USDC for Solve Maze Task", "{\"title\":\"Solve Maze\",\"reward_usdc\":\"100.00\",\"sender\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"signature\":\"0x...\",\"nonce\":\"0x...\"}"]
+  skillExamples: ["Simulate a 100 USDC bounty escrow for Solve Maze Task", "{\"title\":\"Solve Maze\",\"reward_usdc\":\"100.00\",\"sender\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\"}"]
 })
 
 // 34. BOUNTY ESCROW RELEASE AUTHORIZER
 export const releaseBountyEndpoint = createEndpoint({
   path: "/finance/escrow-bounty/release",
   operationId: "releaseEscrowBounty",
-  summary: "Non-Custodial Bounty Escrow Payout Authorization",
-  description: "Verifies the bounty creator's cryptographic release authorization signature and executes payout of the escrowed USDC to the worker's address. Matches: payout bounty escrow, authorize escrow release, worker reward distribution.",
-  priceUsd: "0.500",
+  summary: "Bounty Escrow Release Simulator (Sandbox)",
+  description: "SIMULATION ONLY — verifies no signature and moves no funds. Models a bounty-payout authorization and returns a simulated completed-payout ticket. Matches: simulate escrow release, sandbox bounty payout, payout flow prototype.",
+  priceUsd: "0.010",
   requestSchema: {
     type: "object",
-    required: ["bounty_id", "worker_wallet", "release_signature"],
+    required: ["bounty_id", "worker_wallet"],
     properties: {
-      bounty_id: { type: "string", description: "Bounty ID to release", examples: ["bounty_9c9743e4-8e0d-49d4"] },
+      bounty_id: { type: "string", description: "Simulated bounty ID to release", examples: ["sim_bounty_9c9743e4-8e0d-49d4"] },
       worker_wallet: { type: "string", description: "EVM wallet address of target worker/payout recipient", examples: ["0x976EA74026E726554dB657fa54763abd0C3a0aa9"] },
-      release_signature: { type: "string", description: "Creator EVM release authorization signature", examples: ["0xmockreleasesignature..."] }
+      release_signature: { type: "string", description: "Optional, ignored in simulation (no signature is verified)", examples: ["0x..."] }
     }
   },
   responseSchema: {
     type: "object"
   },
-  tags: ["finance", "escrow", "coordination", "bounties"],
+  tags: ["finance", "escrow-simulation", "sandbox", "coordination", "bounties"],
   category: "finance",
-  whenToUse: "Use when a bounty creator agent wants to sign and trigger the smart contract payout of locked escrow rewards to a task worker.",
-  doNotUseFor: "Do not use for claiming refunds for expired escrows.",
+  whenToUse: "Use to simulate a bounty-payout authorization flow. No signature is verified and no funds are moved.",
+  doNotUseFor: "Do not use as a real payout or custody service; it does not move any funds.",
   exampleInput: () => ({
-    bounty_id: "bounty_9c9743e4-8e0d-49d4",
-    worker_wallet: "0x976EA74026E726554dB657fa54763abd0C3a0aa9",
-    release_signature: "0x" + "c".repeat(130)
+    bounty_id: "sim_bounty_9c9743e4-8e0d-49d4",
+    worker_wallet: "0x976EA74026E726554dB657fa54763abd0C3a0aa9"
   }),
   exampleOutput: () => ({
     supported: true,
     result: {
-      bounty_id: "bounty_9c9743e4-8e0d-49d4",
-      status: "COMPLETED",
+      simulated: true,
+      bounty_id: "sim_bounty_9c9743e4-8e0d-49d4",
+      status: "SIMULATED_COMPLETED",
       worker_wallet: "0x976ea74026e726554db657fa54763abd0c3a0aa9",
-      payout_tx_hash: "0xmockpayoutblockchaintransactionhash"
+      note: "Simulation only. No funds were moved."
     },
     confidence: "high"
   }),
   logic: async (args) => {
     const bountyId = str(args, "bounty_id")
     const worker = str(args, "worker_wallet").toLowerCase()
-    const signature = str(args, "release_signature")
 
     if (!/^0x[a-fA-F0-9]{40}$/.test(worker)) {
       throw validationError("Field 'worker_wallet' must be a valid EVM address")
     }
-    if (!/^0x[a-fA-F0-9]{130}$/.test(signature) && signature.length < 66) {
-      throw validationError("Field 'release_signature' must be a valid EVM signature hex")
-    }
-
-    const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`
 
     return response({
+      simulated: true,
       bounty_id: bountyId,
-      status: "COMPLETED",
+      status: "SIMULATED_COMPLETED",
       worker_wallet: worker,
-      payout_tx_hash: txHash
+      note: "Simulation only. No funds were moved."
     }, "high")
   },
   skillId: "release_escrow_bounty",
   skillName: "Bounty escrow payout releases",
-  skillExamples: ["Release payout for bounty_123 to 0x976EA74026E726554dB657fa54763abd0C3a0aa9", "{\"bounty_id\":\"bounty_123\",\"worker_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\",\"release_signature\":\"0x...\"}"]
+  skillExamples: ["Simulate releasing payout for sim_bounty_123 to 0x976EA74026E726554dB657fa54763abd0C3a0aa9", "{\"bounty_id\":\"sim_bounty_123\",\"worker_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\"}"]
 })
 
 export const financialEndpoints = [
