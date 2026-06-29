@@ -1574,6 +1574,7 @@ app.get("/openapi.json", (c) => {
         summary: "Claim Prepaid API Key via USDC Deposit",
         description: "Submits a verified Base mainnet USDC transaction hash of a payment sent to the API settlement address, and returns a new prepaid API Key (sp_...) loaded with the deposited balance.",
         tags: ["utilities"],
+        security: [],
         requestBody: {
           required: true,
           content: {
@@ -1627,6 +1628,7 @@ app.get("/openapi.json", (c) => {
         summary: "Free Request Schema & Format Validator",
         description: "Allows agents to dry-run parameter validation on any paid or free endpoint path without spending USDC. Returns whether the body payload satisfies format constraints.",
         tags: ["utilities"],
+        security: [],
         requestBody: {
           required: true,
           content: {
@@ -1989,3 +1991,4 @@ for (const endpoint of ENDPOINTS) {
 export default {
   fetch: app.fetch
 }
+
