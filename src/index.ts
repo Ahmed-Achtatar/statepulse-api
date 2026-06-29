@@ -515,8 +515,19 @@ async function getGasMultiplier(env: Env): Promise<number> {
   return 1.0
 }
 
+// Module-level caches — avoids rebuilding 49-endpoint routes + paymentMiddleware on every request (CPU 1102)
+const _routesCache = new Map<string, Record<string, unknown>>()
+const _middlewareCache = new Map<string, any>()
+
 function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1.0, requestBody: any = null, isMockMode = false) {
-  return Object.fromEntries(paidEndpoints().map((endpoint) => {
+  // For the /blockchain/simulate surcharge we still need per-request pricing, but only for that one endpoint.
+  // For all other callers (payment challenge, discovery routes) use the cache.
+  const cacheKey = `${payTo}|${baseUrl}|${multiplier.toFixed(3)}|${isMockMode}`
+  if (!requestBody && _routesCache.has(cacheKey)) {
+    return _routesCache.get(cacheKey)!
+  }
+
+  const routes = Object.fromEntries(paidEndpoints().map((endpoint) => {
     let basePrice = isMockMode ? 0.001 : Number(endpoint.priceUsd)
     if (!isMockMode && requestBody && endpoint.path === "/blockchain/simulate") {
       const dataStr = String(requestBody.data || "")
@@ -567,6 +578,12 @@ function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1
       }
     ]
   }))
+
+  // Cache routes that don't depend on a per-request body
+  if (!requestBody) {
+    _routesCache.set(cacheKey, routes)
+  }
+  return routes
 }
 
 function getPathFromResource(resource?: any): string | undefined {
@@ -850,7 +867,15 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
   const finalPrice = Number((basePrice * multiplier).toFixed(3))
   c.set("appliedPrice", finalPrice)
 
-  const middleware = paymentMiddleware(createOfficialX402Routes(payTo, baseUrl, multiplier, body, isMock) as any, createResourceServer(c.env))
+  // Cache the compiled paymentMiddleware per (payTo|baseUrl|multiplier|isMock) — same key as routes cache.
+  // /blockchain/simulate can use a heavier price but the middleware routes are still the same object.
+  const mwKey = `${payTo}|${baseUrl}|${multiplier.toFixed(3)}|${isMock}`
+  let middleware = _middlewareCache.get(mwKey)
+  if (!middleware) {
+    const routes = createOfficialX402Routes(payTo, baseUrl, multiplier, null, isMock)
+    middleware = paymentMiddleware(routes as any, createResourceServer(c.env))
+    _middlewareCache.set(mwKey, middleware)
+  }
   return middleware(c, next)
 }
 
