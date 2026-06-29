@@ -125,7 +125,10 @@ check_payment_challenge "arbitrage search" "/finance/arbitrage" '{}' "250000"
 check_payment_challenge "kyb escrow" "/finance/kyb-escrow" '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}' "1000000"
 check_payment_challenge "network audit" "/network/audit" '{"host":"google.com"}' "100000"
 check_payment_challenge "verify presence" "/location/verify-presence" '{"ip":"8.8.8.8","expected_country":"US"}' "500000"
+check_payment_challenge "escrow bounty creation" "/finance/escrow-bounty" '{"title":"Solve Maze","reward_usdc":"100.00","sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","signature":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844bc454e4438f44e","nonce":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844b"}' "1000000"
+check_payment_challenge "escrow bounty release" "/finance/escrow-bounty/release" '{"bounty_id":"bounty_123","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","release_signature":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844bc454e4438f44e"}' "500000"
 echo ""
+
 
 
 if [ "$failures" -gt 0 ]; then

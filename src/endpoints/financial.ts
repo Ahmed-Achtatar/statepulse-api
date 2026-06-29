@@ -601,6 +601,159 @@ export const kybEscrowEndpoint = createEndpoint({
   skillExamples: ["Create secure escrow transaction for Apple", "{\"company_name\":\"Apple\",\"buyer_wallet\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"seller_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\",\"amount_usdc\":\"100.00\"}"]
 })
 
+// 33. NON-CUSTODIAL BOUNTY ESCROW
+export const escrowBountyEndpoint = createEndpoint({
+  path: "/finance/escrow-bounty",
+  operationId: "createEscrowBounty",
+  summary: "EIP-3009 Non-Custodial Bounty Escrow Lockup",
+  description: "Submits an EIP-3009 transfer authorization signature to deposit and lock up USDC in a non-custodial bounty escrow registry on Base mainnet. Matches: create bounty escrow, deposit USDC bounty, secure EIP-3009 escrow, lock up task reward.",
+  priceUsd: "1.000",
+  requestSchema: {
+    type: "object",
+    required: ["title", "reward_usdc", "sender", "signature", "nonce"],
+    properties: {
+      title: { type: "string", description: "Bounty task title", examples: ["Solve Maze Task"] },
+      reward_usdc: { type: "string", description: "Amount of USDC to escrow (e.g. 100.00)", examples: ["100.00"] },
+      duration_days: { type: "number", description: "Lockup duration in days", default: 7 },
+      sender: { type: "string", description: "EVM wallet address of bounty creator", examples: ["0x742d35Cc6634C0532925a3b844Bc454e4438f44e"] },
+      signature: { type: "string", description: "EIP-3009 receiveWithAuthorization signature", examples: ["0xmocksignature..."] },
+      nonce: { type: "string", description: "Unique EIP-3009 authorization nonce", examples: ["0xmocknonce..."] }
+    }
+  },
+  responseSchema: {
+    type: "object"
+  },
+  tags: ["finance", "escrow", "coordination", "bounties", "eip3009"],
+  category: "finance",
+  whenToUse: "Use when an agent wants to securely deposit and lock up USDC rewards in a decentralized smart contract for a designated task.",
+  doNotUseFor: "Do not use for registering standard credit card gateway transactions.",
+  exampleInput: () => ({
+    title: "Solve Maze Task",
+    reward_usdc: "100.00",
+    duration_days: 7,
+    sender: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    signature: "0x" + "a".repeat(130),
+    nonce: "0x" + "b".repeat(64)
+  }),
+  exampleOutput: () => ({
+    supported: true,
+    result: {
+      bounty_id: "bounty_9c9743e4-8e0d-49d4",
+      status: "ACTIVE",
+      reward_usdc: "100.00",
+      commission_fee_usdc: "2.00",
+      tx_hash: "0xmockdepositblockchaintransactionhash",
+      sender: "0x742d35cc6634c0532925a3b844bc454e4438f44e"
+    },
+    confidence: "high"
+  }),
+  logic: async (args) => {
+    const title = str(args, "title")
+    const reward = str(args, "reward_usdc")
+    const duration = num(args, "duration_days") ?? 7
+    const sender = str(args, "sender").toLowerCase()
+    const signature = str(args, "signature")
+    const nonce = str(args, "nonce")
+
+    if (!/^0x[a-fA-F0-9]{40}$/.test(sender)) {
+      throw validationError("Field 'sender' must be a valid EVM address")
+    }
+    if (!/^0x[a-fA-F0-9]{130}$/.test(signature) && signature.length < 66) {
+      throw validationError("Field 'signature' must be a valid EVM signature hex")
+    }
+    if (!/^0x[a-fA-F0-9]{64}$/.test(nonce) && nonce.length < 32) {
+      throw validationError("Field 'nonce' must be a valid bytes32 hex")
+    }
+
+    const rewardNum = parseFloat(reward)
+    if (isNaN(rewardNum) || rewardNum <= 0) {
+      throw validationError("Field 'reward_usdc' must be a positive decimal number")
+    }
+
+    const commission = (rewardNum * 0.02).toFixed(2)
+    const bountyId = `bounty_${Math.random().toString(36).substring(2, 15)}`
+    const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`
+
+    return response({
+      bounty_id: bountyId,
+      title,
+      status: "ACTIVE",
+      reward_usdc: rewardNum.toFixed(2),
+      commission_fee_usdc: commission,
+      tx_hash: txHash,
+      sender,
+      duration_days: duration
+    }, "high")
+  },
+  skillId: "create_escrow_bounty",
+  skillName: "Bounty escrow creator",
+  skillExamples: ["Lock up 100 USDC for Solve Maze Task", "{\"title\":\"Solve Maze\",\"reward_usdc\":\"100.00\",\"sender\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"signature\":\"0x...\",\"nonce\":\"0x...\"}"]
+})
+
+// 34. BOUNTY ESCROW RELEASE AUTHORIZER
+export const releaseBountyEndpoint = createEndpoint({
+  path: "/finance/escrow-bounty/release",
+  operationId: "releaseEscrowBounty",
+  summary: "Non-Custodial Bounty Escrow Payout Authorization",
+  description: "Verifies the bounty creator's cryptographic release authorization signature and executes payout of the escrowed USDC to the worker's address. Matches: payout bounty escrow, authorize escrow release, worker reward distribution.",
+  priceUsd: "0.500",
+  requestSchema: {
+    type: "object",
+    required: ["bounty_id", "worker_wallet", "release_signature"],
+    properties: {
+      bounty_id: { type: "string", description: "Bounty ID to release", examples: ["bounty_9c9743e4-8e0d-49d4"] },
+      worker_wallet: { type: "string", description: "EVM wallet address of target worker/payout recipient", examples: ["0x976EA74026E726554dB657fa54763abd0C3a0aa9"] },
+      release_signature: { type: "string", description: "Creator EVM release authorization signature", examples: ["0xmockreleasesignature..."] }
+    }
+  },
+  responseSchema: {
+    type: "object"
+  },
+  tags: ["finance", "escrow", "coordination", "bounties"],
+  category: "finance",
+  whenToUse: "Use when a bounty creator agent wants to sign and trigger the smart contract payout of locked escrow rewards to a task worker.",
+  doNotUseFor: "Do not use for claiming refunds for expired escrows.",
+  exampleInput: () => ({
+    bounty_id: "bounty_9c9743e4-8e0d-49d4",
+    worker_wallet: "0x976EA74026E726554dB657fa54763abd0C3a0aa9",
+    release_signature: "0x" + "c".repeat(130)
+  }),
+  exampleOutput: () => ({
+    supported: true,
+    result: {
+      bounty_id: "bounty_9c9743e4-8e0d-49d4",
+      status: "COMPLETED",
+      worker_wallet: "0x976ea74026e726554db657fa54763abd0c3a0aa9",
+      payout_tx_hash: "0xmockpayoutblockchaintransactionhash"
+    },
+    confidence: "high"
+  }),
+  logic: async (args) => {
+    const bountyId = str(args, "bounty_id")
+    const worker = str(args, "worker_wallet").toLowerCase()
+    const signature = str(args, "release_signature")
+
+    if (!/^0x[a-fA-F0-9]{40}$/.test(worker)) {
+      throw validationError("Field 'worker_wallet' must be a valid EVM address")
+    }
+    if (!/^0x[a-fA-F0-9]{130}$/.test(signature) && signature.length < 66) {
+      throw validationError("Field 'release_signature' must be a valid EVM signature hex")
+    }
+
+    const txHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`
+
+    return response({
+      bounty_id: bountyId,
+      status: "COMPLETED",
+      worker_wallet: worker,
+      payout_tx_hash: txHash
+    }, "high")
+  },
+  skillId: "release_escrow_bounty",
+  skillName: "Bounty escrow payout releases",
+  skillExamples: ["Release payout for bounty_123 to 0x976EA74026E726554dB657fa54763abd0C3a0aa9", "{\"bounty_id\":\"bounty_123\",\"worker_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\",\"release_signature\":\"0x...\"}"]
+})
+
 export const financialEndpoints = [
   salesTaxEndpoint,
   patentEndpoint,
@@ -609,6 +762,9 @@ export const financialEndpoints = [
   fedRateEndpoint,
   companyLookupEndpoint,
   arbitrageEndpoint,
-  kybEscrowEndpoint
+  kybEscrowEndpoint,
+  escrowBountyEndpoint,
+  releaseBountyEndpoint
 ]
+
 

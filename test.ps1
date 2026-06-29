@@ -147,7 +147,9 @@ $ExpectedEndpointPaths = @(
   "/finance/arbitrage",
   "/finance/kyb-escrow",
   "/network/audit",
-  "/location/verify-presence"
+  "/location/verify-presence",
+  "/finance/escrow-bounty",
+  "/finance/escrow-bounty/release"
 )
 
 
@@ -217,9 +219,9 @@ foreach ($path in $ExpectedEndpointPaths) {
     $expectedPrice = "100000"
   } elseif ($path -eq "/finance/arbitrage") {
     $expectedPrice = "250000"
-  } elseif ($path -eq "/location/verify-presence") {
+  } elseif ($path -eq "/location/verify-presence" -or $path -eq "/finance/escrow-bounty/release") {
     $expectedPrice = "500000"
-  } elseif ($path -eq "/finance/kyb-escrow") {
+  } elseif ($path -eq "/finance/kyb-escrow" -or $path -eq "/finance/escrow-bounty") {
     $expectedPrice = "1000000"
   }
   
@@ -242,6 +244,8 @@ foreach ($path in $ExpectedEndpointPaths) {
   elseif ($path -eq "/finance/kyb-escrow") { $payload = '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}' }
   elseif ($path -eq "/network/audit") { $payload = '{"host":"google.com"}' }
   elseif ($path -eq "/location/verify-presence") { $payload = '{"ip":"8.8.8.8","expected_country":"US"}' }
+  elseif ($path -eq "/finance/escrow-bounty") { $payload = '{"title":"Solve Maze","reward_usdc":"100.00","sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","signature":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844bc454e4438f44e","nonce":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844b"}' }
+  elseif ($path -eq "/finance/escrow-bounty/release") { $payload = '{"bounty_id":"bounty_123","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","release_signature":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844bc454e4438f44e"}' }
 
   Test-PaymentChallenge "payment challenge $path" $path $payload $expectedPrice
 }
