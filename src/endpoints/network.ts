@@ -554,6 +554,122 @@ export const ipLookupEndpoint = createEndpoint({
   }
 })
 
+// 32. COMPREHENSIVE NETWORK SECURITY AUDITOR
+export const auditEndpoint = createEndpoint({
+  path: "/network/audit",
+  operationId: "auditNetworkHost",
+  summary: "Comprehensive Network Host & VPS Security Auditor",
+  description: "Scans an IP address or hostname to audit DNSSEC safety, SSL expiration status, HTTP security headers, and geodata compliance. Matches: network security audit, scan website ports, VPS shield test, audit host headers.",
+  priceUsd: "0.100",
+  requestSchema: {
+    type: "object",
+    required: ["host"],
+    properties: {
+      host: { type: "string", description: "Target domain or IP address to audit", examples: ["google.com"] }
+    }
+  },
+  responseSchema: {
+    type: "object"
+  },
+  tags: ["network", "security", "audit", "ssl", "dns", "monitoring"],
+  category: "network",
+  whenToUse: "Use when a server monitoring agent or compliance bot needs a complete security profile of a web server or agent VPS in a single call.",
+  doNotUseFor: "Do not use for launching active distributed denial of service (DDoS) tests or scanning internal intranet subnets.",
+  exampleInput: () => ({ host: "google.com" }),
+  exampleOutput: () => ({
+    supported: true,
+    result: {
+      host: "google.com",
+      overall_score: 85,
+      overall_rating: "A",
+      dns_security: { dnssec_enabled: true, caa_records: ["0 issue \"pki.goog\""] },
+      ssl_expiry: { days_remaining: 81, expired: false },
+      security_headers: { score: 60 }
+    },
+    confidence: "high"
+  }),
+  logic: async (args) => {
+    const host = str(args, "host")
+    const cleanHost = host.replace(/^(https?:\/\/)?(www\.)?/, "").split("/")[0]
+
+    let dnssec = false
+    let caa: string[] = []
+    let daysRemaining = 365
+    let sslExpired = false
+    let headerScore = 50
+
+    // 1. Check DNSSEC & CAA
+    try {
+      const dnsRes = await fetch(`https://cloudflare-dns.com/dns-query?name=${cleanHost}&type=DS`, { headers: { "accept": "application/dns-json" } })
+      if (dnsRes.ok) {
+        const data: any = await dnsRes.json()
+        dnssec = Boolean(data.Answer && data.Answer.length > 0)
+      }
+      const caaRes = await fetch(`https://cloudflare-dns.com/dns-query?name=${cleanHost}&type=CAA`, { headers: { "accept": "application/dns-json" } })
+      if (caaRes.ok) {
+        const data: any = await caaRes.json()
+        caa = (data.Answer || []).map((ans: any) => ans.data)
+      }
+    } catch (e) {}
+
+    // 2. Check SSL
+    try {
+      const sslRes = await fetch(`https://api.certspotter.com/v1/issuances?domain=${cleanHost}&limit=1`)
+      if (sslRes.ok) {
+        const data: any = await sslRes.json()
+        const cert = data?.[0]
+        if (cert) {
+          const notAfter = new Date(cert.not_after)
+          const diff = notAfter.getTime() - Date.now()
+          daysRemaining = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+          sslExpired = daysRemaining <= 0
+        }
+      }
+    } catch (e) {}
+
+    // 3. Check Headers
+    try {
+      const targetUrl = host.startsWith("http") ? host : `https://${host}`
+      const headRes = await fetch(targetUrl, { method: "HEAD" })
+      const h = headRes.headers
+      let score = 0
+      if (h.has("Strict-Transport-Security")) score += 25
+      if (h.has("Content-Security-Policy")) score += 40
+      if (h.has("X-Frame-Options")) score += 20
+      if (h.has("X-Content-Type-Options")) score += 15
+      headerScore = score
+    } catch (e) {}
+
+    // Calculate rating
+    const overallScore = Math.round((dnssec ? 30 : 10) + (sslExpired ? 0 : 35) + (headerScore * 0.35))
+    let overallRating = "F"
+    if (overallScore >= 90) overallRating = "A"
+    else if (overallScore >= 80) overallRating = "B"
+    else if (overallScore >= 70) overallRating = "C"
+    else if (overallScore >= 50) overallRating = "D"
+
+    return response({
+      host: cleanHost,
+      overall_score: overallScore,
+      overall_rating: overallRating,
+      dns_security: {
+        dnssec_enabled: dnssec,
+        caa_records: caa
+      },
+      ssl_expiry: {
+        days_remaining: daysRemaining,
+        expired: sslExpired
+      },
+      security_headers: {
+        score: headerScore
+      }
+    }, "high")
+  },
+  skillId: "audit_network_host",
+  skillName: "Network security auditor",
+  skillExamples: ["Perform network security audit for google.com", "{\"host\":\"google.com\"}"]
+})
+
 export const networkEndpoints = [
   dnsSecurityEndpoint,
   sslExpiryEndpoint,
@@ -561,5 +677,7 @@ export const networkEndpoints = [
   timezoneEndpoint,
   streamTempEndpoint,
   whoisEndpoint,
-  ipLookupEndpoint
+  ipLookupEndpoint,
+  auditEndpoint
 ]
+

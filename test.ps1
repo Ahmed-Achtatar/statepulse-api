@@ -143,8 +143,13 @@ $ExpectedEndpointPaths = @(
   "/calendar/holidays",
   "/network/whois",
   "/network/ip-lookup",
-  "/finance/company-lookup"
+  "/finance/company-lookup",
+  "/finance/arbitrage",
+  "/finance/kyb-escrow",
+  "/network/audit",
+  "/location/verify-presence"
 )
+
 
 Write-Host "1. Health check"
 Test-Status "homepage" "/"
@@ -208,8 +213,14 @@ foreach ($path in $ExpectedEndpointPaths) {
     $expectedPrice = "20000"
   } elseif ($path -eq "/network/whois") {
     $expectedPrice = "40000"
-  } elseif ($path -eq "/finance/company-lookup") {
+  } elseif ($path -eq "/finance/company-lookup" -or $path -eq "/network/audit") {
     $expectedPrice = "100000"
+  } elseif ($path -eq "/finance/arbitrage") {
+    $expectedPrice = "250000"
+  } elseif ($path -eq "/location/verify-presence") {
+    $expectedPrice = "500000"
+  } elseif ($path -eq "/finance/kyb-escrow") {
+    $expectedPrice = "1000000"
   }
   
   $payload = '{}'
@@ -227,9 +238,16 @@ foreach ($path in $ExpectedEndpointPaths) {
   elseif ($path -eq "/network/whois") { $payload = '{"domain":"google.com"}' }
   elseif ($path -eq "/network/ip-lookup") { $payload = '{"ip":"8.8.8.8"}' }
   elseif ($path -eq "/finance/company-lookup") { $payload = '{"company_name":"Apple"}' }
+  elseif ($path -eq "/finance/arbitrage") { $payload = '{}' }
+  elseif ($path -eq "/finance/kyb-escrow") { $payload = '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}' }
+  elseif ($path -eq "/network/audit") { $payload = '{"host":"google.com"}' }
+  elseif ($path -eq "/location/verify-presence") { $payload = '{"ip":"8.8.8.8","expected_country":"US"}' }
 
   Test-PaymentChallenge "payment challenge $path" $path $payload $expectedPrice
 }
+Write-Host "5. Referral status checks"
+Test-Status "referrals balance query" "/credits/referral/0xed6EF0caD95D66842b87d07C5ed0C0465D0052e6"
+Test-Contains "referrals query response" "/credits/referral/0xed6EF0caD95D66842b87d07C5ed0C0465D0052e6" "0xed6ef0cad95d66842b87d07c5ed0c0465d0052e6"
 Write-Host ""
 
 if ($failures -gt 0) {

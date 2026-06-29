@@ -121,7 +121,12 @@ echo ""
 echo "4. Payment challenge"
 check_payment_challenge "weather anomaly" "/weather/anomaly" '{"lat":40.71,"lng":-74.00}' "30000"
 check_payment_challenge "barcode lookup" "/product/barcode" '{"barcode":"9780140449136"}' "30000"
+check_payment_challenge "arbitrage search" "/finance/arbitrage" '{}' "250000"
+check_payment_challenge "kyb escrow" "/finance/kyb-escrow" '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}' "1000000"
+check_payment_challenge "network audit" "/network/audit" '{"host":"google.com"}' "100000"
+check_payment_challenge "verify presence" "/location/verify-presence" '{"ip":"8.8.8.8","expected_country":"US"}' "500000"
 echo ""
+
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) failed"

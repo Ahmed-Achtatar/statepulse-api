@@ -1804,6 +1804,16 @@ app.get("/.well-known/x402.json", (c) => {
   }, 200, metadataHeaders())
 })
 
+app.get("/credits/referral/:address", async (c) => {
+  const address = c.req.param("address")
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    return c.json({ error: "Invalid EVM wallet address format" }, 400)
+  }
+  const refKey = `referrer:${address.toLowerCase()}:balance`
+  const balance = parseFloat(await c.env.CACHE.get(refKey) || "0")
+  return c.json({ address: address.toLowerCase(), balance }, 200)
+})
+
 app.get("/analytics/referrals", async (c) => {
   if (c.env.ANALYTICS_TOKEN) {
     const token = c.req.query("token") || c.req.header("x-analytics-token")

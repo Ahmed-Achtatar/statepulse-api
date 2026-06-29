@@ -933,8 +933,8 @@ export const getHtmlContent = (
 
     function updateCurl() {
       const savedKey = localStorage.getItem("statepulse_api_key")
-      const authHeaderStr = savedKey ? \`  -H "Authorization: Bearer \${savedKey}" \\\\\\n\` : ""
-      curlCode.textContent = \`curl -i -X POST "\${baseUrl}\${endpointSelect.value}" \\\\\\n  -H "Content-Type: application/json" \\\\\\n\${authHeaderStr}  -d '\${JSON.stringify(payload())}'\`
+      const authHeaderStr = savedKey ? "  -H \"Authorization: Bearer " + savedKey + "\" \\\\\\n" : ""
+      curlCode.textContent = "curl -i -X POST \"${baseUrl}" + endpointSelect.value + "\" \\\\\\n  -H \"Content-Type: application/json\" \\\\\\n" + authHeaderStr + "  -d '" + JSON.stringify(payload()) + "'"
     }
 
     async function fetchChallenge() {
@@ -946,7 +946,7 @@ export const getHtmlContent = (
         const headers = { "Content-Type": "application/json" }
         const savedKey = localStorage.getItem("statepulse_api_key")
         if (savedKey) {
-          headers["Authorization"] = \`Bearer \${savedKey}\`
+          headers["Authorization"] = "Bearer " + savedKey
         }
 
         const response = await fetch(endpointSelect.value, {

@@ -20,7 +20,10 @@ wrangler-dev.out.log
 .env.test.local
 .env.production.local
 .dev.vars
-AGENT_DISCOVERY_PLAYBOOK.local.md
+*.local.md
+*.log
+
+
 
 # IDEs and editors
 .idea/
