@@ -749,16 +749,22 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
   }
 
   // Preflight schema and formatting validation check (Rule 5)
+  // Only validate when body has actual content — empty bodies are payment probes (e.g. x402scan)
+  // and must reach the payment middleware to get the correct 402 challenge response.
   const endpoint = ENDPOINTS_BY_PATH[path]
   if (endpoint && endpoint.requestSchema) {
     try {
       const bodyText = await c.req.raw.clone().text()
       if (bodyText) {
         const body = JSON.parse(bodyText)
-        const check = validateSchema(endpoint.requestSchema, body)
-        if (!check.valid) {
-          track(c, "endpoint_bad_request", path)
-          return c.json({ error: check.error }, 400)
+        // Skip validation for empty-ish bodies ({} with no keys) — treat as payment probe
+        const hasContent = body && typeof body === "object" && Object.keys(body).length > 0
+        if (hasContent) {
+          const check = validateSchema(endpoint.requestSchema, body)
+          if (!check.valid) {
+            track(c, "endpoint_bad_request", path)
+            return c.json({ error: check.error }, 400)
+          }
         }
         c.set("paidBodyText", bodyText)
       }
