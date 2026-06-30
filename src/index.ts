@@ -1270,7 +1270,7 @@ app.get("/logo.svg", (c) => {
   })
 })
 
-app.get("/logo.png", (c) => {
+function logoPngResponse() {
   const binary = atob(LOGO_PNG_BASE64)
   const bytes = new Uint8Array(binary.length)
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
@@ -1280,7 +1280,13 @@ app.get("/logo.png", (c) => {
       "cache-control": "public, max-age=86400"
     }
   })
-})
+}
+
+app.get("/logo.png", () => logoPngResponse())
+
+// Crawlers and x402 indexers (x402scan, agentic.market) grab the service icon
+// from /favicon.ico and the homepage og:image, so serve the brand PNG here too.
+app.get("/favicon.ico", () => logoPngResponse())
 
 app.get("/terms", (c) => {
   return c.html(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terms - ${SERVICE_NAME}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:48px auto;padding:0 20px;line-height:1.6;color:#172033}a{color:#0369a1}</style></head><body><h1>Terms of Use</h1><p>${SERVICE_NAME} is a pay-per-call API of narrow lookup, calculator, and classifier endpoints for AI agents. Outputs are informational support, not legal, tax, medical, or financial advice, and should be verified against the cited source before being relied on for a real decision.</p><p>Paid x402 requests are charged before or upon generating the response, depending on the endpoint.</p><p>Do not use the service for unlawful purposes, to generate fraudulent documents, or to misrepresent machine-generated output as a licensed professional's opinion.</p><p>Contact: <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p><p><a href="/">Back to API</a></p></body></html>`)
