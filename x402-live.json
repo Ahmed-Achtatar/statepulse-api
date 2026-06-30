@@ -4,7 +4,7 @@
   "description": "Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base.",
   "version": "1.0.1",
   "url": "https://statepulse-api.hahavoid0.workers.dev",
-  "logoUrl": "https://statepulse-api.hahavoid0.workers.dev/logo.svg",
+  "logoUrl": "https://statepulse-api.hahavoid0.workers.dev/logo.png",
   "openapi": "https://statepulse-api.hahavoid0.workers.dev/openapi.json",
   "agentCard": "https://statepulse-api.hahavoid0.workers.dev/.well-known/agent.json",
   "llmsTxt": "https://statepulse-api.hahavoid0.workers.dev/llms.txt",
