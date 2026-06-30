@@ -1,7 +1,7 @@
 {
   "name": "StatePulse API",
   "short_description": "Pay-per-call live telemetry and utilities for AI agents.",
-  "description": "StatePulse API exposes narrow, machine-readable live telemetry, environmental metrics, transit state vectors, and real-time utilities AI agents can call instead of guessing: coordinates, speed, air quality, weather deviations, DNS, and calendar holidays. Paid per request with x402 on Base USDC. Served from the same worker as the former PageDiff API.",
+  "description": "StatePulse API exposes narrow, machine-readable live telemetry, environmental metrics, transit state vectors, and real-time utilities AI agents can call instead of guessing: coordinates, speed, air quality, weather deviations, DNS, and calendar holidays. Paid per request with x402 on Base USDC.",
   "homepage": "https://statepulse-api.hahavoid0.workers.dev",
   "repository": "https://github.com/Ahmed-Achtatar/statepulse-api",
   "logo": "https://statepulse-api.hahavoid0.workers.dev/logo.svg",
@@ -162,6 +162,13 @@
       "description": "Queries the hourly lightning potential indices for coordinates."
     },
     {
+      "name": "Location Verify presence",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/location/verify-presence",
+      "method": "POST",
+      "price_usd": "0.500",
+      "description": "Validates an IP address's physical route and latency offsets to verify country compliance, returning a cryptographically signed Geolocation Certificate. Matches: geolocate ip check, secure location verification, ip route validator, compliant network geodata."
+    },
+    {
       "name": "Transit Marine vessel",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/marine-vessel",
       "method": "POST",
@@ -253,6 +260,34 @@
       "description": "Searches public business registries (e.g. OpenCorporates and SEC EDGAR databases) to retrieve registered address, incorporation date, jurisdiction, and official status. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup."
     },
     {
+      "name": "Finance Arbitrage",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/arbitrage",
+      "method": "POST",
+      "price_usd": "0.250",
+      "description": "Queries live funding rates and mark-index spreads from centralised perp indices to locate yield arbitrage opportunities. Matches: arbitrage finder, funding rate arbitrage, cross-chain yield, spot-perp spread, perp funding rates checker."
+    },
+    {
+      "name": "Finance Kyb escrow",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/kyb-escrow",
+      "method": "POST",
+      "price_usd": "0.010",
+      "description": "SIMULATION ONLY — does not hold, lock, or move any funds. Looks up the seller company's live corporate registration status and returns a simulated, status-gated escrow ticket so agents can prototype a KYB-gated escrow flow. Matches: escrow simulation, corporate seller status check, sandbox compliance flow."
+    },
+    {
+      "name": "Finance Escrow bounty",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty",
+      "method": "POST",
+      "price_usd": "0.010",
+      "description": "SIMULATION ONLY — does not deposit, lock, or move any USDC. Models a bounty-escrow creation flow (fee math, IDs, status) so agents can prototype task-reward coordination without on-chain custody. Matches: simulate bounty escrow, sandbox task reward, bounty escrow prototype."
+    },
+    {
+      "name": "Finance Escrow bounty Release",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty/release",
+      "method": "POST",
+      "price_usd": "0.010",
+      "description": "SIMULATION ONLY — verifies no signature and moves no funds. Models a bounty-payout authorization and returns a simulated completed-payout ticket. Matches: simulate escrow release, sandbox bounty payout, payout flow prototype."
+    },
+    {
       "name": "Blockchain Abi",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/abi",
       "method": "POST",
@@ -335,6 +370,13 @@
       "method": "POST",
       "price_usd": "0.020",
       "description": "Scans an IPv4 or IPv6 address using public geodata to resolve location, country, ISP, autonomous system, and hosting flags. Matches: geolocate IP address, check client IP country, query ISP metadata, threat intelligence proxy check, hosting provider detector."
+    },
+    {
+      "name": "Network Audit",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/network/audit",
+      "method": "POST",
+      "price_usd": "0.100",
+      "description": "Scans an IP address or hostname to audit DNSSEC safety, SSL expiration status, HTTP security headers, and geodata compliance. Matches: network security audit, scan website ports, VPS shield test, audit host headers."
     }
   ],
   "settlement": {

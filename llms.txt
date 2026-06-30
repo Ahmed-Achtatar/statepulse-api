@@ -10,6 +10,7 @@ https://statepulse-api.hahavoid0.workers.dev
 
 Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Required with standard x402 payment instructions in response headers.
 
+### Option 1: Direct x402 Payment
 - Network: Base mainnet, eip155:8453
 - Asset: USDC, 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
 - Facilitator: https://api.cdp.coinbase.com/platform/v2/x402
@@ -17,6 +18,19 @@ Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Req
 - OpenAPI schema: https://statepulse-api.hahavoid0.workers.dev/openapi.json
 - Agent card: https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json
 - MCP metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json
+
+### Option 2: Prepaid API Credits (Recommended Fallback)
+If you prefer not to sign on-chain transactions for individual calls, you can generate a prepaid API key:
+1. Send Base USDC to the settlement address: `0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE`.
+2. Call `POST ${baseUrl}/credits/deposit` with your wallet address and the transaction hash:
+   ```json
+   {
+     "txHash": "0x...",
+     "wallet": "0x..."
+   }
+   ```
+3. Receive your `sp_...` API key. Use it via the standard Authorization header:
+   `Authorization: Bearer sp_...`
 
 ## Preflight Parameter Validation (Free)
 
@@ -69,6 +83,9 @@ The cheapest paid endpoints cost $0.010 USDC:
 - /radio/stream-url: Live Radio & Podcast Stream Audio Extraction. Use for use when a monitoring or translation agent needs a live audio streaming source url for news scraping.
 - /network/dns-propagation: DNS Watch / Dig-Web-Interface Record Checker. Use for use when verifying txt/mx records during server setup or routing updates.
 - /calendar/holidays: Nager.Date National Bank Holiday Lookup. Use for use when validating if a day is a working day before triggering b2b schedules.
+- /finance/kyb-escrow: Corporate Status Escrow Simulator (Sandbox). Use for use to simulate a corporate-status-gated escrow flow, or to check a seller company's live registration status. no funds are held or transferred.
+- /finance/escrow-bounty: Bounty Escrow Simulator (Sandbox). Use for use to simulate creating a bounty-escrow lockup (fee math, ids, status). no usdc is deposited or locked.
+- /finance/escrow-bounty/release: Bounty Escrow Release Simulator (Sandbox). Use for use to simulate a bounty-payout authorization flow. no signature is verified and no funds are moved.
 - /blockchain/gas-history: Base Blockchain Gas Fee History & Trend Tracker. Use for use when an agent wants to find cheap gas fee windows to execute heavy transactions.
 - /network/dns-security: DNSSEC & CAA Record Security Auditor. Use for use to verify domain name security signing and certificate issuance policies.
 - /network/ssl-expiry: SSL Certificate Handshake Expiration Monitor. Use for use when an it monitor agent checks if website certificates are valid or close to expiration.
@@ -864,6 +881,48 @@ AgentCash call:
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/lightning-density -m POST -b '{"lat":34.05,"lng":-118.24}'
 ```
 
+## Endpoint: Signed IP Geolocation Presence Verification Oracle
+
+POST https://statepulse-api.hahavoid0.workers.dev/location/verify-presence
+
+Price: $0.500
+
+When to use: Use when an agent needs to prove or check that a server or client node resides in a specific regulatory jurisdiction.
+
+Do not use for: Do not use as a general IP routing traceroute tool.
+
+Request body example:
+
+```json
+{
+  "ip": "8.8.8.8",
+  "expected_country": "US"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "certificate_id": "cert_9844-9c97-43e4-8e0d",
+    "ip": "8.8.8.8",
+    "expected_country": "US",
+    "actual_country": "US",
+    "status": "VERIFIED",
+    "signed_verification_proof": "0xmocksignatureprovingstatepulselocationcheck"
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/location/verify-presence -m POST -b '{"ip":"8.8.8.8","expected_country":"US"}'
+```
+
 ## Endpoint: Global AIS Cargo Ship & Vessel Location Tracker
 
 POST https://statepulse-api.hahavoid0.workers.dev/transit/marine-vessel
@@ -1397,6 +1456,183 @@ AgentCash call:
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup -m POST -b '{"company_name":"Apple","country_code":"us"}'
 ```
 
+## Endpoint: Cross-Market Perpetual Arbitrage & Funding Yield Triage
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/arbitrage
+
+Price: $0.250
+
+When to use: Use when an agent wants to find high-yield cross-market perpetual swap funding rate spreads or spot-perp arbitrage opportunities.
+
+Do not use for: Do not use as a direct trade executing router or order submission endpoint.
+
+Request body example:
+
+```json
+{
+  "min_funding_rate": 0.0001
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "opportunities": [
+      {
+        "symbol": "BTCUSDT",
+        "funding_rate": 0.00015,
+        "annualized_yield_percentage": 16.42,
+        "action": "SHORT_PERP_LONG_SPOT"
+      }
+    ]
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/arbitrage -m POST -b '{"min_funding_rate":0.0001}'
+```
+
+## Endpoint: Corporate Status Escrow Simulator (Sandbox)
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/kyb-escrow
+
+Price: $0.010
+
+When to use: Use to simulate a corporate-status-gated escrow flow, or to check a seller company's live registration status. No funds are held or transferred.
+
+Do not use for: Do not use as a real escrow or custody service; it does not hold, lock, or move any funds.
+
+Request body example:
+
+```json
+{
+  "company_name": "Apple",
+  "buyer_wallet": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+  "seller_wallet": "0x976EA74026E726554dB657fa54763abd0C3a0aa9",
+  "amount_usdc": "100.00"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "simulated": true,
+    "escrow_id": "sim_escrow_f274a1d0-96b1-45fc-a68e-9b08",
+    "status": "SIMULATED_LOCK",
+    "seller_verification": {
+      "name": "APPLE INC.",
+      "status": "Active",
+      "verified": true
+    },
+    "amount_usdc": "100.00",
+    "note": "Simulation only. No funds were held, locked, or transferred."
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/kyb-escrow -m POST -b '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}'
+```
+
+## Endpoint: Bounty Escrow Simulator (Sandbox)
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty
+
+Price: $0.010
+
+When to use: Use to simulate creating a bounty-escrow lockup (fee math, IDs, status). No USDC is deposited or locked.
+
+Do not use for: Do not use as a real escrow or custody service; it does not hold or move any funds.
+
+Request body example:
+
+```json
+{
+  "title": "Solve Maze Task",
+  "reward_usdc": "100.00",
+  "duration_days": 7,
+  "sender": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "simulated": true,
+    "bounty_id": "sim_bounty_9c9743e4-8e0d-49d4",
+    "status": "SIMULATED_ACTIVE",
+    "reward_usdc": "100.00",
+    "commission_fee_usdc": "2.00",
+    "sender": "0x742d35cc6634c0532925a3b844bc454e4438f44e",
+    "note": "Simulation only. No USDC was deposited, locked, or transferred."
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty -m POST -b '{"title":"Solve Maze Task","reward_usdc":"100.00","duration_days":7,"sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e"}'
+```
+
+## Endpoint: Bounty Escrow Release Simulator (Sandbox)
+
+POST https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty/release
+
+Price: $0.010
+
+When to use: Use to simulate a bounty-payout authorization flow. No signature is verified and no funds are moved.
+
+Do not use for: Do not use as a real payout or custody service; it does not move any funds.
+
+Request body example:
+
+```json
+{
+  "bounty_id": "sim_bounty_9c9743e4-8e0d-49d4",
+  "worker_wallet": "0x976EA74026E726554dB657fa54763abd0C3a0aa9"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "simulated": true,
+    "bounty_id": "sim_bounty_9c9743e4-8e0d-49d4",
+    "status": "SIMULATED_COMPLETED",
+    "worker_wallet": "0x976ea74026e726554db657fa54763abd0c3a0aa9",
+    "note": "Simulation only. No funds were moved."
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty/release -m POST -b '{"bounty_id":"sim_bounty_9c9743e4-8e0d-49d4","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9"}'
+```
+
 ## Endpoint: Etherscan/Basescan Verified Contract ABI Resolver
 
 POST https://statepulse-api.hahavoid0.workers.dev/blockchain/abi
@@ -1880,5 +2116,56 @@ AgentCash call:
 
 ```bash
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/ip-lookup -m POST -b '{"ip":"8.8.8.8"}'
+```
+
+## Endpoint: Comprehensive Network Host & VPS Security Auditor
+
+POST https://statepulse-api.hahavoid0.workers.dev/network/audit
+
+Price: $0.100
+
+When to use: Use when a server monitoring agent or compliance bot needs a complete security profile of a web server or agent VPS in a single call.
+
+Do not use for: Do not use for launching active distributed denial of service (DDoS) tests or scanning internal intranet subnets.
+
+Request body example:
+
+```json
+{
+  "host": "google.com"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "host": "google.com",
+    "overall_score": 85,
+    "overall_rating": "A",
+    "dns_security": {
+      "dnssec_enabled": true,
+      "caa_records": [
+        "0 issue \"pki.goog\""
+      ]
+    },
+    "ssl_expiry": {
+      "days_remaining": 81,
+      "expired": false
+    },
+    "security_headers": {
+      "score": 60
+    }
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/audit -m POST -b '{"host":"google.com"}'
 ```
 

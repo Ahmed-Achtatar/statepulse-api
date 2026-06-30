@@ -1,6 +1,6 @@
 # StatePulse API
 
-Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents. Narrow, machine-readable agent unblockers for coordinates, speed, air quality, weather anomalies, DNS record propagation, and bank holidays that agents need but can't reliably guess. Served from the same Cloudflare Worker origin as the former PageDiff API.
+Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents. Narrow, machine-readable agent unblockers for coordinates, speed, air quality, weather anomalies, DNS record propagation, and bank holidays that agents need but can't reliably guess.
 
 ## Commercial Endpoints
 
