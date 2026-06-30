@@ -2,6 +2,19 @@
 
 Pay-per-call live telemetry, environmental metrics, transit state vectors, and real-time utilities for AI agents. Narrow, machine-readable agent unblockers for coordinates, speed, air quality, weather anomalies, DNS record propagation, and bank holidays that agents need but can't reliably guess.
 
+## MCP Server
+
+StatePulse API is available as a remote MCP server — point any MCP client at:
+
+```
+https://statepulse-api.hahavoid0.workers.dev/mcp
+```
+
+- Transport: streamable HTTP
+- Auth: none (paid tools settle via x402 USDC on Base, per call)
+- Tools exposed: 50
+- Metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json
+
 ## Commercial Endpoints
 
 | Endpoint | Price | Purpose |
