@@ -1,0 +1,33 @@
+{
+  "name": "statepulse-agent-kit",
+  "version": "0.1.0",
+  "description": "MCP server for AI agents: onchain transaction preflight, domain trust checks, and live market signals — pay-per-call via x402 USDC on Base, bring your own wallet, no API key.",
+  "type": "module",
+  "bin": {
+    "statepulse-agent-kit": "index.mjs"
+  },
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs",
+    "check": "node --check index.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "x402",
+    "ai-agents",
+    "base",
+    "usdc",
+    "onchain",
+    "pay-per-call"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@x402/core": "latest",
+    "@x402/evm": "latest",
+    "@x402/fetch": "latest",
+    "viem": "latest"
+  }
+}

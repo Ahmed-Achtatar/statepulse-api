@@ -93,21 +93,26 @@ export const abiEndpoint = createEndpoint({
     const addr = str(args, "address")
     const chain = str(args, "chain", false).toLowerCase() || "base"
 
-    const apiDomain = chain === "ethereum" ? "api.etherscan.io" : "api.basescan.org"
+    // Blockscout first: keyless and reliable. Etherscan/Basescan retired their
+    // keyless V1 getabi route, so they're only a best-effort fallback now.
+    const blockscout = chain === "ethereum" ? "eth.blockscout.com" : "base.blockscout.com"
+    const scanApi = chain === "ethereum" ? "api.etherscan.io" : "api.basescan.org"
 
-    try {
-      const res = await fetch(`https://${apiDomain}/api?module=contract&action=getabi&address=${addr}`)
-      if (res.ok) {
-        const data: any = await res.json()
-        if (data.status === "1") {
-          return response({
-            address: addr,
-            chain,
-            abi: JSON.parse(data.result)
-          }, "high")
+    for (const domain of [blockscout, scanApi]) {
+      try {
+        const res = await fetch(`https://${domain}/api?module=contract&action=getabi&address=${addr}`)
+        if (res.ok) {
+          const data: any = await res.json()
+          if (data.status === "1") {
+            return response({
+              address: addr,
+              chain,
+              abi: JSON.parse(data.result)
+            }, "high")
+          }
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
 
     return response({ address: addr, chain, note: "Unverified contract or API limit hit." }, "low", ["ABI query returned error status."])
   },
@@ -117,13 +122,13 @@ export const abiEndpoint = createEndpoint({
   preflightCheck: async (args) => {
     const addr = String(args.address || "").trim()
     const chain = String(args.chain || "base").toLowerCase()
-    const apiDomain = chain === "ethereum" ? "api.etherscan.io" : "api.basescan.org"
+    const apiDomain = chain === "ethereum" ? "eth.blockscout.com" : "base.blockscout.com"
     try {
       const res = await fetch(`https://${apiDomain}/api?module=contract&action=getabi&address=${addr}`)
       if (res.ok) {
         const data: any = await res.json()
         const verified = data.status === "1"
-        return { available: verified, error: verified ? undefined : `Contract address is not verified on ${chain === "ethereum" ? "Etherscan" : "Basescan"}` }
+        return { available: verified, error: verified ? undefined : `Contract address is not verified on ${chain}` }
       }
     } catch (e) {}
     return { available: false, error: "Contract verification check failed" }
@@ -350,27 +355,245 @@ export const fundingRatesEndpoint = createEndpoint({
   }),
   logic: async (args) => {
     const symbol = str(args, "symbol").toUpperCase()
+    // Binance/Bybit/OKX geo-block Cloudflare's US egress IPs, so no single
+    // venue is reliable from the Worker — walk the chain until one answers.
 
     try {
       const res = await fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${symbol}`)
       if (res.ok) {
         const data: any = await res.json()
         const rate = Number(data.lastFundingRate) || 0
-        return response({
-          symbol,
-          mark_price: data.markPrice,
-          index_price: data.indexPrice,
-          funding_rate_percentage: Number((rate * 100).toFixed(6)),
-          next_funding_time: new Date(data.nextFundingTime).toISOString()
-        }, "high")
+        if (data.markPrice) {
+          return response({
+            symbol,
+            source: "binance",
+            mark_price: data.markPrice,
+            index_price: data.indexPrice,
+            funding_rate_percentage: Number((rate * 100).toFixed(6)),
+            next_funding_time: new Date(data.nextFundingTime).toISOString()
+          }, "high")
+        }
       }
     } catch (e) {}
 
-    return response({ symbol, note: "Binance futures API timed out." }, "low", ["Perp tickers index query failed."])
+    try {
+      const res = await fetch(`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${symbol}`)
+      if (res.ok) {
+        const data: any = await res.json()
+        const t = data?.result?.list?.[0]
+        if (t?.fundingRate !== undefined) {
+          return response({
+            symbol,
+            source: "bybit",
+            mark_price: t.markPrice,
+            index_price: t.indexPrice,
+            funding_rate_percentage: Number((Number(t.fundingRate) * 100).toFixed(6)),
+            next_funding_time: t.nextFundingTime ? new Date(Number(t.nextFundingTime)).toISOString() : null
+          }, "high")
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const base = symbol.replace(/USDT$|USDC$|USD$/, "")
+      const quote = symbol.endsWith("USDC") ? "USDC" : "USDT"
+      const res = await fetch(`https://www.okx.com/api/v5/public/funding-rate?instId=${base}-${quote}-SWAP`)
+      if (res.ok) {
+        const data: any = await res.json()
+        const t = data?.data?.[0]
+        if (t?.fundingRate !== undefined) {
+          return response({
+            symbol,
+            source: "okx",
+            mark_price: null,
+            index_price: null,
+            funding_rate_percentage: Number((Number(t.fundingRate) * 100).toFixed(6)),
+            next_funding_time: t.nextFundingTime ? new Date(Number(t.nextFundingTime)).toISOString() : null
+          }, "high")
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const coin = symbol.replace(/USDT$|USDC$|USD$/, "")
+      const res = await fetch("https://api.hyperliquid.xyz/info", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: "metaAndAssetCtxs" })
+      })
+      if (res.ok) {
+        const [meta, ctxs]: any = await res.json()
+        const idx = meta?.universe?.findIndex((u: any) => u.name === coin)
+        if (idx >= 0 && ctxs?.[idx]?.funding !== undefined) {
+          const c = ctxs[idx]
+          return response({
+            symbol,
+            source: "hyperliquid",
+            mark_price: c.markPx,
+            index_price: c.oraclePx,
+            funding_rate_percentage: Number((Number(c.funding) * 100).toFixed(6)),
+            next_funding_time: null
+          }, "high", ["Hyperliquid hourly funding rate (Binance/Bybit/OKX use 8h intervals)."])
+        }
+      }
+    } catch (e) {}
+
+    return response({ symbol, note: "All funding-rate venues (Binance, Bybit, OKX, Hyperliquid) unavailable or symbol not listed." }, "low", ["Perp tickers index query failed."])
   },
   skillId: "get_funding_rates",
   skillName: "Perp funding tracker",
   skillExamples: ["Get funding rate for BTCUSDT", "{\"symbol\":\"BTCUSDT\"}"]
+})
+
+// 28. TOKEN SAFETY / RUG-PULL RISK COMPOSITE
+// Bundles three checks an agent would otherwise need to write custom code for:
+// bytecode selector scanning (requires a known-selector table), an on-chain
+// ownership call, and a DexScreener liquidity cross-reference — fused into
+// one risk score. This is not a pass-through of any single public API.
+const RISK_SELECTORS: Record<string, string> = {
+  "40c10f19": "mint(address,uint256) — supply can be inflated by the owner",
+  "449a52f8": "mint(uint256) — supply can be inflated by the owner",
+  "8456cb59": "pause() — token transfers can be frozen",
+  "3f4ba83a": "unpause() — confirms a pausable transfer switch exists",
+  "f9f92be4": "blacklist(address) — individual wallets can be blocked from transferring"
+}
+const OWNER_SELECTOR = "8da5cb5b" // owner()
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
+export const tokenSafetyEndpoint = createEndpoint({
+  path: "/blockchain/token-safety",
+  operationId: "getTokenSafety",
+  summary: "Token Contract Rug-Pull & Ownership Risk Composite",
+  description: "One call that bundles the checks needed before trusting an unfamiliar ERC-20 token: scans deployed bytecode for dangerous function selectors (mint/pause/blacklist), reads on-chain owner() to check if ownership was renounced, and cross-references DexScreener for liquidity depth and pair age — returning a single risk score with flags. Matches: rug pull check, token safety score, is this token safe, contract risk scan, honeypot pre-check, ownership renounced check, liquidity risk.",
+  priceUsd: "0.050",
+  requestSchema: {
+    type: "object",
+    required: ["address"],
+    properties: {
+      address: { type: "string", description: "ERC-20 token contract address on Base", examples: ["0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"] }
+    }
+  },
+  responseSchema: {
+    type: "object"
+  },
+  tags: ["blockchain", "crypto-security", "rug-pull", "token-safety", "defi"],
+  category: "crypto-security",
+  whenToUse: "Use before an agent trades, bridges, or holds an unfamiliar ERC-20 token — surfaces mint/pause/blacklist risk, ownership renouncement, and liquidity depth in one call.",
+  doNotUseFor: "Do not use as a full security audit or as legal/investment advice; bytecode selector matching is a heuristic and can miss obfuscated or proxy contracts.",
+  exampleInput: () => ({ address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" }),
+  exampleOutput: () => ({
+    supported: true,
+    result: {
+      address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      is_contract: true,
+      risk_score: 15,
+      risk_flags: ["Ownership not renounced"],
+      ownership: { owner: "0x1234...", renounced: false },
+      liquidity: { liquidity_usd: 42000000, pair_age_days: 900 }
+    },
+    confidence: "medium"
+  }),
+  logic: async (args) => {
+    const address = str(args, "address").toLowerCase()
+    const warnings: string[] = []
+    const flags: string[] = []
+    let score = 0
+    let checksOk = 0
+
+    let isContract = false
+    try {
+      const code = await rpcCall(BASE_RPC, "eth_getCode", [address, "latest"])
+      isContract = typeof code === "string" && code.length > 2
+      if (isContract) {
+        checksOk++
+        const hex = code.toLowerCase()
+        for (const [selector, note] of Object.entries(RISK_SELECTORS)) {
+          if (hex.includes(selector)) {
+            flags.push(note)
+            score += selector.startsWith("40c10f19") || selector.startsWith("449a52f8") ? 30 : 10
+          }
+        }
+      } else {
+        warnings.push("Address has no deployed bytecode — not a contract.")
+      }
+    } catch {
+      warnings.push("Bytecode lookup failed — selector scan skipped.")
+    }
+
+    let ownership: { owner: string | null; renounced: boolean | null } = { owner: null, renounced: null }
+    if (isContract) {
+      try {
+        const raw = await rpcCall(BASE_RPC, "eth_call", [{ to: address, data: "0x" + OWNER_SELECTOR }, "latest"])
+        if (typeof raw === "string" && raw.length >= 66) {
+          const owner = "0x" + raw.slice(-40)
+          const renounced = owner.toLowerCase() === ZERO_ADDRESS
+          ownership = { owner, renounced }
+          checksOk++
+          if (!renounced) {
+            flags.push("Ownership not renounced")
+            score += 15
+          }
+        } else {
+          warnings.push("No owner() function detected — could be ownerless or use a non-standard access pattern.")
+        }
+      } catch {
+        warnings.push("owner() call failed or reverted — could not verify ownership renouncement.")
+      }
+    }
+
+    let liquidity: { liquidity_usd: number | null; volume_24h_usd: number | null; pair_age_days: number | null } = {
+      liquidity_usd: null,
+      volume_24h_usd: null,
+      pair_age_days: null
+    }
+    try {
+      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`)
+      if (res.ok) {
+        const data: any = await res.json()
+        const pairs = Array.isArray(data?.pairs) ? data.pairs : []
+        if (pairs.length > 0) {
+          const best = pairs.reduce((a: any, b: any) => (Number(b?.liquidity?.usd || 0) > Number(a?.liquidity?.usd || 0) ? b : a))
+          const liqUsd = Number(best?.liquidity?.usd || 0)
+          const ageDays = best?.pairCreatedAt ? Math.floor((Date.now() - best.pairCreatedAt) / 86400000) : null
+          liquidity = {
+            liquidity_usd: liqUsd,
+            volume_24h_usd: Number(best?.volume?.h24 || 0),
+            pair_age_days: ageDays
+          }
+          checksOk++
+          if (liqUsd < 1000) {
+            flags.push("Very low on-chain liquidity (<$1,000)")
+            score += 25
+          }
+          if (ageDays !== null && ageDays < 3) {
+            flags.push("Trading pair created less than 3 days ago")
+            score += 15
+          }
+        } else {
+          warnings.push("No DexScreener trading pairs found for this address.")
+          score += 10
+        }
+      } else {
+        warnings.push("DexScreener lookup failed.")
+      }
+    } catch {
+      warnings.push("DexScreener lookup failed.")
+    }
+
+    const confidence = checksOk >= 3 ? "high" : checksOk >= 1 ? "medium" : "low"
+
+    return response({
+      address,
+      is_contract: isContract,
+      risk_score: Math.min(100, score),
+      risk_flags: flags,
+      ownership,
+      liquidity
+    }, confidence, warnings)
+  },
+  skillId: "get_token_safety",
+  skillName: "Token rug-pull risk composite",
+  skillExamples: ["Check if token 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 is safe to trade", "{\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}"]
 })
 
 export const blockchainEndpoints = [
@@ -378,5 +601,6 @@ export const blockchainEndpoints = [
   simulateEndpoint,
   gasHistoryEndpoint,
   balanceEndpoint,
-  fundingRatesEndpoint
+  fundingRatesEndpoint,
+  tokenSafetyEndpoint
 ]

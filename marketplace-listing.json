@@ -291,36 +291,43 @@
       "name": "Blockchain Abi",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/abi",
       "method": "POST",
-      "price_usd": "0.030",
+      "price_usd": "0.005",
       "description": "Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser."
     },
     {
       "name": "Blockchain Simulate",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/simulate",
       "method": "POST",
-      "price_usd": "0.150",
+      "price_usd": "0.050",
       "description": "Runs eth_call state simulation against the Base blockchain RPC to check for transaction reverts. Matches: EVM revert checks, test contract call, inspect transaction failure, dry-run solidity method, gas estimator, test token swap failure, simulate multisig transaction execution."
     },
     {
       "name": "Blockchain Gas history",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/gas-history",
       "method": "POST",
-      "price_usd": "0.010",
+      "price_usd": "0.001",
       "description": "Scans recent block gas details to estimate the minimum, average, and maximum base fee."
     },
     {
       "name": "Blockchain Balances",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/balances",
       "method": "POST",
-      "price_usd": "0.020",
+      "price_usd": "0.001",
       "description": "Scans native balance and ERC-20 token balances for a wallet address on Base or Ethereum."
     },
     {
       "name": "Blockchain Funding rates",
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates",
       "method": "POST",
-      "price_usd": "0.020",
+      "price_usd": "0.002",
       "description": "Queries current pricing and funding rate margins for perpetual swap contracts from Binance."
+    },
+    {
+      "name": "Blockchain Token safety",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/token-safety",
+      "method": "POST",
+      "price_usd": "0.050",
+      "description": "One call that bundles the checks needed before trusting an unfamiliar ERC-20 token: scans deployed bytecode for dangerous function selectors (mint/pause/blacklist), reads on-chain owner() to check if ownership was renounced, and cross-references DexScreener for liquidity depth and pair age — returning a single risk score with flags. Matches: rug pull check, token safety score, is this token safe, contract risk scan, honeypot pre-check, ownership renounced check, liquidity risk."
     },
     {
       "name": "Network Dns security",
@@ -377,6 +384,13 @@
       "method": "POST",
       "price_usd": "0.100",
       "description": "Scans an IP address or hostname to audit DNSSEC safety, SSL expiration status, HTTP security headers, and geodata compliance. Matches: network security audit, scan website ports, VPS shield test, audit host headers."
+    },
+    {
+      "name": "Agent Preflight",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/agent/preflight",
+      "method": "POST",
+      "price_usd": "0.030",
+      "description": "One call that pre-flights an onchain transaction for an agent: simulates the call for reverts, checks the sender wallet's native gas balance, and reads current Base gas — returning a single GO/NO_GO verdict with reasons. Replaces 3 separate calls (simulate + balances + gas-history) every agent runs before transacting. Matches: pre-transaction check, agent transaction guard, revert + balance + gas preflight, onchain go/no-go, safe-to-send checker, autonomous trade preflight."
     }
   ],
   "settlement": {

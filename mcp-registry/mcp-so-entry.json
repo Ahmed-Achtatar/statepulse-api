@@ -28,7 +28,7 @@
     "pay-per-call",
     "cloudflare-workers"
   ],
-  "tool_count": 51,
+  "tool_count": 52,
   "auth": "none",
   "payment": {
     "protocol": "x402",
@@ -203,6 +203,10 @@
     {
       "name": "getFundingRates",
       "description": "Queries current pricing and funding rate margins for perpetual swap contracts from Binance."
+    },
+    {
+      "name": "getTokenSafety",
+      "description": "One call that bundles the checks needed before trusting an unfamiliar ERC-20 token: scans deployed bytecode for dangerous function selectors (mint/pause/blacklist), reads on-chain owner() to check if "
     },
     {
       "name": "auditDnsSecurity",

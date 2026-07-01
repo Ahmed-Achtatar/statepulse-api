@@ -14,49 +14,14 @@
     "x-agent-card": "https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json",
     "x-cheapest-paid-endpoints": [
       {
-        "path": "/radio/stream-url",
-        "price": "$0.010",
-        "summary": "Live Radio & Podcast Stream Audio Extraction"
-      },
-      {
-        "path": "/network/dns-propagation",
-        "price": "$0.010",
-        "summary": "DNS Watch / Dig-Web-Interface Record Checker"
-      },
-      {
-        "path": "/calendar/holidays",
-        "price": "$0.010",
-        "summary": "Nager.Date National Bank Holiday Lookup"
-      },
-      {
-        "path": "/finance/kyb-escrow",
-        "price": "$0.010",
-        "summary": "Corporate Status Escrow Simulator (Sandbox)"
-      },
-      {
-        "path": "/finance/escrow-bounty",
-        "price": "$0.010",
-        "summary": "Bounty Escrow Simulator (Sandbox)"
-      },
-      {
-        "path": "/finance/escrow-bounty/release",
-        "price": "$0.010",
-        "summary": "Bounty Escrow Release Simulator (Sandbox)"
-      },
-      {
         "path": "/blockchain/gas-history",
-        "price": "$0.010",
+        "price": "$0.001",
         "summary": "Base Blockchain Gas Fee History & Trend Tracker"
       },
       {
-        "path": "/network/dns-security",
-        "price": "$0.010",
-        "summary": "DNSSEC & CAA Record Security Auditor"
-      },
-      {
-        "path": "/network/ssl-expiry",
-        "price": "$0.010",
-        "summary": "SSL Certificate Handshake Expiration Monitor"
+        "path": "/blockchain/balances",
+        "price": "$0.001",
+        "summary": "Multi-Chain Wallet Token Balance Scanner"
       }
     ]
   },
@@ -5156,7 +5121,7 @@
           "price": {
             "mode": "fixed",
             "currency": "USD",
-            "amount": "0.030000"
+            "amount": "0.005000"
           },
           "asset": "USDC",
           "network": "eip155:8453",
@@ -5293,7 +5258,7 @@
           "price": {
             "mode": "fixed",
             "currency": "USD",
-            "amount": "0.150000"
+            "amount": "0.050000"
           },
           "asset": "USDC",
           "network": "eip155:8453",
@@ -5447,7 +5412,7 @@
           "price": {
             "mode": "fixed",
             "currency": "USD",
-            "amount": "0.010000"
+            "amount": "0.001000"
           },
           "asset": "USDC",
           "network": "eip155:8453",
@@ -5555,7 +5520,7 @@
           "price": {
             "mode": "fixed",
             "currency": "USD",
-            "amount": "0.020000"
+            "amount": "0.001000"
           },
           "asset": "USDC",
           "network": "eip155:8453",
@@ -5684,7 +5649,7 @@
           "price": {
             "mode": "fixed",
             "currency": "USD",
-            "amount": "0.020000"
+            "amount": "0.002000"
           },
           "asset": "USDC",
           "network": "eip155:8453",
@@ -5774,6 +5739,139 @@
                         "next_funding_time": "2026-06-25T16:00:00.000Z"
                       },
                       "confidence": "high"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "402": {
+            "description": "Payment required"
+          }
+        }
+      }
+    },
+    "/blockchain/token-safety": {
+      "post": {
+        "operationId": "getTokenSafety",
+        "summary": "Token Contract Rug-Pull & Ownership Risk Composite",
+        "description": "One call that bundles the checks needed before trusting an unfamiliar ERC-20 token: scans deployed bytecode for dangerous function selectors (mint/pause/blacklist), reads on-chain owner() to check if ownership was renounced, and cross-references DexScreener for liquidity depth and pair age — returning a single risk score with flags. Matches: rug pull check, token safety score, is this token safe, contract risk scan, honeypot pre-check, ownership renounced check, liquidity risk.",
+        "tags": [
+          "blockchain",
+          "crypto-security",
+          "rug-pull",
+          "token-safety",
+          "defi"
+        ],
+        "x-agent-keywords": "Token Contract Rug-Pull & Ownership Risk Composite One call that bundles the checks needed before trusting an unfamiliar ERC-20 token: scans deployed bytecode for dangerous function selectors (mint/pause/blacklist), reads on-chain owner() to check if ownership was renounced, and cross-references DexScreener for liquidity depth and pair age — returning a single risk score with flags. Matches: rug pull check, token safety score, is this token safe, contract risk scan, honeypot pre-check, ownership renounced check, liquidity risk. Use before an agent trades, bridges, or holds an unfamiliar ERC-20 token — surfaces mint/pause/blacklist risk, ownership renouncement, and liquidity depth in one call. blockchain crypto-security rug-pull token-safety defi Check if token 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 is safe to trade {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.050000"
+          },
+          "asset": "USDC",
+          "network": "eip155:8453",
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "x-bazaar": {
+          "discoverable": true,
+          "category": "blockchain",
+          "tags": [
+            "blockchain",
+            "crypto-security",
+            "rug-pull",
+            "token-safety",
+            "defi"
+          ],
+          "keywords": "Token Contract Rug-Pull & Ownership Risk Composite One call that bundles the checks needed before trusting an unfamiliar ERC-20 token: scans deployed bytecode for dangerous function selectors (mint/pause/blacklist), reads on-chain owner() to check if ownership was renounced, and cross-references DexScreener for liquidity depth and pair age — returning a single risk score with flags. Matches: rug pull check, token safety score, is this token safe, contract risk scan, honeypot pre-check, ownership renounced check, liquidity risk. Use before an agent trades, bridges, or holds an unfamiliar ERC-20 token — surfaces mint/pause/blacklist risk, ownership renouncement, and liquidity depth in one call. blockchain crypto-security rug-pull token-safety defi Check if token 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 is safe to trade {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
+          "input": {
+            "method": "POST",
+            "body": {
+              "type": "object",
+              "required": [
+                "address"
+              ],
+              "properties": {
+                "address": {
+                  "type": "string",
+                  "description": "ERC-20 token contract address on Base",
+                  "examples": [
+                    "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+                  ]
+                }
+              }
+            }
+          },
+          "output": {
+            "type": "object"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "address"
+                ],
+                "properties": {
+                  "address": {
+                    "type": "string",
+                    "description": "ERC-20 token contract address on Base",
+                    "examples": [
+                      "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "default": {
+                  "value": {
+                    "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "supported": true,
+                      "result": {
+                        "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                        "is_contract": true,
+                        "risk_score": 15,
+                        "risk_flags": [
+                          "Ownership not renounced"
+                        ],
+                        "ownership": {
+                          "owner": "0x1234...",
+                          "renounced": false
+                        },
+                        "liquidity": {
+                          "liquidity_usd": 42000000,
+                          "pair_age_days": 900
+                        }
+                      },
+                      "confidence": "medium"
                     }
                   }
                 }
@@ -6767,6 +6865,185 @@
                         },
                         "security_headers": {
                           "score": 60
+                        }
+                      },
+                      "confidence": "high"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "402": {
+            "description": "Payment required"
+          }
+        }
+      }
+    },
+    "/agent/preflight": {
+      "post": {
+        "operationId": "agentPreflight",
+        "summary": "Onchain Transaction Preflight — Bundled GO/NO-GO Check",
+        "description": "One call that pre-flights an onchain transaction for an agent: simulates the call for reverts, checks the sender wallet's native gas balance, and reads current Base gas — returning a single GO/NO_GO verdict with reasons. Replaces 3 separate calls (simulate + balances + gas-history) every agent runs before transacting. Matches: pre-transaction check, agent transaction guard, revert + balance + gas preflight, onchain go/no-go, safe-to-send checker, autonomous trade preflight.",
+        "tags": [
+          "blockchain",
+          "agent",
+          "preflight",
+          "transaction-guard",
+          "revert-guard",
+          "go-no-go",
+          "bundle",
+          "auto-trader"
+        ],
+        "x-agent-keywords": "Onchain Transaction Preflight — Bundled GO/NO-GO Check One call that pre-flights an onchain transaction for an agent: simulates the call for reverts, checks the sender wallet's native gas balance, and reads current Base gas — returning a single GO/NO_GO verdict with reasons. Replaces 3 separate calls (simulate + balances + gas-history) every agent runs before transacting. Matches: pre-transaction check, agent transaction guard, revert + balance + gas preflight, onchain go/no-go, safe-to-send checker, autonomous trade preflight. Use as the single pre-send check before an autonomous agent or auto-trader broadcasts an onchain transaction: confirms it won't revert, the sender can pay gas, and gas is reasonable — in one call. blockchain agent preflight transaction-guard revert-guard go-no-go bundle auto-trader Preflight a Base USDC transfer before sending {\"wallet\":\"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE\",\"to\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\",\"data\":\"0x70a08231...\"}",
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.030000"
+          },
+          "asset": "USDC",
+          "network": "eip155:8453",
+          "protocols": [
+            {
+              "x402": {}
+            }
+          ]
+        },
+        "x-bazaar": {
+          "discoverable": true,
+          "category": "blockchain",
+          "tags": [
+            "blockchain",
+            "agent",
+            "preflight",
+            "transaction-guard",
+            "revert-guard",
+            "go-no-go",
+            "bundle",
+            "auto-trader"
+          ],
+          "keywords": "Onchain Transaction Preflight — Bundled GO/NO-GO Check One call that pre-flights an onchain transaction for an agent: simulates the call for reverts, checks the sender wallet's native gas balance, and reads current Base gas — returning a single GO/NO_GO verdict with reasons. Replaces 3 separate calls (simulate + balances + gas-history) every agent runs before transacting. Matches: pre-transaction check, agent transaction guard, revert + balance + gas preflight, onchain go/no-go, safe-to-send checker, autonomous trade preflight. Use as the single pre-send check before an autonomous agent or auto-trader broadcasts an onchain transaction: confirms it won't revert, the sender can pay gas, and gas is reasonable — in one call. blockchain agent preflight transaction-guard revert-guard go-no-go bundle auto-trader Preflight a Base USDC transfer before sending {\"wallet\":\"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE\",\"to\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\",\"data\":\"0x70a08231...\"}",
+          "input": {
+            "method": "POST",
+            "body": {
+              "type": "object",
+              "properties": {
+                "wallet": {
+                  "type": "string",
+                  "description": "Sender wallet — checks native gas balance and USDC",
+                  "examples": [
+                    "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"
+                  ]
+                },
+                "to": {
+                  "type": "string",
+                  "description": "Target contract address of the transaction to simulate"
+                },
+                "data": {
+                  "type": "string",
+                  "description": "Calldata payload (hex) of the transaction to simulate",
+                  "examples": [
+                    "0x70a082310000000000000000000000000000000000000000000000000000000000000000"
+                  ]
+                },
+                "from": {
+                  "type": "string",
+                  "description": "Simulated sender (defaults to wallet)"
+                },
+                "chain": {
+                  "type": "string",
+                  "description": "base or ethereum",
+                  "default": "base"
+                }
+              }
+            }
+          },
+          "output": {
+            "type": "object"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "wallet": {
+                    "type": "string",
+                    "description": "Sender wallet — checks native gas balance and USDC",
+                    "examples": [
+                      "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"
+                    ]
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "Target contract address of the transaction to simulate"
+                  },
+                  "data": {
+                    "type": "string",
+                    "description": "Calldata payload (hex) of the transaction to simulate",
+                    "examples": [
+                      "0x70a082310000000000000000000000000000000000000000000000000000000000000000"
+                    ]
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "Simulated sender (defaults to wallet)"
+                  },
+                  "chain": {
+                    "type": "string",
+                    "description": "base or ethereum",
+                    "default": "base"
+                  }
+                }
+              },
+              "examples": {
+                "default": {
+                  "value": {
+                    "wallet": "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE",
+                    "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+                    "data": "0x70a082310000000000000000000000000000000000000000000000000000000000000000",
+                    "chain": "base"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "supported": true,
+                      "result": {
+                        "decision": "GO",
+                        "go": true,
+                        "reasons": [
+                          "Simulation passed: transaction does not revert.",
+                          "Wallet native balance: 0.4200 (can pay gas).",
+                          "Current avg gas: 0.15 gwei."
+                        ],
+                        "simulation": {
+                          "reverted": false
+                        },
+                        "balance": {
+                          "native_balance": "0.4200",
+                          "usdc_balance": "12.50"
+                        },
+                        "gas": {
+                          "avg_base_fee_gwei": 0.15
                         }
                       },
                       "confidence": "high"
