@@ -80,15 +80,8 @@ Note: The payment gateway middleware will also run these validation checks autom
 
 The cheapest paid endpoints cost $0.010 USDC:
 
-- /radio/stream-url: Live Radio & Podcast Stream Audio Extraction. Use for use when a monitoring or translation agent needs a live audio streaming source url for news scraping.
-- /network/dns-propagation: DNS Watch / Dig-Web-Interface Record Checker. Use for use when verifying txt/mx records during server setup or routing updates.
-- /calendar/holidays: Nager.Date National Bank Holiday Lookup. Use for use when validating if a day is a working day before triggering b2b schedules.
-- /finance/kyb-escrow: Corporate Status Escrow Simulator (Sandbox). Use for use to simulate a corporate-status-gated escrow flow, or to check a seller company's live registration status. no funds are held or transferred.
-- /finance/escrow-bounty: Bounty Escrow Simulator (Sandbox). Use for use to simulate creating a bounty-escrow lockup (fee math, ids, status). no usdc is deposited or locked.
-- /finance/escrow-bounty/release: Bounty Escrow Release Simulator (Sandbox). Use for use to simulate a bounty-payout authorization flow. no signature is verified and no funds are moved.
 - /blockchain/gas-history: Base Blockchain Gas Fee History & Trend Tracker. Use for use when an agent wants to find cheap gas fee windows to execute heavy transactions.
-- /network/dns-security: DNSSEC & CAA Record Security Auditor. Use for use to verify domain name security signing and certificate issuance policies.
-- /network/ssl-expiry: SSL Certificate Handshake Expiration Monitor. Use for use when an it monitor agent checks if website certificates are valid or close to expiration.
+- /blockchain/balances: Multi-Chain Wallet Token Balance Scanner. Use for use when an agent needs to monitor the stablecoin or native asset balance of a wallet.
 
 To prove the API works as an agent with the smallest spend, discover the origin, check the schema, then call:
 
@@ -1637,7 +1630,7 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/
 
 POST https://statepulse-api.hahavoid0.workers.dev/blockchain/abi
 
-Price: $0.030
+Price: $0.005
 
 When to use: Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically.
 
@@ -1676,7 +1669,7 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockcha
 
 POST https://statepulse-api.hahavoid0.workers.dev/blockchain/simulate
 
-Price: $0.150
+Price: $0.050
 
 When to use: Use when an on-chain coding agent or auto-trader needs to check if a contract transaction (e.g. Uniswap swap, lending deposit, claim tokens) will succeed, revert, or fail before paying network transaction gas fees.
 
@@ -1714,7 +1707,7 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockcha
 
 POST https://statepulse-api.hahavoid0.workers.dev/blockchain/gas-history
 
-Price: $0.010
+Price: $0.001
 
 When to use: Use when an agent wants to find cheap gas fee windows to execute heavy transactions.
 
@@ -1752,7 +1745,7 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockcha
 
 POST https://statepulse-api.hahavoid0.workers.dev/blockchain/balances
 
-Price: $0.020
+Price: $0.001
 
 When to use: Use when an agent needs to monitor the stablecoin or native asset balance of a wallet.
 
@@ -1791,7 +1784,7 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockcha
 
 POST https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates
 
-Price: $0.020
+Price: $0.002
 
 When to use: Use when calculating delta-neutral yield margins or perp arbitrage funding offsets.
 
@@ -1825,6 +1818,55 @@ AgentCash call:
 
 ```bash
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates -m POST -b '{"symbol":"BTCUSDT"}'
+```
+
+## Endpoint: Token Contract Rug-Pull & Ownership Risk Composite
+
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/token-safety
+
+Price: $0.050
+
+When to use: Use before an agent trades, bridges, or holds an unfamiliar ERC-20 token — surfaces mint/pause/blacklist risk, ownership renouncement, and liquidity depth in one call.
+
+Do not use for: Do not use as a full security audit or as legal/investment advice; bytecode selector matching is a heuristic and can miss obfuscated or proxy contracts.
+
+Request body example:
+
+```json
+{
+  "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+    "is_contract": true,
+    "risk_score": 15,
+    "risk_flags": [
+      "Ownership not renounced"
+    ],
+    "ownership": {
+      "owner": "0x1234...",
+      "renounced": false
+    },
+    "liquidity": {
+      "liquidity_usd": 42000000,
+      "pair_age_days": 900
+    }
+  },
+  "confidence": "medium"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/token-safety -m POST -b '{"address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"}'
 ```
 
 ## Endpoint: DNSSEC & CAA Record Security Auditor
@@ -2167,5 +2209,60 @@ AgentCash call:
 
 ```bash
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/audit -m POST -b '{"host":"google.com"}'
+```
+
+## Endpoint: Onchain Transaction Preflight — Bundled GO/NO-GO Check
+
+POST https://statepulse-api.hahavoid0.workers.dev/agent/preflight
+
+Price: $0.030
+
+When to use: Use as the single pre-send check before an autonomous agent or auto-trader broadcasts an onchain transaction: confirms it won't revert, the sender can pay gas, and gas is reasonable — in one call.
+
+Do not use for: Do not use for submitting signed transactions, or as a substitute for full security auditing of an unknown contract.
+
+Request body example:
+
+```json
+{
+  "wallet": "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE",
+  "to": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+  "data": "0x70a082310000000000000000000000000000000000000000000000000000000000000000",
+  "chain": "base"
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "decision": "GO",
+    "go": true,
+    "reasons": [
+      "Simulation passed: transaction does not revert.",
+      "Wallet native balance: 0.4200 (can pay gas).",
+      "Current avg gas: 0.15 gwei."
+    ],
+    "simulation": {
+      "reverted": false
+    },
+    "balance": {
+      "native_balance": "0.4200",
+      "usdc_balance": "12.50"
+    },
+    "gas": {
+      "avg_base_fee_gwei": 0.15
+    }
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/agent/preflight -m POST -b '{"wallet":"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE","to":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","data":"0x70a082310000000000000000000000000000000000000000000000000000000000000000","chain":"base"}'
 ```
 
