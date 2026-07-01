@@ -8,7 +8,7 @@ https://statepulse-api.hahavoid0.workers.dev/mcp
 
 - Transport: streamable HTTP
 - Auth: none (paid tools settle via x402 USDC on Base, per call)
-- Tools exposed: 50
+- Tools exposed: 51
 - Metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json
 
 ### GitHub topics to set

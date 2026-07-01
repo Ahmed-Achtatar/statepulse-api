@@ -8,20 +8,53 @@ function createEndpoint(input: Omit<EndpointDef, "free"> & { free?: boolean }): 
   }
 }
 
-const BASE_RPC = "https://mainnet.base.org"
-const ETH_RPC = "https://cloudflare-eth.com"
+// Public RPC pools with fallback — mainnet.base.org rate-limits Worker IPs,
+// which silently degraded every onchain endpoint. Try the primary, then fall
+// back through the pool so a single flaky node no longer breaks a response.
+const BASE_RPCS = [
+  "https://mainnet.base.org",
+  "https://base.llamarpc.com",
+  "https://base-rpc.publicnode.com",
+  "https://base.drpc.org"
+]
+const ETH_RPCS = [
+  "https://cloudflare-eth.com",
+  "https://eth.llamarpc.com",
+  "https://ethereum-rpc.publicnode.com"
+]
+const BASE_RPC = BASE_RPCS[0]
+const ETH_RPC = ETH_RPCS[0]
 
 async function rpcCall(rpcUrl: string, method: string, params: any[]) {
-  const res = await fetch(rpcUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
-  })
-  if (res.ok) {
-    const data: any = await res.json()
-    return data.result
+  const pool = BASE_RPCS.includes(rpcUrl)
+    ? BASE_RPCS
+    : ETH_RPCS.includes(rpcUrl)
+      ? ETH_RPCS
+      : [rpcUrl]
+  const urls = [rpcUrl, ...pool.filter((u) => u !== rpcUrl)]
+
+  let lastError: any
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params })
+      })
+      if (res.ok) {
+        const data: any = await res.json()
+        if (data.error) {
+          lastError = new Error(data.error.message || "RPC error")
+          continue
+        }
+        return data.result
+      }
+      lastError = new Error(`HTTP ${res.status}`)
+    } catch (e) {
+      lastError = e
+    }
   }
-  throw new Error(`RPC call ${method} failed`)
+  throw new Error(`RPC call ${method} failed: ${lastError?.message || "all endpoints failed"}`)
 }
 
 // 21. CONTRACT ABI RESOLVER
@@ -30,7 +63,7 @@ export const abiEndpoint = createEndpoint({
   operationId: "getContractAbi",
   summary: "Etherscan/Basescan Verified Contract ABI Resolver",
   description: "Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser.",
-  priceUsd: "0.030",
+  priceUsd: "0.005",
   requestSchema: {
     type: "object",
     required: ["address"],
@@ -103,7 +136,7 @@ export const simulateEndpoint = createEndpoint({
   operationId: "simulateTransaction",
   summary: "EVM Transaction Execution Simulator",
   description: "Runs eth_call state simulation against the Base blockchain RPC to check for transaction reverts. Matches: EVM revert checks, test contract call, inspect transaction failure, dry-run solidity method, gas estimator, test token swap failure, simulate multisig transaction execution.",
-  priceUsd: "0.150",
+  priceUsd: "0.050",
   requestSchema: {
     type: "object",
     required: ["to", "data"],
@@ -165,7 +198,7 @@ export const gasHistoryEndpoint = createEndpoint({
   operationId: "getGasHistory",
   summary: "Base Blockchain Gas Fee History & Trend Tracker",
   description: "Scans recent block gas details to estimate the minimum, average, and maximum base fee.",
-  priceUsd: "0.010",
+  priceUsd: "0.001",
   requestSchema: {
     type: "object",
     properties: {
@@ -220,7 +253,7 @@ export const balanceEndpoint = createEndpoint({
   operationId: "getWalletBalances",
   summary: "Multi-Chain Wallet Token Balance Scanner",
   description: "Scans native balance and ERC-20 token balances for a wallet address on Base or Ethereum.",
-  priceUsd: "0.020",
+  priceUsd: "0.001",
   requestSchema: {
     type: "object",
     required: ["wallet"],
@@ -288,7 +321,7 @@ export const fundingRatesEndpoint = createEndpoint({
   operationId: "getFundingRates",
   summary: "Binance Futures Live Perp Funding Rates Ticker",
   description: "Queries current pricing and funding rate margins for perpetual swap contracts from Binance.",
-  priceUsd: "0.020",
+  priceUsd: "0.002",
   requestSchema: {
     type: "object",
     required: ["symbol"],
