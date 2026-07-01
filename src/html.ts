@@ -12,6 +12,18 @@ export const getHtmlContent = (
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>StatePulse API - Live Telemetry & Micro-Utilities for AI Agents</title>
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="apple-touch-icon" href="/logo.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="StatePulse API">
+  <meta property="og:title" content="StatePulse API — Live data & utilities for AI agents (x402)">
+  <meta property="og:description" content="50 pay-per-call tools for AI agents: live telemetry, environmental, transit, blockchain, network/security and finance utilities. x402 USDC on Base, no API key.">
+  <meta property="og:image" content="${baseUrl}/logo.png">
+  <meta property="og:url" content="${baseUrl}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="StatePulse API — x402 tools for AI agents">
+  <meta name="twitter:description" content="50 pay-per-call tools for AI agents. x402 USDC on Base, no API key.">
+  <meta name="twitter:image" content="${baseUrl}/logo.png">
   <!-- AI Agent & Protocol Discovery Specifications -->
   <link rel="alternate" type="text/markdown" title="LLM-friendly documentation" href="/llms.txt">
   <link rel="alternate" type="application/json" title="OpenAPI Specifications" href="/openapi.json">

@@ -28,7 +28,7 @@
     "pay-per-call",
     "cloudflare-workers"
   ],
-  "tool_count": 50,
+  "tool_count": 51,
   "auth": "none",
   "payment": {
     "protocol": "x402",
@@ -235,6 +235,10 @@
     {
       "name": "auditNetworkHost",
       "description": "Scans an IP address or hostname to audit DNSSEC safety, SSL expiration status, HTTP security headers, and geodata compliance. Matches: network security audit, scan website ports, VPS shield test, audi"
+    },
+    {
+      "name": "agentPreflight",
+      "description": "One call that pre-flights an onchain transaction for an agent: simulates the call for reverts, checks the sender wallet's native gas balance, and reads current Base gas — returning a single GO/NO_GO v"
     }
   ]
 }

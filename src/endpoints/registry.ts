@@ -5,6 +5,7 @@ import { transitEndpoints } from "./transit"
 import { financialEndpoints } from "./financial"
 import { blockchainEndpoints } from "./blockchain"
 import { networkEndpoints } from "./network"
+import { compositeEndpoints } from "./composite"
 
 export const ENDPOINTS: EndpointDef[] = [
   ...telemetryEndpoints,
@@ -12,7 +13,8 @@ export const ENDPOINTS: EndpointDef[] = [
   ...transitEndpoints,
   ...financialEndpoints,
   ...blockchainEndpoints,
-  ...networkEndpoints
+  ...networkEndpoints,
+  ...compositeEndpoints
 ]
 
 export const ENDPOINTS_BY_PATH: Record<string, EndpointDef> = Object.fromEntries(

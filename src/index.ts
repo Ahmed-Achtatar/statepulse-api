@@ -9,6 +9,7 @@ import { getHtmlContent } from "./html"
 import { ENDPOINTS, ENDPOINTS_BY_PATH, paidEndpoints } from "./endpoints/registry"
 import type { EndpointDef } from "./endpoints/types"
 import { validateSchema } from "./endpoints/utils"
+import { LOGO_PNG_BASE64 } from "./logo"
 
 type Env = {
   WALLET_ADDRESS: string
@@ -282,7 +283,7 @@ function publicMetadata(payTo: string, baseUrl: string) {
     description: SERVICE_DESCRIPTION,
     version: API_VERSION,
     url: baseUrl,
-    logo: `${baseUrl}/logo.svg`,
+    logo: `${baseUrl}/logo.png`,
     contact: CONTACT_EMAIL,
     payTo: payTo || undefined,
     protocol: {
@@ -386,7 +387,7 @@ function agentRegistrationMetadata(payTo: string, baseUrl: string) {
     type: "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
     name: SERVICE_NAME,
     description: SERVICE_DESCRIPTION,
-    image: `${baseUrl}/logo.svg`,
+    image: `${baseUrl}/logo.png`,
     services: [
       { name: "A2A", endpoint: `${baseUrl}/.well-known/agent-card.json`, version: A2A_PROTOCOL_VERSION },
       { name: "MCP", endpoint: `${baseUrl}/mcp`, metadata: `${baseUrl}/.well-known/mcp.json`, version: MCP_PROTOCOL_VERSION },
@@ -422,7 +423,7 @@ function agentCard(payTo: string, baseUrl: string) {
     url: `${baseUrl}/a2a`,
     version: API_VERSION,
     documentationUrl: `${baseUrl}/openapi.json`,
-    iconUrl: `${baseUrl}/logo.svg`,
+    iconUrl: `${baseUrl}/logo.png`,
     provider: { organization: SERVICE_NAME, url: baseUrl },
     capabilities: {
       streaming: false,
@@ -556,7 +557,7 @@ function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1
         mimeType: "application/json",
         serviceName: SERVICE_NAME,
         tags: [...endpoint.tags],
-        iconUrl: `${baseUrl}/logo.svg`,
+        iconUrl: `${baseUrl}/logo.png`,
         extensions: {
           ...declareDiscoveryExtension({
             input: endpoint.exampleInput(),
@@ -1269,6 +1270,24 @@ app.get("/logo.svg", (c) => {
   })
 })
 
+function logoPngResponse() {
+  const binary = atob(LOGO_PNG_BASE64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Response(bytes, {
+    headers: {
+      "content-type": "image/png",
+      "cache-control": "public, max-age=86400"
+    }
+  })
+}
+
+app.get("/logo.png", () => logoPngResponse())
+
+// Crawlers and x402 indexers (x402scan, agentic.market) grab the service icon
+// from /favicon.ico and the homepage og:image, so serve the brand PNG here too.
+app.get("/favicon.ico", () => logoPngResponse())
+
 app.get("/terms", (c) => {
   return c.html(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terms - ${SERVICE_NAME}</title><style>body{font-family:Arial,sans-serif;max-width:760px;margin:48px auto;padding:0 20px;line-height:1.6;color:#172033}a{color:#0369a1}</style></head><body><h1>Terms of Use</h1><p>${SERVICE_NAME} is a pay-per-call API of narrow lookup, calculator, and classifier endpoints for AI agents. Outputs are informational support, not legal, tax, medical, or financial advice, and should be verified against the cited source before being relied on for a real decision.</p><p>Paid x402 requests are charged before or upon generating the response, depending on the endpoint.</p><p>Do not use the service for unlawful purposes, to generate fraudulent documents, or to misrepresent machine-generated output as a licensed professional's opinion.</p><p>Contact: <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></p><p><a href="/">Back to API</a></p></body></html>`)
 })
@@ -1734,7 +1753,7 @@ app.get("/openapi.json", (c) => {
       version: API_VERSION,
       contact: { email: CONTACT_EMAIL },
       termsOfService: `${baseUrl}/terms`,
-      "x-logo": { url: `${baseUrl}/logo.svg` },
+      "x-logo": { url: `${baseUrl}/logo.png` },
       "x-agent-card": `${baseUrl}/.well-known/agent-card.json`,
       "x-cheapest-paid-endpoints": cheapestEndpoints().map((endpoint) => ({
         path: endpoint.path,
@@ -1775,7 +1794,7 @@ app.get("/.well-known/ai-plugin.json", (c) => {
     description_for_human: "Pay-per-call lookups and calculators for AI agents.",
     auth: { type: "none" },
     api: { type: "openapi", url: `${baseUrl}/openapi.json` },
-    logo_url: `${baseUrl}/logo.svg`,
+    logo_url: `${baseUrl}/logo.png`,
     contact_email: CONTACT_EMAIL,
     legal_info_url: `${baseUrl}/terms`
   }, 200, metadataHeaders())
@@ -1793,7 +1812,7 @@ app.get("/.well-known/x402.json", (c) => {
     description: SERVICE_DESCRIPTION,
     version: API_VERSION,
     url: baseUrl,
-    logoUrl: `${baseUrl}/logo.svg`,
+    logoUrl: `${baseUrl}/logo.png`,
     openapi: `${baseUrl}/openapi.json`,
     agentCard: `${baseUrl}/.well-known/agent.json`,
     llmsTxt: `${baseUrl}/llms.txt`,

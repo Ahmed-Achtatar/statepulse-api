@@ -9,7 +9,7 @@
     },
     "termsOfService": "https://statepulse-api.hahavoid0.workers.dev/terms",
     "x-logo": {
-      "url": "https://statepulse-api.hahavoid0.workers.dev/logo.svg"
+      "url": "https://statepulse-api.hahavoid0.workers.dev/logo.png"
     },
     "x-agent-card": "https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json",
     "x-cheapest-paid-endpoints": [
