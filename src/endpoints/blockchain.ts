@@ -93,21 +93,26 @@ export const abiEndpoint = createEndpoint({
     const addr = str(args, "address")
     const chain = str(args, "chain", false).toLowerCase() || "base"
 
-    const apiDomain = chain === "ethereum" ? "api.etherscan.io" : "api.basescan.org"
+    // Blockscout first: keyless and reliable. Etherscan/Basescan retired their
+    // keyless V1 getabi route, so they're only a best-effort fallback now.
+    const blockscout = chain === "ethereum" ? "eth.blockscout.com" : "base.blockscout.com"
+    const scanApi = chain === "ethereum" ? "api.etherscan.io" : "api.basescan.org"
 
-    try {
-      const res = await fetch(`https://${apiDomain}/api?module=contract&action=getabi&address=${addr}`)
-      if (res.ok) {
-        const data: any = await res.json()
-        if (data.status === "1") {
-          return response({
-            address: addr,
-            chain,
-            abi: JSON.parse(data.result)
-          }, "high")
+    for (const domain of [blockscout, scanApi]) {
+      try {
+        const res = await fetch(`https://${domain}/api?module=contract&action=getabi&address=${addr}`)
+        if (res.ok) {
+          const data: any = await res.json()
+          if (data.status === "1") {
+            return response({
+              address: addr,
+              chain,
+              abi: JSON.parse(data.result)
+            }, "high")
+          }
         }
-      }
-    } catch (e) {}
+      } catch (e) {}
+    }
 
     return response({ address: addr, chain, note: "Unverified contract or API limit hit." }, "low", ["ABI query returned error status."])
   },
@@ -117,13 +122,13 @@ export const abiEndpoint = createEndpoint({
   preflightCheck: async (args) => {
     const addr = String(args.address || "").trim()
     const chain = String(args.chain || "base").toLowerCase()
-    const apiDomain = chain === "ethereum" ? "api.etherscan.io" : "api.basescan.org"
+    const apiDomain = chain === "ethereum" ? "eth.blockscout.com" : "base.blockscout.com"
     try {
       const res = await fetch(`https://${apiDomain}/api?module=contract&action=getabi&address=${addr}`)
       if (res.ok) {
         const data: any = await res.json()
         const verified = data.status === "1"
-        return { available: verified, error: verified ? undefined : `Contract address is not verified on ${chain === "ethereum" ? "Etherscan" : "Basescan"}` }
+        return { available: verified, error: verified ? undefined : `Contract address is not verified on ${chain}` }
       }
     } catch (e) {}
     return { available: false, error: "Contract verification check failed" }
@@ -350,23 +355,90 @@ export const fundingRatesEndpoint = createEndpoint({
   }),
   logic: async (args) => {
     const symbol = str(args, "symbol").toUpperCase()
+    // Binance/Bybit/OKX geo-block Cloudflare's US egress IPs, so no single
+    // venue is reliable from the Worker — walk the chain until one answers.
 
     try {
       const res = await fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${symbol}`)
       if (res.ok) {
         const data: any = await res.json()
         const rate = Number(data.lastFundingRate) || 0
-        return response({
-          symbol,
-          mark_price: data.markPrice,
-          index_price: data.indexPrice,
-          funding_rate_percentage: Number((rate * 100).toFixed(6)),
-          next_funding_time: new Date(data.nextFundingTime).toISOString()
-        }, "high")
+        if (data.markPrice) {
+          return response({
+            symbol,
+            source: "binance",
+            mark_price: data.markPrice,
+            index_price: data.indexPrice,
+            funding_rate_percentage: Number((rate * 100).toFixed(6)),
+            next_funding_time: new Date(data.nextFundingTime).toISOString()
+          }, "high")
+        }
       }
     } catch (e) {}
 
-    return response({ symbol, note: "Binance futures API timed out." }, "low", ["Perp tickers index query failed."])
+    try {
+      const res = await fetch(`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${symbol}`)
+      if (res.ok) {
+        const data: any = await res.json()
+        const t = data?.result?.list?.[0]
+        if (t?.fundingRate !== undefined) {
+          return response({
+            symbol,
+            source: "bybit",
+            mark_price: t.markPrice,
+            index_price: t.indexPrice,
+            funding_rate_percentage: Number((Number(t.fundingRate) * 100).toFixed(6)),
+            next_funding_time: t.nextFundingTime ? new Date(Number(t.nextFundingTime)).toISOString() : null
+          }, "high")
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const base = symbol.replace(/USDT$|USDC$|USD$/, "")
+      const quote = symbol.endsWith("USDC") ? "USDC" : "USDT"
+      const res = await fetch(`https://www.okx.com/api/v5/public/funding-rate?instId=${base}-${quote}-SWAP`)
+      if (res.ok) {
+        const data: any = await res.json()
+        const t = data?.data?.[0]
+        if (t?.fundingRate !== undefined) {
+          return response({
+            symbol,
+            source: "okx",
+            mark_price: null,
+            index_price: null,
+            funding_rate_percentage: Number((Number(t.fundingRate) * 100).toFixed(6)),
+            next_funding_time: t.nextFundingTime ? new Date(Number(t.nextFundingTime)).toISOString() : null
+          }, "high")
+        }
+      }
+    } catch (e) {}
+
+    try {
+      const coin = symbol.replace(/USDT$|USDC$|USD$/, "")
+      const res = await fetch("https://api.hyperliquid.xyz/info", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: "metaAndAssetCtxs" })
+      })
+      if (res.ok) {
+        const [meta, ctxs]: any = await res.json()
+        const idx = meta?.universe?.findIndex((u: any) => u.name === coin)
+        if (idx >= 0 && ctxs?.[idx]?.funding !== undefined) {
+          const c = ctxs[idx]
+          return response({
+            symbol,
+            source: "hyperliquid",
+            mark_price: c.markPx,
+            index_price: c.oraclePx,
+            funding_rate_percentage: Number((Number(c.funding) * 100).toFixed(6)),
+            next_funding_time: null
+          }, "high", ["Hyperliquid hourly funding rate (Binance/Bybit/OKX use 8h intervals)."])
+        }
+      }
+    } catch (e) {}
+
+    return response({ symbol, note: "All funding-rate venues (Binance, Bybit, OKX, Hyperliquid) unavailable or symbol not listed." }, "low", ["Perp tickers index query failed."])
   },
   skillId: "get_funding_rates",
   skillName: "Perp funding tracker",
