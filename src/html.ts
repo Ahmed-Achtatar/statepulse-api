@@ -393,6 +393,34 @@ export const getHtmlContent = (
       box-shadow: 0 8px 30px rgba(56, 189, 248, 0.04);
     }
 
+    .use-case-card.featured {
+      border-color: rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.02);
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .use-case-card.featured::before {
+      content: "RECOMMENDED BUNDLE";
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: var(--accent-2);
+      color: #060913;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      border-bottom-left-radius: 8px;
+    }
+
+    .use-case-card.featured:hover {
+      border-color: rgba(34, 197, 94, 0.6);
+      background: rgba(34, 197, 94, 0.04);
+      box-shadow: 0 8px 30px rgba(34, 197, 94, 0.08);
+    }
+
     .card-header {
       display: flex;
       justify-content: space-between;
@@ -774,7 +802,7 @@ export const getHtmlContent = (
 
         <div class="use-cases-grid" id="use-cases-list">
           ${ENDPOINTS.map((endpoint) => `
-          <div class="use-case-card" 
+          <div class="use-case-card${endpoint.path === "/agent/preflight" ? " featured" : ""}" 
                data-path="${endpoint.path}" 
                data-category="${endpoint.category}" 
                data-summary="${endpoint.summary}" 
@@ -837,6 +865,45 @@ export const getHtmlContent = (
         <strong>Direct Agent Execution:</strong> To invoke paid endpoints, agents negotiate the x402 protocol challenge. When receiving a <code>402 Payment Required</code> response, parse the <code>payment-required</code> header containing payment specifications, initiate a Base USDC transfer, and resubmit the request with the <code>X-Payment</code> header.
       </div>
       <pre id="curl-code"></pre>
+    </section>
+
+    <section class="panel integration-docs">
+      <h2>Add StatePulse to your IDE (MCP Config)</h2>
+      <p style="color: var(--muted); font-size: 0.95rem; margin-bottom: 16px;">
+        StatePulse runs a Model Context Protocol (MCP) server. You can integrate all 50+ tools directly into <strong>Cursor</strong>, <strong>Windsurf</strong>, or <strong>Claude Desktop</strong>.
+      </p>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <div>
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.05em;">Claude Desktop Config</h3>
+          <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 8px;">
+            Add this server entry to your <code>claude_desktop_config.json</code>:
+          </p>
+          <pre style="border-left-color: var(--accent); font-size: 0.8rem; min-height: unset; margin: 0;">{
+  "mcpServers": {
+    "statepulse": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-http",
+        "${baseUrl}/mcp"
+      ]
+    }
+  }
+}</pre>
+        </div>
+        <div>
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.05em;">Cursor / Windsurf Config</h3>
+          <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 8px;">
+            Go to <strong>Settings &gt; Models &gt; MCP</strong> (or Windsurf config), click <strong>+ Add New MCP Server</strong>:
+          </p>
+          <ul style="font-size: 0.85rem; color: var(--muted); margin-left: 20px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px;">
+            <li><strong>Name:</strong> <code>statepulse</code></li>
+            <li><strong>Type:</strong> <code>command</code></li>
+            <li><strong>Command:</strong> <code style="color: #bef264;">npx -y @modelcontextprotocol/server-http ${baseUrl}/mcp</code></li>
+          </ul>
+        </div>
+      </div>
     </section>
   </main>
 

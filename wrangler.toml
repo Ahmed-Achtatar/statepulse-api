@@ -6,3 +6,6 @@ compatibility_flags = ["nodejs_compat"]
 [[kv_namespaces]]
 binding = "CACHE"
 id = "5e2b89d9dad44feca664f7bfe247a13e"
+
+[vars]
+ESCROW_REGISTRY_ADDRESS = "0xee8bfa0dcdb48d5da7a3b91dca8ddd84b53875c7"

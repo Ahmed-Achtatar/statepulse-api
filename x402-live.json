@@ -2734,6 +2734,223 @@
       "responseSchema": {
         "type": "object"
       }
+    },
+    "/coordination/bounties": {
+      "method": "POST",
+      "url": "https://statepulse-api.hahavoid0.workers.dev/coordination/bounties",
+      "price": "$0.010",
+      "atomicAmount": "10000",
+      "description": "Deposits a real USDC bounty on Base using EIP-3009 receiveWithAuthorization, locking it in the non-custodial EscrowRegistry contract. Matches: deposit onchain bounty, non-custodial escrow bounty, lock usdc bounty.",
+      "keywords": "Deposit Real Onchain USDC Bounty (Base Mainnet) Deposits a real USDC bounty on Base using EIP-3009 receiveWithAuthorization, locking it in the non-custodial EscrowRegistry contract. Matches: deposit onchain bounty, non-custodial escrow bounty, lock usdc bounty. Use when an agent wants to lock real USDC on Base to coordinate and incentivize a task payout. coordination bounties finance blockchain Deposit 10 USDC bounty on Base for Solve Maze Task {\"title\":\"Solve Maze\",\"reward_usdc\":\"10.00\",\"duration_days\":7,\"sender\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"nonce\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"valid_before\":1800000000,\"signature\":\"0x...\",\"bounty_id\":\"0x...\"}",
+      "tags": [
+        "coordination",
+        "bounties",
+        "finance",
+        "blockchain"
+      ],
+      "requestExample": {
+        "title": "Solve Maze Task",
+        "description": "Submit exit path coordinates",
+        "reward_usdc": "10.00",
+        "duration_days": 7,
+        "sender": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+        "nonce": "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "valid_before": 1800000000,
+        "signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "bounty_id": "0x000000000000000000000000000000000000000000000000000000000000000a"
+      },
+      "responseExample": {
+        "supported": true,
+        "result": {
+          "bounty_id": "0x000000000000000000000000000000000000000000000000000000000000000a",
+          "status": "DEPOSITED",
+          "tx_hash": "0x...",
+          "reward_usdc": "10.00",
+          "sender": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+        },
+        "confidence": "high"
+      },
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "title",
+          "reward_usdc",
+          "duration_days",
+          "sender",
+          "nonce",
+          "valid_before",
+          "signature",
+          "bounty_id"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Bounty task title"
+          },
+          "description": {
+            "type": "string",
+            "description": "Bounty task details/description",
+            "default": ""
+          },
+          "reward_usdc": {
+            "type": "string",
+            "description": "Bounty reward in USDC (e.g. 10.00)"
+          },
+          "duration_days": {
+            "type": "number",
+            "description": "Number of days the bounty is locked for"
+          },
+          "sender": {
+            "type": "string",
+            "description": "EVM address of the buyer/sender"
+          },
+          "nonce": {
+            "type": "string",
+            "description": "Unique 32-byte hex nonce (0x...) for the EIP-3009 transfer"
+          },
+          "valid_before": {
+            "type": "number",
+            "description": "Unix timestamp after which the signature expires"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Hex signature authorizing the USDC receiveWithAuthorization transfer"
+          },
+          "bounty_id": {
+            "type": "string",
+            "description": "Unique 32-byte hex ID representing this bounty"
+          }
+        }
+      },
+      "responseSchema": {
+        "type": "object"
+      }
+    },
+    "/coordination/bounties/release": {
+      "method": "POST",
+      "url": "https://statepulse-api.hahavoid0.workers.dev/coordination/bounties/release",
+      "price": "$0.010",
+      "atomicAmount": "10000",
+      "description": "Triggers the EscrowRegistry contract to release a locked USDC bounty to a worker wallet. Releasing can only be authorized by the StatePulse hot wallet (owner). Matches: release onchain bounty, payout escrow bounty, resolve locked bounty.",
+      "keywords": "Release Deployed USDC Bounty (Base Mainnet) Triggers the EscrowRegistry contract to release a locked USDC bounty to a worker wallet. Releasing can only be authorized by the StatePulse hot wallet (owner). Matches: release onchain bounty, payout escrow bounty, resolve locked bounty. Use to payout a locked USDC bounty once the task is verified as completed. coordination bounties finance blockchain Release payout for bounty 0x... to 0x976EA74026E726554dB657fa54763abd0C3a0aa9 {\"bounty_id\":\"0x...\",\"worker_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\"}",
+      "tags": [
+        "coordination",
+        "bounties",
+        "finance",
+        "blockchain"
+      ],
+      "requestExample": {
+        "bounty_id": "0x000000000000000000000000000000000000000000000000000000000000000a",
+        "worker_wallet": "0x976EA74026E726554dB657fa54763abd0C3a0aa9"
+      },
+      "responseExample": {
+        "supported": true,
+        "result": {
+          "bounty_id": "0x000000000000000000000000000000000000000000000000000000000000000a",
+          "status": "COMPLETED",
+          "tx_hash": "0x...",
+          "worker_wallet": "0x976EA74026E726554dB657fa54763abd0C3a0aa9"
+        },
+        "confidence": "high"
+      },
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "bounty_id",
+          "worker_wallet"
+        ],
+        "properties": {
+          "bounty_id": {
+            "type": "string",
+            "description": "Unique 32-byte hex ID representing the locked bounty"
+          },
+          "worker_wallet": {
+            "type": "string",
+            "description": "EVM wallet address of the payout recipient"
+          }
+        }
+      },
+      "responseSchema": {
+        "type": "object"
+      }
+    },
+    "/blockchain/send": {
+      "method": "POST",
+      "url": "https://statepulse-api.hahavoid0.workers.dev/blockchain/send",
+      "price": "$0.010",
+      "atomicAmount": "10000",
+      "description": "Relays a transaction to Base Mainnet, paying the native gas on your behalf and charging your wallet equivalent USDC via EIP-3009 receiveWithAuthorization. Matches: gasless tx relayer, submit transaction base, pay gas in usdc.",
+      "keywords": "Relay Gasless Transaction (Base Mainnet) Relays a transaction to Base Mainnet, paying the native gas on your behalf and charging your wallet equivalent USDC via EIP-3009 receiveWithAuthorization. Matches: gasless tx relayer, submit transaction base, pay gas in usdc. Use when an agent wants to execute a transaction on Base without maintaining an ETH balance for gas. blockchain relayer gasless finance Relay call to 0x... with payload 0x... and max gas fee 0.50 USDC {\"target_contract\":\"0x...\",\"calldata\":\"0x...\",\"max_gas_fee_usdc\":\"0.50\",\"sender\":\"0x...\",\"nonce\":\"0x...\",\"valid_before\":1800000000,\"signature\":\"0x...\"}",
+      "tags": [
+        "blockchain",
+        "relayer",
+        "gasless",
+        "finance"
+      ],
+      "requestExample": {
+        "target_contract": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "calldata": "0x095ea7b300000000000000000000000055014c5b9781682b3cd1eedfd56e85bfe4a33251ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "max_gas_fee_usdc": "0.50",
+        "sender": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+        "nonce": "0x0000000000000000000000000000000000000000000000000000000000000002",
+        "valid_before": 1800000000,
+        "signature": "0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "responseExample": {
+        "supported": true,
+        "result": {
+          "status": "RELAYED",
+          "gas_fee_collected_usdc": "0.50",
+          "payment_tx_hash": "0x...",
+          "execution_tx_hash": "0x..."
+        },
+        "confidence": "high"
+      },
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "target_contract",
+          "calldata",
+          "max_gas_fee_usdc",
+          "sender",
+          "nonce",
+          "valid_before",
+          "signature"
+        ],
+        "properties": {
+          "target_contract": {
+            "type": "string",
+            "description": "The destination contract address to call"
+          },
+          "calldata": {
+            "type": "string",
+            "description": "The hex payload calldata of the call"
+          },
+          "max_gas_fee_usdc": {
+            "type": "string",
+            "description": "Maximum USDC authorized for gas payment (e.g. 0.50)"
+          },
+          "sender": {
+            "type": "string",
+            "description": "EVM address of the sender paying USDC"
+          },
+          "nonce": {
+            "type": "string",
+            "description": "32-byte hex nonce for the EIP-3009 transfer"
+          },
+          "valid_before": {
+            "type": "number",
+            "description": "Unix timestamp after which signature is invalid"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Hex signature authorizing the USDC receiveWithAuthorization transfer"
+          }
+        }
+      },
+      "responseSchema": {
+        "type": "object"
+      }
     }
   }
 }

@@ -649,7 +649,11 @@ function createResourceServer(env: Env) {
     settle: async (paymentPayload: any, paymentRequirements: any) => {
       if (env.CDP_API_KEY_ID === "mock-key-id" || env.CDP_API_KEY_ID?.startsWith("mock-")) {
         console.log("x402 mock settle success (local test mode)")
-        const result = { success: true, transaction: "0xmocktransactionhashforlocaltesting" }
+        const result = {
+          success: true,
+          transaction: "0xmocktransactionhashforlocaltesting",
+          network: paymentRequirements?.network || "eip155:8453"
+        }
         try {
           const today = dayKey()
           await incrementCounter(env, `analytics:total:payment_settled`)

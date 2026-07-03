@@ -391,6 +391,27 @@
       "method": "POST",
       "price_usd": "0.030",
       "description": "One call that pre-flights an onchain transaction for an agent: simulates the call for reverts, checks the sender wallet's native gas balance, and reads current Base gas — returning a single GO/NO_GO verdict with reasons. Replaces 3 separate calls (simulate + balances + gas-history) every agent runs before transacting. Matches: pre-transaction check, agent transaction guard, revert + balance + gas preflight, onchain go/no-go, safe-to-send checker, autonomous trade preflight."
+    },
+    {
+      "name": "Coordination Bounties",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/coordination/bounties",
+      "method": "POST",
+      "price_usd": "0.010",
+      "description": "Deposits a real USDC bounty on Base using EIP-3009 receiveWithAuthorization, locking it in the non-custodial EscrowRegistry contract. Matches: deposit onchain bounty, non-custodial escrow bounty, lock usdc bounty."
+    },
+    {
+      "name": "Coordination Bounties Release",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/coordination/bounties/release",
+      "method": "POST",
+      "price_usd": "0.010",
+      "description": "Triggers the EscrowRegistry contract to release a locked USDC bounty to a worker wallet. Releasing can only be authorized by the StatePulse hot wallet (owner). Matches: release onchain bounty, payout escrow bounty, resolve locked bounty."
+    },
+    {
+      "name": "Blockchain Send",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/send",
+      "method": "POST",
+      "price_usd": "0.010",
+      "description": "Relays a transaction to Base Mainnet, paying the native gas on your behalf and charging your wallet equivalent USDC via EIP-3009 receiveWithAuthorization. Matches: gasless tx relayer, submit transaction base, pay gas in usdc."
     }
   ],
   "settlement": {

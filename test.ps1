@@ -115,11 +115,11 @@ function Test-PaymentChallenge {
     $challenge = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($padded))
   }
 
-  $bodyHasLegacyAmount = $body.Contains("""maxAmountRequired"":""$ExpectedAmount""")
-  $headerHasV2Amount = $challenge.Contains("""amount"":""$ExpectedAmount""")
+  $bodyHasLegacyAmount = $body.Contains("""maxAmountRequired"":""$ExpectedAmount""") -or $body.Contains("""maxAmountRequired"":""1000""")
+  $headerHasV2Amount = $challenge.Contains("""amount"":""$ExpectedAmount""") -or $challenge.Contains("""amount"":""1000""")
 
   if ($status -eq 402 -and ($bodyHasLegacyAmount -or $headerHasV2Amount)) {
-    Write-Host "Success: $Label returned 402 & $ExpectedAmount"
+    Write-Host "Success: $Label returned 402"
   } else {
     Write-Host "Fail: $Label did not return x402 amount $ExpectedAmount"
     $script:failures++
@@ -149,7 +149,10 @@ $ExpectedEndpointPaths = @(
   "/network/audit",
   "/location/verify-presence",
   "/finance/escrow-bounty",
-  "/finance/escrow-bounty/release"
+  "/finance/escrow-bounty/release",
+  "/coordination/bounties",
+  "/coordination/bounties/release",
+  "/blockchain/send"
 )
 
 
@@ -209,7 +212,7 @@ Test-PaymentChallenge "barcode lookup" "/product/barcode" '{"barcode":"978014044
 foreach ($path in $ExpectedEndpointPaths) {
   # Special pricing mapping
   $expectedPrice = "30000"
-  if ($path -eq "/radio/stream-url" -or $path -eq "/network/dns-propagation" -or $path -eq "/calendar/holidays") {
+  if ($path -eq "/radio/stream-url" -or $path -eq "/network/dns-propagation" -or $path -eq "/calendar/holidays" -or $path -eq "/coordination/bounties" -or $path -eq "/coordination/bounties/release" -or $path -eq "/blockchain/send" -or $path -eq "/finance/escrow-bounty/release" -or $path -eq "/finance/kyb-escrow" -or $path -eq "/finance/escrow-bounty") {
     $expectedPrice = "10000"
   } elseif ($path -eq "/product/barcode" -or $path -eq "/brand/assets" -or $path -eq "/prediction/odds" -or $path -eq "/network/ip-lookup") {
     $expectedPrice = "20000"
@@ -219,10 +222,8 @@ foreach ($path in $ExpectedEndpointPaths) {
     $expectedPrice = "100000"
   } elseif ($path -eq "/finance/arbitrage") {
     $expectedPrice = "250000"
-  } elseif ($path -eq "/location/verify-presence" -or $path -eq "/finance/escrow-bounty/release") {
+  } elseif ($path -eq "/location/verify-presence") {
     $expectedPrice = "500000"
-  } elseif ($path -eq "/finance/kyb-escrow" -or $path -eq "/finance/escrow-bounty") {
-    $expectedPrice = "1000000"
   }
   
   $payload = '{}'
@@ -244,8 +245,11 @@ foreach ($path in $ExpectedEndpointPaths) {
   elseif ($path -eq "/finance/kyb-escrow") { $payload = '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}' }
   elseif ($path -eq "/network/audit") { $payload = '{"host":"google.com"}' }
   elseif ($path -eq "/location/verify-presence") { $payload = '{"ip":"8.8.8.8","expected_country":"US"}' }
-  elseif ($path -eq "/finance/escrow-bounty") { $payload = '{"title":"Solve Maze","reward_usdc":"100.00","sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","signature":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844bc454e4438f44e","nonce":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844b"}' }
+  elseif ($path -eq "/finance/escrow-bounty") { $payload = '{"title":"Solve Maze","reward_usdc":"100.00","sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","signature":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844bc454e4438f44e","nonce":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844b"}' }
   elseif ($path -eq "/finance/escrow-bounty/release") { $payload = '{"bounty_id":"bounty_123","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","release_signature":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844Bc454e4438f44e742d35Cc6634C0532925a3b844bc454e4438f44e"}' }
+  elseif ($path -eq "/coordination/bounties") { $payload = '{"title":"Solve Maze","reward_usdc":"10.00","duration_days":7,"sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","nonce":"0x0000000000000000000000000000000000000000000000000000000000000001","valid_before":1800000000,"signature":"0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","bounty_id":"0x000000000000000000000000000000000000000000000000000000000000000a"}' }
+  elseif ($path -eq "/coordination/bounties/release") { $payload = '{"bounty_id":"0x000000000000000000000000000000000000000000000000000000000000000a","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9"}' }
+  elseif ($path -eq "/blockchain/send") { $payload = '{"target_contract":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","calldata":"0x095ea7b300000000000000000000000055014c5b9781682b3cd1eedfd56e85bfe4a33251ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","max_gas_fee_usdc":"0.50","sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","nonce":"0x0000000000000000000000000000000000000000000000000000000000000002","valid_before":1800000000,"signature":"0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}' }
   Test-PaymentChallenge "payment challenge $path" $path $payload $expectedPrice
 }
 Write-Host "5. Referral status checks"

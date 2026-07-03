@@ -11,7 +11,7 @@ function createEndpoint(input: Omit<EndpointDef, "free"> & { free?: boolean }): 
 // Public RPC pools with fallback — mainnet.base.org rate-limits Worker IPs,
 // which silently degraded every onchain endpoint. Try the primary, then fall
 // back through the pool so a single flaky node no longer breaks a response.
-const BASE_RPCS = [
+export const BASE_RPCS = [
   "https://mainnet.base.org",
   "https://base.llamarpc.com",
   "https://base-rpc.publicnode.com",
