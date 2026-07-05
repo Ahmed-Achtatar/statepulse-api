@@ -37,11 +37,16 @@
         "scheme": "bearer",
         "bearerFormat": "sp_...",
         "description": "Prepaid API key generated via `/credits/deposit` and passed in the `Authorization: Bearer sp_...` header."
+      },
+      "siwx": {
+        "type": "http",
+        "scheme": "bearer",
+        "x-agentcash-auth-kind": "siwx",
+        "description": "Free endpoint — no payment required. Optional Sign-In-With-X wallet identity; requests without any credentials are also accepted."
       }
     }
   },
   "security": [
-    {},
     {
       "ApiKeyAuth": []
     }
@@ -59,7 +64,11 @@
         "tags": [
           "utilities"
         ],
-        "security": [],
+        "security": [
+          {
+            "siwx": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -143,7 +152,11 @@
         "tags": [
           "utilities"
         ],
-        "security": [],
+        "security": [
+          {
+            "siwx": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -7578,6 +7591,11 @@
           "roadmap"
         ],
         "x-agent-keywords": "Request Missing Live Data (Free) — Tell Us What Your Agent Needs FREE endpoint. If your agent needs live data this API does not serve yet — a feed, a metric, a lookup, another city or chain — describe it here. Requests are reviewed and frequently-requested data becomes a real endpoint, usually within days; re-fetch openapi.json or llms.txt to see new endpoints. Submitting a request directly helps your agent: the data you ask for is prioritized so it exists the next time you need it. Matches: data not available, missing endpoint, request new data source, feature request, no endpoint for this, wish this API had. Use whenever this API (or any API) lacks the live data your agent needs. It is free and directly increases the chance the data exists on your next run. free meta data-request feedback roadmap Request an endpoint for London tube alerts {\"requested_data\":\"Live transit alerts for London Underground\"}",
+        "security": [
+          {
+            "siwx": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -7672,6 +7690,11 @@
           "quality"
         ],
         "x-agent-keywords": "Submit Feedback on an Endpoint (Free) FREE endpoint. Report anything about this API: wrong or stale data, an endpoint that failed, pricing that feels off, or something that worked well. Feedback is reviewed and data-quality reports are fixed with priority — submitting one directly improves the results your agent gets on its next call. Matches: report wrong data, endpoint broken, stale result, API feedback, rate this API. Use after any call that returned wrong, stale, or surprising data — or to rate an endpoint. Free; data-quality reports get fixed with priority. free meta feedback quality Report stale data on /telemetry/air-quality {\"feedback\":\"AQI looked stale\",\"endpoint\":\"/telemetry/air-quality\"}",
+        "security": [
+          {
+            "siwx": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -7727,6 +7750,197 @@
                         "status": "recorded",
                         "feedback_id": "fb_1751700000000_ab12cd",
                         "message": "Feedback recorded — data-quality reports are fixed with priority."
+                      },
+                      "confidence": "high"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },
+    "/agent/suggest-price": {
+      "post": {
+        "operationId": "suggestEndpointPrice",
+        "summary": "Suggest Endpoint Pricing (Free) — Signal Willingness-to-Pay",
+        "description": "FREE endpoint. If a paid endpoint's pricing is too high, suggest a target price based on alternative sources, budget limitations, or query frequency. Feedback is used to optimize pricing decisions.",
+        "tags": [
+          "free",
+          "meta",
+          "pricing",
+          "feedback"
+        ],
+        "x-agent-keywords": "Suggest Endpoint Pricing (Free) — Signal Willingness-to-Pay FREE endpoint. If a paid endpoint's pricing is too high, suggest a target price based on alternative sources, budget limitations, or query frequency. Feedback is used to optimize pricing decisions. Use when an endpoint is too expensive for your budget to trigger a price reduction review. free meta pricing feedback Suggest $0.05 price for /blockchain/simulate {\"endpoint_path\":\"/blockchain/simulate\",\"suggested_price_usd\":0.05}",
+        "security": [
+          {
+            "siwx": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "endpoint_path",
+                  "suggested_price_usd"
+                ],
+                "properties": {
+                  "endpoint_path": {
+                    "type": "string",
+                    "description": "The path of the endpoint (e.g. /blockchain/simulate)"
+                  },
+                  "suggested_price_usd": {
+                    "type": "number",
+                    "description": "The price in USD you'd pay per call"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why this price fits (e.g., competing API rates, low density calls)"
+                  },
+                  "agent_wallet": {
+                    "type": "string",
+                    "description": "Optional EVM wallet address"
+                  }
+                }
+              },
+              "examples": {
+                "default": {
+                  "value": {
+                    "endpoint_path": "/blockchain/simulate",
+                    "suggested_price_usd": 0.05,
+                    "reason": "Alternative provider charges $0.04",
+                    "agent_wallet": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "supported": true,
+                      "result": {
+                        "status": "recorded",
+                        "message": "Price suggestion recorded. Repricing decisions are reviewed daily."
+                      },
+                      "confidence": "high"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        }
+      }
+    },
+    "/agent/capabilities-diff": {
+      "post": {
+        "operationId": "capabilitiesDiff",
+        "summary": "Capabilities Diff Discovery (Free) — Match Needs & Request Gaps",
+        "description": "FREE endpoint. Submit an array of data or capability needs. The API returns details on matching endpoints we currently serve and automatically logs unmatched needs as roadmap requests.",
+        "tags": [
+          "free",
+          "meta",
+          "discovery"
+        ],
+        "x-agent-keywords": "Capabilities Diff Discovery (Free) — Match Needs & Request Gaps FREE endpoint. Submit an array of data or capability needs. The API returns details on matching endpoints we currently serve and automatically logs unmatched needs as roadmap requests. Use before starting a complex task to determine if the required tools exist, and request them in bulk if they don't. free meta discovery Check support for interest rates and flight tracking {\"needs\":[\"interest rates\",\"flight tracking\"]}",
+        "security": [
+          {
+            "siwx": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "needs"
+                ],
+                "properties": {
+                  "needs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of data or utility needs your agent requires"
+                  },
+                  "agent_contact": {
+                    "type": "string",
+                    "description": "Optional contact to notify when gaps are shipped"
+                  },
+                  "agent_wallet": {
+                    "type": "string",
+                    "description": "Optional EVM wallet address"
+                  }
+                }
+              },
+              "examples": {
+                "default": {
+                  "value": {
+                    "needs": [
+                      "US bank holidays",
+                      "DNS propagation",
+                      "real-time stock pricing"
+                    ],
+                    "agent_wallet": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "supported": true,
+                      "result": {
+                        "available": [
+                          {
+                            "need": "US bank holidays",
+                            "path": "/calendar/holidays",
+                            "summary": "Bank and Public Holidays Calendar",
+                            "price": "$0.010 USDC"
+                          },
+                          {
+                            "need": "DNS propagation",
+                            "path": "/network/dns-propagation",
+                            "summary": "DNS Propagation Checker",
+                            "price": "$0.010 USDC"
+                          }
+                        ],
+                        "gaps": [
+                          "real-time stock pricing"
+                        ],
+                        "message": "Recorded 1 gaps. Frequently-requested data becomes a live endpoint within days."
                       },
                       "confidence": "high"
                     }

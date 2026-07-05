@@ -5,7 +5,8 @@ export const getHtmlContent = (
   baseUrl: string,
   paymentSettled: number,
   totalRevenue: number = 0.0,
-  totalDeposits: number = 0.0
+  totalDeposits: number = 0.0,
+  systemSla: string = "100.00%"
 ) => `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -65,7 +66,8 @@ export const getHtmlContent = (
       color: var(--text);
       font-family: "Outfit", system-ui, -apple-system, sans-serif;
       line-height: 1.5;
-      padding-bottom: 80px;
+      display: flex;
+      flex-direction: column;
     }
 
     header {
@@ -634,11 +636,7 @@ export const getHtmlContent = (
       color: var(--muted);
       padding: 32px 0;
       background: rgba(6, 9, 19, 0.9);
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 80px;
+      margin-top: auto;
     }
 
     footer .wrap {
@@ -668,12 +666,7 @@ export const getHtmlContent = (
       .console {
         position: static;
       }
-      body {
-        padding-bottom: 120px;
-      }
-      footer {
-        height: 120px;
-      }
+
       footer .wrap {
         flex-direction: column;
         text-align: center;
@@ -718,6 +711,13 @@ export const getHtmlContent = (
 
       <div style="display: flex; flex-direction: column; gap: 20px;">
         <div class="panel status">
+          <div class="metric" style="border-bottom: 1px dashed rgba(34, 197, 94, 0.3); padding-bottom: 12px; margin-bottom: 8px;">
+            <span>System Success Rate (SLA)</span>
+            <strong style="color: var(--accent-2); display: flex; align-items: center; gap: 6px;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-2); box-shadow: 0 0 8px var(--accent-2);"></span>
+              ${systemSla}
+            </strong>
+          </div>
           <div class="metric">
             <span>Total Endpoints</span>
             <strong>${ENDPOINTS.length} Live</strong>

@@ -149,4 +149,204 @@ export const feedbackEndpoint = createEndpoint({
   skillExamples: ["Report stale data on /telemetry/air-quality", "{\"feedback\":\"AQI looked stale\",\"endpoint\":\"/telemetry/air-quality\"}"]
 })
 
-export const requestEndpoints = [requestDataEndpoint, feedbackEndpoint]
+function localPriceLabel(endpoint: EndpointDef) {
+  return endpoint.free ? "free" : `$${endpoint.priceUsd}`
+}
+
+function getEndpointKeywords(endpoint: EndpointDef) {
+  return [
+    endpoint.summary,
+    endpoint.description,
+    endpoint.whenToUse,
+    endpoint.tags.join(" "),
+    endpoint.skillExamples.join(" ")
+  ].join(" ")
+}
+
+// FREE — SUGGEST PRICE: agents tell us what they want to pay
+export const suggestPriceEndpoint = createEndpoint({
+  path: "/agent/suggest-price",
+  operationId: "suggestEndpointPrice",
+  summary: "Suggest Endpoint Pricing (Free) — Signal Willingness-to-Pay",
+  description: "FREE endpoint. If a paid endpoint's pricing is too high, suggest a target price based on alternative sources, budget limitations, or query frequency. Feedback is used to optimize pricing decisions.",
+  requestSchema: {
+    type: "object",
+    required: ["endpoint_path", "suggested_price_usd"],
+    properties: {
+      endpoint_path: { type: "string", description: "The path of the endpoint (e.g. /blockchain/simulate)" },
+      suggested_price_usd: { type: "number", description: "The price in USD you'd pay per call" },
+      reason: { type: "string", description: "Why this price fits (e.g., competing API rates, low density calls)" },
+      agent_wallet: { type: "string", description: "Optional EVM wallet address" }
+    }
+  },
+  responseSchema: { type: "object" },
+  tags: ["free", "meta", "pricing", "feedback"],
+  category: "meta",
+  whenToUse: "Use when an endpoint is too expensive for your budget to trigger a price reduction review.",
+  doNotUseFor: "Do not use to run real endpoint queries or make payments.",
+  exampleInput: () => ({
+    endpoint_path: "/blockchain/simulate",
+    suggested_price_usd: 0.05,
+    reason: "Alternative provider charges $0.04",
+    agent_wallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+  }),
+  exampleOutput: () => ({
+    supported: true,
+    result: { status: "recorded", message: "Price suggestion recorded. Repricing decisions are reviewed daily." },
+    confidence: "high"
+  }),
+  logic: async (args, c) => {
+    const path = clip(str(args, "endpoint_path"), 200)
+    const price = num(args, "suggested_price_usd", true)
+    const reason = clip(str(args, "reason", false), 1000) || null
+    const wallet = clip(str(args, "agent_wallet", false), 100) || null
+
+    if (price !== null && (price < 0 || price > 1000)) throw validationError("suggested_price_usd must be between 0 and 1000")
+    if (await rateLimited(c, "suggestprice", 10)) throw Object.assign(new Error("Rate limit: max 10 price suggestions per hour"), { status: 429 })
+
+    const id = `sug_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    const record = {
+      id,
+      endpoint_path: path,
+      suggested_price_usd: price,
+      reason,
+      agent_wallet: wallet,
+      user_agent: c?.req?.header?.("user-agent") || null,
+      created_at: new Date().toISOString()
+    }
+    await c.env.CACHE.put(`pricesuggestion:${record.created_at}:${id}`, JSON.stringify(record))
+
+    return response({ status: "recorded", suggestion_id: id, message: "Price suggestion recorded. Thank you for your feedback!" }, "high")
+  },
+  skillId: "suggest_endpoint_price",
+  skillName: "Suggest endpoint pricing",
+  skillExamples: ["Suggest $0.05 price for /blockchain/simulate", "{\"endpoint_path\":\"/blockchain/simulate\",\"suggested_price_usd\":0.05}"]
+})
+
+// FREE — CAPABILITIES DIFF: discover what we serve and auto-file gaps
+export const capabilitiesDiffEndpoint = createEndpoint({
+  path: "/agent/capabilities-diff",
+  operationId: "capabilitiesDiff",
+  summary: "Capabilities Diff Discovery (Free) — Match Needs & Request Gaps",
+  description: "FREE endpoint. Submit an array of data or capability needs. The API returns details on matching endpoints we currently serve and automatically logs unmatched needs as roadmap requests.",
+  requestSchema: {
+    type: "object",
+    required: ["needs"],
+    properties: {
+      needs: {
+        type: "array",
+        items: { type: "string" },
+        description: "List of data or utility needs your agent requires"
+      },
+      agent_contact: { type: "string", description: "Optional contact to notify when gaps are shipped" },
+      agent_wallet: { type: "string", description: "Optional EVM wallet address" }
+    }
+  },
+  responseSchema: { type: "object" },
+  tags: ["free", "meta", "discovery"],
+  category: "meta",
+  whenToUse: "Use before starting a complex task to determine if the required tools exist, and request them in bulk if they don't.",
+  doNotUseFor: "Do not use to query actual real-time telemetry.",
+  exampleInput: () => ({
+    needs: ["US bank holidays", "DNS propagation", "real-time stock pricing"],
+    agent_wallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+  }),
+  exampleOutput: () => ({
+    supported: true,
+    result: {
+      available: [
+        { need: "US bank holidays", path: "/calendar/holidays", summary: "Bank and Public Holidays Calendar", price: "$0.010 USDC" },
+        { need: "DNS propagation", path: "/network/dns-propagation", summary: "DNS Propagation Checker", price: "$0.010 USDC" }
+      ],
+      gaps: ["real-time stock pricing"],
+      message: "Recorded 1 gaps. Frequently-requested data becomes a live endpoint within days."
+    },
+    confidence: "high"
+  }),
+  logic: async (args, c) => {
+    const needs = args.needs
+    if (!Array.isArray(needs) || needs.length === 0) {
+      throw validationError("needs must be a non-empty array of strings")
+    }
+    const agentContact = clip(str(args, "agent_contact", false), 300) || null
+    const agentWallet = clip(str(args, "agent_wallet", false), 100) || null
+
+    if (await rateLimited(c, "capdiff", 10)) throw Object.assign(new Error("Rate limit: max 10 capability checks per hour"), { status: 429 })
+
+    const { ENDPOINTS } = await import("./registry")
+
+    const available: any[] = []
+    const gaps: string[] = []
+
+    for (const rawNeed of needs) {
+      const need = String(rawNeed).trim()
+      if (!need) continue
+
+      const needLower = need.toLowerCase()
+      let matched: EndpointDef | undefined = undefined
+
+      let bestScore = 0
+      const needWords = needLower.split(/\s+/)
+
+      for (const ep of ENDPOINTS) {
+        const epText = getEndpointKeywords(ep).toLowerCase()
+        let score = 0
+        for (const word of needWords) {
+          if (word.length > 2 && epText.includes(word)) {
+            score += 1
+          }
+        }
+
+        if (epText.includes(needLower) || ep.tags.some(t => t.toLowerCase() === needLower)) {
+          score += 5
+        }
+
+        if (score > bestScore && score >= 2) {
+          bestScore = score
+          matched = ep
+        }
+      }
+
+      if (matched) {
+        available.push({
+          need,
+          path: matched.path,
+          summary: matched.summary,
+          price: localPriceLabel(matched)
+        })
+      } else {
+        gaps.push(need)
+        
+        // Auto-file gap
+        const dreqId = `dreq_auto_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+        const record = {
+          id: dreqId,
+          requested_data: `Auto-filed gap from capabilities-diff: ${need}`,
+          example_query: null,
+          category: "meta",
+          max_price_usd: null,
+          agent_contact: agentContact,
+          agent_wallet: agentWallet,
+          user_agent: c?.req?.header?.("user-agent") || null,
+          country: c?.req?.raw?.cf?.country || null,
+          created_at: new Date().toISOString()
+        }
+        await c.env.CACHE.put(`datarequest:${record.created_at}:${dreqId}`, JSON.stringify(record))
+      }
+    }
+
+    return response({
+      available,
+      gaps,
+      message: gaps.length > 0
+        ? `Recorded ${gaps.length} gaps. Frequently-requested data becomes a live endpoint within days.`
+        : "All requested capabilities are available."
+    }, "high")
+  },
+  skillId: "capabilities_diff",
+  skillName: "Capabilities difference lookup",
+  skillExamples: ["Check support for interest rates and flight tracking", "{\"needs\":[\"interest rates\",\"flight tracking\"]}"]
+})
+
+export const requestEndpoints = [requestDataEndpoint, feedbackEndpoint, suggestPriceEndpoint, capabilitiesDiffEndpoint]
+

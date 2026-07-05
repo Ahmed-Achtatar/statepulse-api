@@ -772,14 +772,14 @@ const officialX402Middleware = (path: string) => async (c: any, next: any) => {
           const check = validateSchema(endpoint.requestSchema, body)
           if (!check.valid) {
             track(c, "endpoint_bad_request", path)
-            return c.json({ error: check.error }, 400)
+            return c.json({ error: check.error, correct_example: endpoint.exampleInput() }, 400)
           }
         }
         c.set("paidBodyText", bodyText)
       }
     } catch (err: any) {
       track(c, "endpoint_bad_request", path)
-      return c.json({ error: "Invalid JSON body: " + err.message }, 400)
+      return c.json({ error: "Invalid JSON body: " + err.message, correct_example: endpoint.exampleInput() }, 400)
     }
   }
 
@@ -1052,14 +1052,22 @@ app.get("/", async (c) => {
   let paymentSettled = 0
   let totalRevenue = 0
   let totalDeposits = 0
+  let systemSla = "100.00%"
+  
   if (kvAnalyticsEnabled(c.env)) {
     paymentSettled = await readCounter(c.env, "analytics:total:payment_settled")
+    const overallSuccess = await readCounter(c.env, "analytics:total:endpoint_success")
+    const overallError = await readCounter(c.env, "analytics:total:endpoint_error")
+    const overallTotal = overallSuccess + overallError
+    if (overallTotal > 0) {
+      systemSla = `${((overallSuccess / overallTotal) * 100).toFixed(2)}%`
+    }
   }
   try {
     totalRevenue = parseFloat(await c.env.CACHE.get("analytics:total_revenue") || "0")
     totalDeposits = parseFloat(await c.env.CACHE.get("analytics:total_deposits") || "0")
   } catch (e) {}
-  return c.html(getHtmlContent(wallet, baseUrl, paymentSettled, totalRevenue, totalDeposits))
+  return c.html(getHtmlContent(wallet, baseUrl, paymentSettled, totalRevenue, totalDeposits, systemSla))
 })
 
 app.get("/health", (c) => {
@@ -1219,11 +1227,22 @@ app.post("/credits/deposit", async (c) => {
       return c.json({ error: "No valid USDC transfer to our settlement wallet found in transaction logs" }, 400)
     }
 
+    // Check if this wallet has pending rewards and add them to their deposit balance
+    const rewardKey = `reward:wallet:${wallet.toLowerCase()}:balance`
+    const rewardVal = parseFloat(await c.env.CACHE.get(rewardKey) || "0")
+    let finalDepositAmount = depositAmount
+    let rewardClaimedMessage = ""
+    if (rewardVal > 0) {
+      finalDepositAmount = Number((depositAmount + rewardVal).toFixed(3))
+      await c.env.CACHE.delete(rewardKey)
+      rewardClaimedMessage = ` Including $${rewardVal.toFixed(3)} claimed bonus credits.`
+    }
+
     const apiKey = "sp_" + crypto.randomUUID().replace(/-/g, "")
     
     const keyData = {
       wallet: wallet.toLowerCase(),
-      balance: depositAmount,
+      balance: finalDepositAmount,
       referrer: referrer ? referrer.toLowerCase() : null,
       created_at: new Date().toISOString()
     }
@@ -1238,14 +1257,218 @@ app.post("/credits/deposit", async (c) => {
     return c.json({
       success: true,
       apiKey,
-      balance: depositAmount,
+      balance: finalDepositAmount,
       wallet: wallet.toLowerCase(),
-      message: "Deposit verified. API Key successfully generated."
+      message: `Deposit verified. API Key successfully generated.${rewardClaimedMessage}`
     }, 200)
   } catch (err: any) {
     return c.json({ error: "Failed to verify deposit: " + err.message }, 500)
   }
 })
+
+app.post("/credits/claim-reward", async (c) => {
+  let body: any = {}
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400)
+  }
+
+  const { wallet, apiKey } = body
+  if (!wallet) {
+    return c.json({ error: "wallet address is required" }, 400)
+  }
+
+  if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+    return c.json({ error: "Invalid wallet address format" }, 400)
+  }
+
+  const rewardKey = `reward:wallet:${wallet.toLowerCase()}:balance`
+  const rewardVal = parseFloat(await c.env.CACHE.get(rewardKey) || "0")
+  if (rewardVal <= 0) {
+    return c.json({ error: "No pending rewards found for this wallet address" }, 400)
+  }
+
+  if (apiKey) {
+    // Top up existing API key
+    const keyDataStr = await c.env.CACHE.get(`apikey:${apiKey}`)
+    if (!keyDataStr) {
+      return c.json({ error: "API key not found" }, 404)
+    }
+
+    const keyData = JSON.parse(keyDataStr)
+    if (keyData.wallet?.toLowerCase() !== wallet.toLowerCase()) {
+      return c.json({ error: "Wallet address does not match API key owner" }, 403)
+    }
+
+    keyData.balance = Number((keyData.balance + rewardVal).toFixed(3))
+    await c.env.CACHE.put(`apikey:${apiKey}`, JSON.stringify(keyData))
+    await c.env.CACHE.delete(rewardKey)
+
+    return c.json({
+      success: true,
+      apiKey,
+      balance: keyData.balance,
+      wallet: wallet.toLowerCase(),
+      message: `Reward claimed! $${rewardVal.toFixed(3)} credited to your API key.`
+    }, 200)
+  } else {
+    // Generate new API key
+    const newApiKey = "sp_" + crypto.randomUUID().replace(/-/g, "")
+    const keyData = {
+      wallet: wallet.toLowerCase(),
+      balance: rewardVal,
+      referrer: null,
+      created_at: new Date().toISOString()
+    }
+
+    await c.env.CACHE.put(`apikey:${newApiKey}`, JSON.stringify(keyData))
+    await c.env.CACHE.delete(rewardKey)
+
+    return c.json({
+      success: true,
+      apiKey: newApiKey,
+      balance: rewardVal,
+      wallet: wallet.toLowerCase(),
+      message: `Reward claimed! Generated new prepaid API key with $${rewardVal.toFixed(3)} credit.`
+    }, 200)
+  }
+})
+
+app.post("/admin/ship-endpoint", async (c) => {
+  if (c.env.ANALYTICS_TOKEN) {
+    const token = c.req.query("token") || c.req.header("x-analytics-token")
+    if (token !== c.env.ANALYTICS_TOKEN) return c.json({ error: "Unauthorized" }, 401)
+  }
+
+  let body: any = {}
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: "Invalid JSON body" }, 400)
+  }
+
+  const { endpoint_path, request_ids, reward_amount } = body
+  if (!endpoint_path) {
+    return c.json({ error: "endpoint_path is required" }, 400)
+  }
+
+  if (!Array.isArray(request_ids) || request_ids.length === 0) {
+    return c.json({ error: "request_ids must be a non-empty array of strings" }, 400)
+  }
+
+  const defaultReward = reward_amount !== undefined ? Number(reward_amount) : 0.50
+  if (isNaN(defaultReward) || defaultReward < 0) {
+    return c.json({ error: "Invalid reward_amount" }, 400)
+  }
+
+  const credited: Record<string, number> = {}
+
+  // List and check request-data entries
+  const list = await c.env.CACHE.list({ prefix: "datarequest:" })
+  for (const keyObj of list.keys) {
+    const key = keyObj.name
+    const value = await c.env.CACHE.get(key)
+    if (value) {
+      try {
+        const record = JSON.parse(value)
+        if (request_ids.includes(record.id)) {
+          const wallet = record.agent_wallet
+          if (wallet && /^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+            const walletLower = wallet.toLowerCase()
+            const rewardKey = `reward:wallet:${walletLower}:balance`
+            const currentVal = parseFloat(await c.env.CACHE.get(rewardKey) || "0")
+            const newVal = Number((currentVal + defaultReward).toFixed(3))
+            await c.env.CACHE.put(rewardKey, String(newVal))
+            credited[walletLower] = (credited[walletLower] || 0) + defaultReward
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse datarequest record:", e)
+      }
+    }
+  }
+
+  return c.json({
+    success: true,
+    message: `Processed shipment for ${endpoint_path}. Credited rewards to matching wallets.`,
+    credited
+  }, 200)
+})
+
+async function getStatusData(c: any) {
+  const overallSuccess = await readCounter(c.env, "analytics:total:endpoint_success")
+  const overallError = await readCounter(c.env, "analytics:total:endpoint_error")
+  const overallTotal = overallSuccess + overallError
+  
+  const systemSla = overallTotal > 0 
+    ? `${((overallSuccess / overallTotal) * 100).toFixed(2)}%` 
+    : "100.00%"
+
+  const endpointStats: Record<string, { success_rate: string; total_calls: number }> = {}
+
+  for (const endpoint of ENDPOINTS) {
+    endpointStats[endpoint.path] = {
+      success_rate: "100.00% (no traffic)",
+      total_calls: 0
+    }
+  }
+
+  try {
+    const routeList = await c.env.CACHE.list({ prefix: "analytics:route:" })
+    const routeCounts: Record<string, { success: number; error: number }> = {}
+
+    await Promise.all(routeList.keys.map(async (keyObj: any) => {
+      const key = keyObj.name
+      const parts = key.split(":")
+      if (parts.length >= 4) {
+        const path = parts[2]
+        const event = parts[3]
+        if (event === "endpoint_success" || event === "endpoint_error") {
+          if (!routeCounts[path]) {
+            routeCounts[path] = { success: 0, error: 0 }
+          }
+          const val = Number(await c.env.CACHE.get(key) || "0")
+          if (event === "endpoint_success") routeCounts[path].success = val
+          else routeCounts[path].error = val
+        }
+      }
+    }))
+
+    for (const [path, counts] of Object.entries(routeCounts)) {
+      if (endpointStats[path]) {
+        const total = counts.success + counts.error
+        if (total > 0) {
+          endpointStats[path] = {
+            success_rate: `${((counts.success / total) * 100).toFixed(2)}%`,
+            total_calls: total
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to list status keys:", err)
+  }
+
+  return {
+    status: "operational",
+    system_sla: systemSla,
+    total_successful_calls: overallSuccess,
+    total_failed_calls: overallError,
+    endpoints: endpointStats
+  }
+}
+
+app.get("/status", async (c) => {
+  const data = await getStatusData(c)
+  return c.json(data, 200, metadataHeaders())
+})
+
+app.get("/agent/status", async (c) => {
+  const data = await getStatusData(c)
+  return c.json(data, 200, metadataHeaders())
+})
+
 
 app.get("/use-cases/:slug", (c) => {
   const item = useCases.find((entry) => entry.slug === c.req.param("slug"))
@@ -1601,7 +1824,7 @@ app.get("/openapi.json", (c) => {
         summary: "Claim Prepaid API Key via USDC Deposit",
         description: "Submits a verified Base mainnet USDC transaction hash of a payment sent to the API settlement address, and returns a new prepaid API Key (sp_...) loaded with the deposited balance.",
         tags: ["utilities"],
-        security: [],
+        security: [{ siwx: [] }],
         requestBody: {
           required: true,
           content: {
@@ -1655,7 +1878,7 @@ app.get("/openapi.json", (c) => {
         summary: "Free Request Schema & Format Validator",
         description: "Allows agents to dry-run parameter validation on any paid or free endpoint path without spending USDC. Returns whether the body payload satisfies format constraints.",
         tags: ["utilities"],
-        security: [],
+        security: [{ siwx: [] }],
         requestBody: {
           required: true,
           content: {
@@ -1710,7 +1933,12 @@ app.get("/openapi.json", (c) => {
         description: endpoint.description,
         tags: [...endpoint.tags],
         "x-agent-keywords": endpointKeywordText(endpoint),
-        ...(endpoint.free ? {} : {
+        ...(endpoint.free ? {
+          // "siwx" (not an empty array) so x402scan/agentcash discovery
+          // classifies these as registrable free resources instead of
+          // "unprotected endpoints skipped".
+          security: [{ siwx: [] }]
+        } : {
           "x-payment-info": {
             price: { mode: "fixed", currency: "USD", amount: Number(endpoint.priceUsd).toFixed(6) },
             asset: "USDC",
@@ -1777,11 +2005,16 @@ app.get("/openapi.json", (c) => {
           scheme: "bearer",
           bearerFormat: "sp_...",
           description: "Prepaid API key generated via `/credits/deposit` and passed in the `Authorization: Bearer sp_...` header."
+        },
+        siwx: {
+          type: "http",
+          scheme: "bearer",
+          "x-agentcash-auth-kind": "siwx",
+          description: "Free endpoint — no payment required. Optional Sign-In-With-X wallet identity; requests without any credentials are also accepted."
         }
       }
     },
     security: [
-      {},
       { ApiKeyAuth: [] }
     ],
     externalDocs: {
@@ -1941,13 +2174,29 @@ app.get("/analytics", async (c) => {
     event,
     await readCounter(c.env, `analytics:day:${today}:${event}`)
   ])))
-  const routes = Object.fromEntries(await Promise.all(ENDPOINTS.map(async (endpoint) => [
-    endpoint.path,
-    Object.fromEntries(await Promise.all(analyticsEvents.map(async (event) => [
-      event,
-      await readCounter(c.env, `analytics:route:${endpoint.path}:${event}`)
-    ])))
-  ])))
+
+  const routes: Record<string, Record<string, number>> = {}
+  for (const endpoint of ENDPOINTS) {
+    routes[endpoint.path] = Object.fromEntries(analyticsEvents.map((event) => [event, 0]))
+  }
+
+  try {
+    const routeList = await c.env.CACHE.list({ prefix: "analytics:route:" })
+    await Promise.all(routeList.keys.map(async (keyObj: any) => {
+      const key = keyObj.name
+      const parts = key.split(":")
+      if (parts.length >= 4) {
+        const path = parts[2]
+        const event = parts[3]
+        if (routes[path] && event in routes[path]) {
+          const val = Number(await c.env.CACHE.get(key) || "0")
+          routes[path][event] = val
+        }
+      }
+    }))
+  } catch (err) {
+    console.error("Failed to list analytics route keys:", err)
+  }
 
   return c.json({
     service: SERVICE_SLUG,
@@ -2003,12 +2252,28 @@ for (const endpoint of ENDPOINTS) {
         }
       }
 
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        if (endpoint.relatedEndpoints && endpoint.relatedEndpoints.length > 0) {
+          const resolved = endpoint.relatedEndpoints.map(p => {
+            const dep = ENDPOINTS_BY_PATH[p]
+            return dep ? { path: dep.path, summary: dep.summary, price: priceLabel(dep) } : null
+          }).filter(Boolean)
+          if (resolved.length > 0) {
+            ;(data as any).related_endpoints = resolved
+          }
+        }
+      }
+
       return c.json(data, 200)
     } catch (error: any) {
       const status = error.status || 500
-      if (status === 400) track(c, "endpoint_bad_request", endpoint.path)
-      else track(c, "endpoint_error", endpoint.path)
-      return c.json({ error: error.message }, status)
+      if (status === 400) {
+        track(c, "endpoint_bad_request", endpoint.path)
+        return c.json({ error: error.message, correct_example: endpoint.exampleInput() }, 400)
+      } else {
+        track(c, "endpoint_error", endpoint.path)
+        return c.json({ error: error.message }, status)
+      }
     }
   })
 

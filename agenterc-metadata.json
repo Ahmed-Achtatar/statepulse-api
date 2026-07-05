@@ -2,23 +2,23 @@
   "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
   "name": "StatePulse API",
   "description": "Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base.",
-  "image": "https://statepulse-api.hahavoid0.workers.dev/logo.svg",
+  "image": "http://127.0.0.1:8787/logo.png",
   "services": [
     {
       "name": "A2A",
-      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json",
+      "endpoint": "http://127.0.0.1:8787/.well-known/agent-card.json",
       "version": "0.3.0"
     },
     {
       "name": "MCP",
-      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/mcp",
-      "metadata": "https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json",
+      "endpoint": "http://127.0.0.1:8787/mcp",
+      "metadata": "http://127.0.0.1:8787/.well-known/mcp.json",
       "version": "2025-06-18"
     },
     {
       "name": "OASF",
-      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/oasf",
-      "metadata": "https://statepulse-api.hahavoid0.workers.dev/.well-known/oasf.json",
+      "endpoint": "http://127.0.0.1:8787/oasf",
+      "metadata": "http://127.0.0.1:8787/.well-known/oasf.json",
       "version": "1.0.0",
       "skills": [
         "lookup_barcode",
@@ -40,6 +40,7 @@
         "get_flood_warnings",
         "get_uv_index",
         "get_lightning_potential",
+        "verify_location_presence",
         "track_marine_vessel",
         "get_rail_status",
         "get_toll_cost",
@@ -53,18 +54,32 @@
         "get_market_halts",
         "get_fed_rate",
         "lookup_company",
+        "get_financial_arbitrage",
+        "create_kyb_escrow",
+        "create_escrow_bounty",
+        "release_escrow_bounty",
         "get_contract_abi",
         "simulate_transaction",
         "get_gas_history",
         "get_wallet_balances",
         "get_funding_rates",
+        "get_token_safety",
         "audit_dns_security",
         "check_ssl_expiry",
         "audit_security_headers",
         "check_timezone",
         "get_stream_temperature",
         "lookup_whois",
-        "lookup_ip"
+        "lookup_ip",
+        "audit_network_host",
+        "agent_preflight",
+        "deposit_coordination_bounty",
+        "release_coordination_bounty",
+        "relay_transaction",
+        "request_missing_data",
+        "submit_feedback",
+        "suggest_endpoint_price",
+        "capabilities_diff"
       ],
       "domains": [
         "commerce",
@@ -78,22 +93,24 @@
         "agriculture",
         "finance",
         "blockchain",
-        "network"
+        "crypto-security",
+        "network",
+        "meta"
       ]
     },
     {
       "name": "OpenAPI",
-      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/openapi.json",
+      "endpoint": "http://127.0.0.1:8787/openapi.json",
       "version": "3.1.0"
     },
     {
       "name": "x402",
-      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json",
+      "endpoint": "http://127.0.0.1:8787/.well-known/x402.json",
       "version": "2"
     },
     {
       "name": "Website",
-      "endpoint": "https://statepulse-api.hahavoid0.workers.dev"
+      "endpoint": "http://127.0.0.1:8787"
     },
     {
       "name": "agentWallet",

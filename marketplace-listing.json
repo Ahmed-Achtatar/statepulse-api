@@ -426,6 +426,20 @@
       "method": "POST",
       "price_usd": "free",
       "description": "FREE endpoint. Report anything about this API: wrong or stale data, an endpoint that failed, pricing that feels off, or something that worked well. Feedback is reviewed and data-quality reports are fixed with priority — submitting one directly improves the results your agent gets on its next call. Matches: report wrong data, endpoint broken, stale result, API feedback, rate this API."
+    },
+    {
+      "name": "Agent Suggest Price",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/agent/suggest-price",
+      "method": "POST",
+      "price_usd": "free",
+      "description": "FREE endpoint. Suggest a target price for paid endpoints based on competing rates or usage budget. Informs dynamic and loss-leader repricing decisions."
+    },
+    {
+      "name": "Agent Capabilities Diff",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/agent/capabilities-diff",
+      "method": "POST",
+      "price_usd": "free",
+      "description": "FREE endpoint. Discovery utility to compare your agent's required data needs in bulk against our catalog. Existing features are matched and returned, and gaps are auto-filed as priority requests."
     }
   ],
   "settlement": {

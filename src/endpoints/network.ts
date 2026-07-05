@@ -69,7 +69,8 @@ export const dnsSecurityEndpoint = createEndpoint({
   },
   skillId: "audit_dns_security",
   skillName: "DNS security auditor",
-  skillExamples: ["Audit DNS security for google.com", "{\"domain\":\"google.com\"}"]
+  skillExamples: ["Audit DNS security for google.com", "{\"domain\":\"google.com\"}"],
+  relatedEndpoints: ["/network/ssl-expiry", "/network/dns-propagation"]
 })
 
 // 27. SSL CERTIFICATE EXPIRY CHECKER
@@ -134,7 +135,8 @@ export const sslExpiryEndpoint = createEndpoint({
   },
   skillId: "check_ssl_expiry",
   skillName: "SSL certificate checker",
-  skillExamples: ["Check SSL expiry for google.com", "{\"domain\":\"google.com\"}"]
+  skillExamples: ["Check SSL expiry for google.com", "{\"domain\":\"google.com\"}"],
+  relatedEndpoints: ["/network/dns-security", "/network/security-headers"]
 })
 
 // 28. HTTP SECURITY HEADERS AUDITOR
