@@ -330,52 +330,37 @@ export const airQualityEndpoint = createEndpoint({
     const lat = num(args, "lat", true)
     const lng = num(args, "lng", true)
 
+    // Open-Meteo air quality — keyless, live model data (OpenAQ v2 was retired)
     try {
-      const res = await fetch(`https://api.openaq.org/v2/latest?coordinates=${lat},${lng}&radius=25000&limit=1`)
+      const res = await fetch(
+        `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lng}&current=us_aqi,pm2_5,pm10,ozone,nitrogen_dioxide,sulphur_dioxide,carbon_monoxide`
+      )
       if (res.ok) {
         const data: any = await res.json()
-        if (data && data.results && data.results.length > 0) {
-          const result = data.results[0]
-          const measurements = result.measurements.map((m: any) => ({
-            parameter: m.parameter,
-            value: m.value,
-            unit: m.unit,
-            lastUpdated: m.lastUpdated
-          }))
-          const pm25 = measurements.find((m: any) => m.parameter === "pm25")?.value || 0
-          // Approximate US EPA AQI mapping for PM2.5
-          let aqi = 0
-          let label = "Good"
-          if (pm25 <= 12) {
-            aqi = Math.round((pm25 / 12) * 50)
-          } else if (pm25 <= 35.4) {
-            aqi = Math.round(50 + ((pm25 - 12.1) / (35.4 - 12.1)) * 50)
-            label = "Moderate"
-          } else {
-            aqi = 150
-            label = "Unhealthy"
-          }
+        const cur = data?.current
+        if (cur && cur.us_aqi !== undefined && cur.us_aqi !== null) {
+          const aqi = Math.round(cur.us_aqi)
+          const label =
+            aqi <= 50 ? "Good" :
+            aqi <= 100 ? "Moderate" :
+            aqi <= 150 ? "Unhealthy for Sensitive Groups" :
+            aqi <= 200 ? "Unhealthy" :
+            aqi <= 300 ? "Very Unhealthy" : "Hazardous"
+          const units = data.current_units || {}
+          const measurements = ["pm2_5", "pm10", "ozone", "nitrogen_dioxide", "sulphur_dioxide", "carbon_monoxide"]
+            .filter((p) => cur[p] !== undefined && cur[p] !== null)
+            .map((p) => ({ parameter: p, value: cur[p], unit: units[p] || "µg/m³", lastUpdated: cur.time }))
 
-          return response({
-            aqi,
-            label,
-            location: result.location,
-            city: result.city,
-            measurements
-          }, "medium")
+          return response({ aqi, label, lat, lng, measurements, source: "open-meteo" }, "high")
         }
       }
     } catch (e) {}
 
-    // Fallback: Return simulated/estimated AQI if API is down
-    return response({
-      lat,
-      lng,
-      aqi: 55,
-      label: "Moderate (Estimated)",
-      note: "Live sensor data unavailable. Standard seasonal estimates returned.",
-      source: "Seasonal Baseline Estimate"
-    }, "low", ["Upstream air quality sensor server did not respond."])
+    return response(
+      { lat, lng, note: "Live air-quality data unavailable right now; no estimate returned." },
+      "low",
+      ["Upstream air quality service did not respond."]
+    )
   },
   skillId: "get_air_quality",
   skillName: "Air quality check",
@@ -388,8 +373,8 @@ export const airQualityEndpoint = createEndpoint({
 export const transitEndpoint = createEndpoint({
   path: "/transit/status",
   operationId: "getTransitStatus",
-  summary: "Global Public Transit Alerts & Delays",
-  description: "Check transit delays, active alerts, and schedule status updates for supported cities and lines.",
+  summary: "Live Public Transit Alerts & Delays (NYC MTA)",
+  description: "Live subway alerts, delays, and planned-work advisories from the official MTA GTFS-RT feed for NYC lines. Other cities can be requested via the free /agent/request-data endpoint.",
   requestSchema: {
     type: "object",
     required: ["city", "line"],
@@ -421,26 +406,60 @@ export const transitEndpoint = createEndpoint({
     const city = str(args, "city").toLowerCase()
     const line = str(args, "line").toUpperCase()
 
-    // Mocking real-world feed parser for demo/sandbox limits
-    if (city === "nyc") {
-      return response({
-        city: "nyc",
-        line,
-        status: "Good Service",
-        delays: false,
-        alerts: [],
-        last_updated: new Date().toISOString()
-      }, "medium")
+    if (city === "nyc" || city === "new york" || city === "new york city") {
+      // MTA subway alerts — keyless GTFS-RT JSON feed
+      try {
+        const res = await fetch("https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/camsys%2Fsubway-alerts.json")
+        if (res.ok) {
+          const data: any = await res.json()
+          const now = Date.now() / 1000
+          const alerts = (data?.entity || [])
+            .filter((e: any) => {
+              const a = e.alert
+              if (!a) return false
+              const onLine = (a.informed_entity || []).some((ie: any) => String(ie.route_id || "").toUpperCase() === line)
+              if (!onLine) return false
+              const periods = a.active_period || []
+              if (periods.length === 0) return true
+              return periods.some((p: any) => (!p.start || Number(p.start) <= now) && (!p.end || Number(p.end) >= now))
+            })
+            .slice(0, 10)
+            .map((e: any) => {
+              const a = e.alert
+              const text = (field: any) => field?.translation?.find((t: any) => t.language === "en")?.text || field?.translation?.[0]?.text || null
+              return {
+                header: text(a.header_text),
+                description: text(a.description_text),
+                alert_type: a?.["transit_realtime.mercury_alert"]?.alert_type || null
+              }
+            })
+          const hasDelays = alerts.some((a: any) =>
+            ["delay", "suspend", "part suspended", "service change"].some((k) => `${a.alert_type} ${a.header}`.toLowerCase().includes(k))
+          )
+          return response({
+            city: "nyc",
+            line,
+            status: alerts.length === 0 ? "Good Service" : hasDelays ? "Delays / Service Change" : "Planned Work / Advisories",
+            delays: hasDelays,
+            alerts,
+            source: "mta-gtfs-rt",
+            last_updated: new Date().toISOString()
+          }, "high")
+        }
+      } catch (e) {}
+
+      return response(
+        { city: "nyc", line, note: "MTA alerts feed unavailable right now; no status returned." },
+        "low",
+        ["Upstream MTA GTFS-RT alerts feed did not respond."]
+      )
     }
 
-    return response({
-      city,
-      line,
-      status: "Scheduled Operation",
-      delays: false,
-      note: "Direct live feed for this line is currently in baseline scheduled mode.",
-      alerts: []
-    }, "low")
+    return response(
+      { city, line, supported_cities: ["nyc"], note: "Live transit alerts are currently only available for NYC (MTA). Request more cities via the free POST /agent/request-data endpoint and they will be prioritized." },
+      "low",
+      ["No live feed integrated for this city yet."]
+    )
   },
   skillId: "get_transit_status",
   skillName: "Transit status check",

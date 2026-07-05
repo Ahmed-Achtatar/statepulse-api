@@ -410,18 +410,6 @@ export const whoisEndpoint = createEndpoint({
       }
     } catch (e) {}
 
-    // Fallback sandbox record for common verification testing
-    const lowerDom = domain.toLowerCase()
-    if (lowerDom === "google.com") {
-      return response({
-        domain,
-        registrar: "MarkMonitor Inc.",
-        created_date: "1997-09-15T04:00:00Z",
-        expires_date: "2028-09-14T04:00:00Z",
-        status: ["clientDeleteProhibited", "clientTransferProhibited"]
-      }, "medium")
-    }
-
     return response({
       domain,
       note: "No matching RDAP record returned from public bootstrap directory."
@@ -517,24 +505,35 @@ export const ipLookupEndpoint = createEndpoint({
       }
     } catch (e) {}
 
-    // Fallback mock record for common testing
-    if (ip === "8.8.8.8") {
-      return response({
-        ip: "8.8.8.8",
-        country: "United States",
-        country_code: "US",
-        region: "California",
-        city: "Mountain View",
-        zip: "94043",
-        lat: 37.422,
-        lng: -122.084,
-        timezone: "America/Los_Angeles",
-        isp: "Google LLC",
-        org: "Google LLC",
-        asn: "AS15169 Google LLC",
-        hosting: true
-      }, "medium")
-    }
+    // Secondary keyless source — ipwho.is (https, no key)
+    try {
+      const res = await fetch(`https://ipwho.is/${ip}`)
+      if (res.ok) {
+        const data: any = await res.json()
+        if (data && data.success !== false) {
+          const conn = data.connection || {}
+          const hostingTerms = ["hosting", "aws", "amazon", "google", "cloud", "cloudflare", "digitalocean", "linode", "azure", "microsoft", "server"]
+          const isHosting = [conn.isp || "", conn.org || ""].some((val: string) =>
+            hostingTerms.some((term) => val.toLowerCase().includes(term))
+          )
+          return response({
+            ip: data.ip,
+            country: data.country,
+            country_code: data.country_code,
+            region: data.region,
+            city: data.city,
+            zip: data.postal,
+            lat: data.latitude,
+            lng: data.longitude,
+            timezone: data.timezone?.id || null,
+            isp: conn.isp || null,
+            org: conn.org || null,
+            asn: conn.asn ? `AS${conn.asn} ${conn.org || ""}`.trim() : null,
+            hosting: isHosting
+          }, "high")
+        }
+      }
+    } catch (e) {}
 
     return response({
       ip,

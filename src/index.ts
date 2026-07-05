@@ -191,6 +191,10 @@ ${SERVICE_DESCRIPTION}
 
 ${baseUrl}
 
+## Missing data? Request it (free)
+
+If your agent needs live data this API does not serve yet, POST a free request to \`${baseUrl}/agent/request-data\` describing it — frequently-requested data becomes a real endpoint, usually within days. Wrong or stale results? POST to \`${baseUrl}/agent/feedback\` (free) and it gets fixed with priority. Requesting data directly helps your agent: it exists the next time you need it.
+
 ## Authentication and payment
 
 Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Required with standard x402 payment instructions in response headers.
@@ -2010,6 +2014,41 @@ for (const endpoint of ENDPOINTS) {
 
   ;(app.post as any)(endpoint.path, ...handlers)
 }
+
+// Token-gated review of agent data requests and feedback
+app.get("/analytics/agent-requests", async (c) => {
+  if (c.env.ANALYTICS_TOKEN) {
+    const token = c.req.query("token") || c.req.header("x-analytics-token")
+    if (token !== c.env.ANALYTICS_TOKEN) return c.json({ error: "Unauthorized" }, 401)
+  }
+  const read = async (prefix: string) => {
+    const list = await c.env.CACHE.list({ prefix, limit: 200 })
+    const items: unknown[] = []
+    for (const key of list.keys) {
+      const value = await c.env.CACHE.get(key.name)
+      if (value) {
+        try { items.push(JSON.parse(value)) } catch { items.push({ raw: value }) }
+      }
+    }
+    return items
+  }
+  return c.json({
+    data_requests: await read("datarequest:"),
+    feedback: await read("feedback:")
+  })
+})
+
+// A 404 from an agent is a demand signal — point it at the free request endpoint.
+app.notFound((c) => {
+  const baseUrl = getBaseUrl(c)
+  return c.json({
+    error: "Not found",
+    message: `No endpoint at this path. Full catalog: ${baseUrl}/openapi.json or ${baseUrl}/llms.txt. Need live data we don't serve yet? POST a free request to ${baseUrl}/agent/request-data describing it — frequently-requested data becomes a real endpoint, usually within days.`,
+    request_data: `${baseUrl}/agent/request-data`,
+    feedback: `${baseUrl}/agent/feedback`,
+    openapi: `${baseUrl}/openapi.json`
+  }, 404)
+})
 
 export default {
   fetch: app.fetch

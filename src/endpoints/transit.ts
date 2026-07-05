@@ -234,28 +234,50 @@ export const evChargerEndpoint = createEndpoint({
     const lng = num(args, "lng", true)
     const radius = num(args, "radius_miles") || 10
 
+    // OpenStreetMap Overpass — keyless; Open Charge Map now 403s keyless requests
     try {
-      // Query Open Charge Map public read-only endpoint (requires no API key for basic bounding queries)
-      const res = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&latitude=${lat}&longitude=${lng}&distance=${radius}&distanceunit=Miles&maxresults=5`)
+      const radiusMeters = Math.round(radius * 1609)
+      const query = `[out:json][timeout:15];node["amenity"="charging_station"](around:${radiusMeters},${lat},${lng});out 10;`
+      const res = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        headers: { "user-agent": "StatePulse-API/1.0", "content-type": "application/x-www-form-urlencoded" },
+        body: `data=${encodeURIComponent(query)}`
+      })
       if (res.ok) {
         const data: any = await res.json()
-        const chargers = data.map((item: any) => ({
-          name: item.AddressInfo?.Title || "EV Charger",
-          lat: item.AddressInfo?.Latitude,
-          lng: item.AddressInfo?.Longitude,
-          distance_miles: Number((item.AddressInfo?.Distance || 0).toFixed(2)),
-          connections: (item.Connections || []).map((c: any) => c.ConnectionType?.Title || "Standard")
-        }))
-        return response({ chargers }, "high")
+        const toRad = (d: number) => (d * Math.PI) / 180
+        const distMiles = (aLat: number, aLng: number, bLat: number, bLng: number) => {
+          const dLat = toRad(bLat - aLat)
+          const dLng = toRad(bLng - aLng)
+          const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2
+          return 3958.8 * 2 * Math.asin(Math.sqrt(h))
+        }
+        const chargers = (data.elements || [])
+          .map((el: any) => {
+            const tags = el.tags || {}
+            const connections = Object.keys(tags)
+              .filter((k) => k.startsWith("socket:") && !k.includes(":output") && !k.includes(":current"))
+              .map((k) => k.replace("socket:", ""))
+            return {
+              name: tags.name || tags.operator || "EV Charging Station",
+              lat: el.lat,
+              lng: el.lon,
+              distance_miles: Number(distMiles(Number(lat), Number(lng), el.lat, el.lon).toFixed(2)),
+              connections: connections.length > 0 ? connections : ["unspecified"],
+              capacity: tags.capacity ? Number(tags.capacity) : null,
+              operator: tags.operator || null
+            }
+          })
+          .sort((a: any, b: any) => a.distance_miles - b.distance_miles)
+        return response({ chargers, source: "openstreetmap" }, chargers.length > 0 ? "high" : "medium")
       }
     } catch (e) {}
 
-    // Fallback sandbox estimate
-    return response({
-      chargers: [
-        { name: "Downtown Charger Hub (Fallback)", lat: Number(lat) + 0.002, lng: Number(lng) - 0.003, distance_miles: 0.5, connections: ["Type 2", "CCS"] }
-      ]
-    }, "low", ["Using geolocated fallback coordinates due to index API timeout."])
+    return response(
+      { chargers: [], note: "Charging-station index (OpenStreetMap Overpass) unavailable right now." },
+      "low",
+      ["Upstream charging-station directory did not respond; no data returned."]
+    )
   },
   skillId: "get_ev_chargers",
   skillName: "EV charging station finder",
