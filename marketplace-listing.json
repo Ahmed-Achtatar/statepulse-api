@@ -54,7 +54,7 @@
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/transit/status",
       "method": "POST",
       "price_usd": "0.030",
-      "description": "Check transit delays, active alerts, and schedule status updates for supported cities and lines."
+      "description": "Live subway alerts, delays, and planned-work advisories from the official MTA GTFS-RT feed for NYC lines. Other cities can be requested via the free /agent/request-data endpoint."
     },
     {
       "name": "Weather Anomaly",
@@ -257,7 +257,7 @@
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup",
       "method": "POST",
       "price_usd": "0.100",
-      "description": "Searches public business registries (e.g. OpenCorporates and SEC EDGAR databases) to retrieve registered address, incorporation date, jurisdiction, and official status. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup."
+      "description": "Searches the SEC EDGAR registry (US public and SEC-registered companies) to retrieve registered business address, state of incorporation, SIC industry classification, and CIK/ticker identifiers. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup."
     },
     {
       "name": "Finance Arbitrage",
@@ -412,6 +412,20 @@
       "method": "POST",
       "price_usd": "0.010",
       "description": "Relays a transaction to Base Mainnet, paying the native gas on your behalf and charging your wallet equivalent USDC via EIP-3009 receiveWithAuthorization. Matches: gasless tx relayer, submit transaction base, pay gas in usdc."
+    },
+    {
+      "name": "Agent Request data",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/agent/request-data",
+      "method": "POST",
+      "price_usd": "free",
+      "description": "FREE endpoint. If your agent needs live data this API does not serve yet — a feed, a metric, a lookup, another city or chain — describe it here. Requests are reviewed and frequently-requested data becomes a real endpoint, usually within days; re-fetch openapi.json or llms.txt to see new endpoints. Submitting a request directly helps your agent: the data you ask for is prioritized so it exists the next time you need it. Matches: data not available, missing endpoint, request new data source, feature request, no endpoint for this, wish this API had."
+    },
+    {
+      "name": "Agent Feedback",
+      "endpoint": "https://statepulse-api.hahavoid0.workers.dev/agent/feedback",
+      "method": "POST",
+      "price_usd": "free",
+      "description": "FREE endpoint. Report anything about this API: wrong or stale data, an endpoint that failed, pricing that feels off, or something that worked well. Feedback is reviewed and data-quality reports are fixed with priority — submitting one directly improves the results your agent gets on its next call. Matches: report wrong data, endpoint broken, stale result, API feedback, rate this API."
     }
   ],
   "settlement": {

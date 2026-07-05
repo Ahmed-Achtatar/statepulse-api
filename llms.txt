@@ -4,7 +4,11 @@ Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: 
 
 ## Base URL
 
-http://localhost:8787
+https://statepulse-api.hahavoid0.workers.dev
+
+## Missing data? Request it (free)
+
+If your agent needs live data this API does not serve yet, POST a free request to `https://statepulse-api.hahavoid0.workers.dev/agent/request-data` describing it — frequently-requested data becomes a real endpoint, usually within days. Wrong or stale results? POST to `https://statepulse-api.hahavoid0.workers.dev/agent/feedback` (free) and it gets fixed with priority. Requesting data directly helps your agent: it exists the next time you need it.
 
 ## Authentication and payment
 
@@ -14,10 +18,10 @@ Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Req
 - Network: Base mainnet, eip155:8453
 - Asset: USDC, 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
 - Facilitator: https://api.cdp.coinbase.com/platform/v2/x402
-- x402 metadata: http://localhost:8787/.well-known/x402.json
-- OpenAPI schema: http://localhost:8787/openapi.json
-- Agent card: http://localhost:8787/.well-known/agent-card.json
-- MCP metadata: http://localhost:8787/.well-known/mcp.json
+- x402 metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json
+- OpenAPI schema: https://statepulse-api.hahavoid0.workers.dev/openapi.json
+- Agent card: https://statepulse-api.hahavoid0.workers.dev/.well-known/agent-card.json
+- MCP metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json
 
 ### Option 2: Prepaid API Credits (Recommended Fallback)
 If you prefer not to sign on-chain transactions for individual calls, you can generate a prepaid API key:
@@ -36,7 +40,7 @@ If you prefer not to sign on-chain transactions for individual calls, you can ge
 
 Before submitting a paid request, you can validate your request arguments completely **free** to check for format compatibility (e.g. valid EVM address format, 5-digit ZIP validation, coordinates boundary limits):
 
-POST http://localhost:8787/preflight
+POST https://statepulse-api.hahavoid0.workers.dev/preflight
 
 Example Body payload:
 ```json
@@ -71,8 +75,8 @@ Note: The payment gateway middleware will also run these validation checks autom
 1. Pick the narrowest endpoint that matches the user's task from the list below.
 2. Validate required fields client-side before paying; each endpoint documents its required JSON fields.
 3. If using AgentCash, you can discover and check schemas first:
-   - npx agentcash@latest discover http://localhost:8787
-   - npx agentcash@latest check http://localhost:8787/product/barcode
+   - npx agentcash@latest discover https://statepulse-api.hahavoid0.workers.dev
+   - npx agentcash@latest check https://statepulse-api.hahavoid0.workers.dev/product/barcode
 4. Execute the request with the JSON body shown for that endpoint.
 5. Every response includes a confidence/disclaimer field where relevant (legal, tax, or safety topics) — surface that to the end user, do not present results as certain legal or medical fact.
 
@@ -86,12 +90,12 @@ The cheapest paid endpoints cost $0.010 USDC:
 To prove the API works as an agent with the smallest spend, discover the origin, check the schema, then call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/calendar/holidays -m POST -b '{"year":2026,"country_code":"US"}' --payment-protocol x402 --payment-network base --max-amount 0.02
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/calendar/holidays -m POST -b '{"year":2026,"country_code":"US"}' --payment-protocol x402 --payment-network base --max-amount 0.02
 ```
 
 ## Endpoint: Universal Barcode & Retail Product Metadata Lookup
 
-POST http://localhost:8787/product/barcode
+POST https://statepulse-api.hahavoid0.workers.dev/product/barcode
 
 Price: $0.020
 
@@ -129,12 +133,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/product/barcode -m POST -b '{"barcode":"9780140449136"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/product/barcode -m POST -b '{"barcode":"9780140449136"}'
 ```
 
 ## Endpoint: Global Air Traffic & Flight State Vectors
 
-POST http://localhost:8787/airspace/track
+POST https://statepulse-api.hahavoid0.workers.dev/airspace/track
 
 Price: $0.030
 
@@ -173,12 +177,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/airspace/track -m POST -b '{"icao24":"3c6444"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/airspace/track -m POST -b '{"icao24":"3c6444"}'
 ```
 
 ## Endpoint: Hyperlocal Air Quality & Environmental Conditions
 
-POST http://localhost:8787/environment/air-quality
+POST https://statepulse-api.hahavoid0.workers.dev/environment/air-quality
 
 Price: $0.030
 
@@ -222,12 +226,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/environment/air-quality -m POST -b '{"lat":34.05,"lng":-118.24}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/air-quality -m POST -b '{"lat":34.05,"lng":-118.24}'
 ```
 
-## Endpoint: Global Public Transit Alerts & Delays
+## Endpoint: Live Public Transit Alerts & Delays (NYC MTA)
 
-POST http://localhost:8787/transit/status
+POST https://statepulse-api.hahavoid0.workers.dev/transit/status
 
 Price: $0.030
 
@@ -263,12 +267,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/status -m POST -b '{"city":"nyc","line":"L"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/status -m POST -b '{"city":"nyc","line":"L"}'
 ```
 
 ## Endpoint: Dark Sky / Open-Meteo Historic Weather Anomalies
 
-POST http://localhost:8787/weather/anomaly
+POST https://statepulse-api.hahavoid0.workers.dev/weather/anomaly
 
 Price: $0.030
 
@@ -303,12 +307,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/weather/anomaly -m POST -b '{"lat":40.71,"lng":-74}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/weather/anomaly -m POST -b '{"lat":40.71,"lng":-74}'
 ```
 
 ## Endpoint: Live Radio & Podcast Stream Audio Extraction
 
-POST http://localhost:8787/radio/stream-url
+POST https://statepulse-api.hahavoid0.workers.dev/radio/stream-url
 
 Price: $0.010
 
@@ -342,12 +346,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/radio/stream-url -m POST -b '{"country":"Morocco","genre":"news"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/radio/stream-url -m POST -b '{"country":"Morocco","genre":"news"}'
 ```
 
 ## Endpoint: DNS Watch / Dig-Web-Interface Record Checker
 
-POST http://localhost:8787/network/dns-propagation
+POST https://statepulse-api.hahavoid0.workers.dev/network/dns-propagation
 
 Price: $0.010
 
@@ -383,12 +387,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/network/dns-propagation -m POST -b '{"domain":"google.com","type":"MX"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/dns-propagation -m POST -b '{"domain":"google.com","type":"MX"}'
 ```
 
 ## Endpoint: Canva / Brandfetch Color & Logo Scraper
 
-POST http://localhost:8787/brand/assets
+POST https://statepulse-api.hahavoid0.workers.dev/brand/assets
 
 Price: $0.020
 
@@ -422,12 +426,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/brand/assets -m POST -b '{"domain":"spotify.com"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/brand/assets -m POST -b '{"domain":"spotify.com"}'
 ```
 
 ## Endpoint: PredictIt / ElectionBettingOdds Market Tracker
 
-POST http://localhost:8787/prediction/odds
+POST https://statepulse-api.hahavoid0.workers.dev/prediction/odds
 
 Price: $0.020
 
@@ -464,12 +468,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/prediction/odds -m POST -b '{"market_id":7000}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/prediction/odds -m POST -b '{"market_id":7000}'
 ```
 
 ## Endpoint: USGS WaterData River Level Tracker
 
-POST http://localhost:8787/water/streamflow
+POST https://statepulse-api.hahavoid0.workers.dev/water/streamflow
 
 Price: $0.030
 
@@ -507,12 +511,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/water/streamflow -m POST -b '{"state":"CA"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/streamflow -m POST -b '{"state":"CA"}'
 ```
 
 ## Endpoint: Nager.Date National Bank Holiday Lookup
 
-POST http://localhost:8787/calendar/holidays
+POST https://statepulse-api.hahavoid0.workers.dev/calendar/holidays
 
 Price: $0.010
 
@@ -549,12 +553,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/calendar/holidays -m POST -b '{"year":2026,"country_code":"US"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/calendar/holidays -m POST -b '{"year":2026,"country_code":"US"}'
 ```
 
 ## Endpoint: USGS Live Earthquake Seismic Activity Tracker
 
-POST http://localhost:8787/environment/earthquake
+POST https://statepulse-api.hahavoid0.workers.dev/environment/earthquake
 
 Price: $0.020
 
@@ -594,12 +598,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/environment/earthquake -m POST -b '{"min_magnitude":4}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/earthquake -m POST -b '{"min_magnitude":4}'
 ```
 
 ## Endpoint: NASA FIRMS Satellite Active Forest Fire Detector
 
-POST http://localhost:8787/environment/wildfire
+POST https://statepulse-api.hahavoid0.workers.dev/environment/wildfire
 
 Price: $0.050
 
@@ -637,12 +641,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/environment/wildfire -m POST -b '{"state":"CA"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/wildfire -m POST -b '{"state":"CA"}'
 ```
 
 ## Endpoint: NOAA Live Solar Storm & Geomagnetic Alert System
 
-POST http://localhost:8787/environment/space-weather
+POST https://statepulse-api.hahavoid0.workers.dev/environment/space-weather
 
 Price: $0.050
 
@@ -673,12 +677,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/environment/space-weather -m POST -b '{}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/space-weather -m POST -b '{}'
 ```
 
 ## Endpoint: Hyperlocal Pollen & Allergen Live Forecast
 
-POST http://localhost:8787/environment/pollen
+POST https://statepulse-api.hahavoid0.workers.dev/environment/pollen
 
 Price: $0.020
 
@@ -713,12 +717,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/environment/pollen -m POST -b '{"lat":34.05,"lng":-118.24}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/pollen -m POST -b '{"lat":34.05,"lng":-118.24}'
 ```
 
 ## Endpoint: NOAA NDBC Wave Height & Sea Temperature Tracker
 
-POST http://localhost:8787/water/marine-conditions
+POST https://statepulse-api.hahavoid0.workers.dev/water/marine-conditions
 
 Price: $0.030
 
@@ -752,12 +756,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/water/marine-conditions -m POST -b '{"buoy_id":"41002"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/marine-conditions -m POST -b '{"buoy_id":"41002"}'
 ```
 
 ## Endpoint: USGS Streamflow River Gauge Height & Flood Alert System
 
-POST http://localhost:8787/water/flood-warnings
+POST https://statepulse-api.hahavoid0.workers.dev/water/flood-warnings
 
 Price: $0.050
 
@@ -794,12 +798,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/water/flood-warnings -m POST -b '{"state":"CA"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/flood-warnings -m POST -b '{"state":"CA"}'
 ```
 
 ## Endpoint: Open-Meteo Current UV Index & Sun-Safety Triage
 
-POST http://localhost:8787/environment/uv-index
+POST https://statepulse-api.hahavoid0.workers.dev/environment/uv-index
 
 Price: $0.020
 
@@ -833,12 +837,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/environment/uv-index -m POST -b '{"lat":34.05,"lng":-118.24}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/uv-index -m POST -b '{"lat":34.05,"lng":-118.24}'
 ```
 
 ## Endpoint: Open-Meteo Current Lightning Strike Potential
 
-POST http://localhost:8787/environment/lightning-density
+POST https://statepulse-api.hahavoid0.workers.dev/environment/lightning-density
 
 Price: $0.020
 
@@ -871,12 +875,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/environment/lightning-density -m POST -b '{"lat":34.05,"lng":-118.24}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/lightning-density -m POST -b '{"lat":34.05,"lng":-118.24}'
 ```
 
 ## Endpoint: Signed IP Geolocation Presence Verification Oracle
 
-POST http://localhost:8787/location/verify-presence
+POST https://statepulse-api.hahavoid0.workers.dev/location/verify-presence
 
 Price: $0.500
 
@@ -913,12 +917,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/location/verify-presence -m POST -b '{"ip":"8.8.8.8","expected_country":"US"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/location/verify-presence -m POST -b '{"ip":"8.8.8.8","expected_country":"US"}'
 ```
 
 ## Endpoint: Global AIS Cargo Ship & Vessel Location Tracker
 
-POST http://localhost:8787/transit/marine-vessel
+POST https://statepulse-api.hahavoid0.workers.dev/transit/marine-vessel
 
 Price: $0.150
 
@@ -955,12 +959,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/marine-vessel -m POST -b '{"mmsi":"205792000"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/marine-vessel -m POST -b '{"mmsi":"205792000"}'
 ```
 
 ## Endpoint: OpenData European Railway Station Board & Delays
 
-POST http://localhost:8787/transit/rail-status
+POST https://statepulse-api.hahavoid0.workers.dev/transit/rail-status
 
 Price: $0.020
 
@@ -999,12 +1003,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/rail-status -m POST -b '{"station":"Zurich HB"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/rail-status -m POST -b '{"station":"Zurich HB"}'
 ```
 
 ## Endpoint: US/EU Toll Road Route Fee Calculator
 
-POST http://localhost:8787/transit/toll-cost
+POST https://statepulse-api.hahavoid0.workers.dev/transit/toll-cost
 
 Price: $0.080
 
@@ -1038,12 +1042,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/toll-cost -m POST -b '{"state":"NY","distance_miles":80}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/toll-cost -m POST -b '{"state":"NY","distance_miles":80}'
 ```
 
 ## Endpoint: Open Charge Map EV Charging Station Live Finder
 
-POST http://localhost:8787/transit/ev-charger
+POST https://statepulse-api.hahavoid0.workers.dev/transit/ev-charger
 
 Price: $0.020
 
@@ -1086,12 +1090,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/ev-charger -m POST -b '{"lat":34.05,"lng":-118.24}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/ev-charger -m POST -b '{"lat":34.05,"lng":-118.24}'
 ```
 
 ## Endpoint: OpenStreetMap OSRM Driving Distance & Duration Calculator
 
-POST http://localhost:8787/transit/route-duration
+POST https://statepulse-api.hahavoid0.workers.dev/transit/route-duration
 
 Price: $0.020
 
@@ -1126,12 +1130,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/route-duration -m POST -b '{"start_lat":34.05,"start_lng":-118.24,"end_lat":34.14,"end_lng":-118.14}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/route-duration -m POST -b '{"start_lat":34.05,"start_lng":-118.24,"end_lat":34.14,"end_lng":-118.14}'
 ```
 
 ## Endpoint: OpenSky Network Live Airport Flight Board
 
-POST http://localhost:8787/transit/airport-board
+POST https://statepulse-api.hahavoid0.workers.dev/transit/airport-board
 
 Price: $0.050
 
@@ -1169,12 +1173,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/airport-board -m POST -b '{"airport_icao":"EDDF"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/airport-board -m POST -b '{"airport_icao":"EDDF"}'
 ```
 
 ## Endpoint: FAA US Airport Live Ground Stop & Delay Checker
 
-POST http://localhost:8787/transit/faa-delays
+POST https://statepulse-api.hahavoid0.workers.dev/transit/faa-delays
 
 Price: $0.050
 
@@ -1209,12 +1213,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/transit/faa-delays -m POST -b '{"airport_code":"SFO"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/transit/faa-delays -m POST -b '{"airport_code":"SFO"}'
 ```
 
 ## Endpoint: US State & County Sales Tax Rate Triage
 
-POST http://localhost:8787/finance/sales-tax
+POST https://statepulse-api.hahavoid0.workers.dev/finance/sales-tax
 
 Price: $0.040
 
@@ -1248,12 +1252,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/sales-tax -m POST -b '{"zip_code":"90210"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/sales-tax -m POST -b '{"zip_code":"90210"}'
 ```
 
 ## Endpoint: USPTO PatentsView Database Live Search
 
-POST http://localhost:8787/intellectual-property/patent
+POST https://statepulse-api.hahavoid0.workers.dev/intellectual-property/patent
 
 Price: $0.120
 
@@ -1289,12 +1293,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/intellectual-property/patent -m POST -b '{"patent_number":"10000000"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/intellectual-property/patent -m POST -b '{"patent_number":"10000000"}'
 ```
 
 ## Endpoint: USPTO Trademark Registry Brand Name Checker
 
-POST http://localhost:8787/intellectual-property/trademark
+POST https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark
 
 Price: $0.100
 
@@ -1329,12 +1333,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/intellectual-property/trademark -m POST -b '{"word":"Apple"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark -m POST -b '{"word":"Apple"}'
 ```
 
 ## Endpoint: Nasdaq Stock Exchange Circuit Breaker & Halts Tracker
 
-POST http://localhost:8787/finance/halts
+POST https://statepulse-api.hahavoid0.workers.dev/finance/halts
 
 Price: $0.020
 
@@ -1369,12 +1373,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/halts -m POST -b '{}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/halts -m POST -b '{}'
 ```
 
 ## Endpoint: Federal Reserve Current Target & Discount Rate
 
-POST http://localhost:8787/finance/fed-rate
+POST https://statepulse-api.hahavoid0.workers.dev/finance/fed-rate
 
 Price: $0.020
 
@@ -1404,12 +1408,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/fed-rate -m POST -b '{}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/fed-rate -m POST -b '{}'
 ```
 
 ## Endpoint: Company & Corporate Registry Information Finder
 
-POST http://localhost:8787/finance/company-lookup
+POST https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup
 
 Price: $0.100
 
@@ -1432,12 +1436,14 @@ Response example:
 {
   "supported": true,
   "result": {
-    "name": "APPLE INC.",
-    "company_number": "C0802245",
+    "name": "Apple Inc.",
+    "cik": "0000320193",
+    "ticker": "AAPL",
     "jurisdiction": "us_ca",
     "company_status": "Active",
-    "date_of_creation": "1977-01-03",
-    "registered_address": "One Apple Park Way, Cupertino, CA 95014"
+    "sic_code": "3571",
+    "sic_description": "Electronic Computers",
+    "registered_address": "One Apple Park Way, Cupertino, CA, 95014"
   },
   "confidence": "high"
 }
@@ -1446,12 +1452,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/company-lookup -m POST -b '{"company_name":"Apple","country_code":"us"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup -m POST -b '{"company_name":"Apple","country_code":"us"}'
 ```
 
 ## Endpoint: Cross-Market Perpetual Arbitrage & Funding Yield Triage
 
-POST http://localhost:8787/finance/arbitrage
+POST https://statepulse-api.hahavoid0.workers.dev/finance/arbitrage
 
 Price: $0.250
 
@@ -1489,12 +1495,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/arbitrage -m POST -b '{"min_funding_rate":0.0001}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/arbitrage -m POST -b '{"min_funding_rate":0.0001}'
 ```
 
 ## Endpoint: Corporate Status Escrow Simulator (Sandbox)
 
-POST http://localhost:8787/finance/kyb-escrow
+POST https://statepulse-api.hahavoid0.workers.dev/finance/kyb-escrow
 
 Price: $0.010
 
@@ -1537,12 +1543,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/kyb-escrow -m POST -b '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/kyb-escrow -m POST -b '{"company_name":"Apple","buyer_wallet":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","seller_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9","amount_usdc":"100.00"}'
 ```
 
 ## Endpoint: Bounty Escrow Simulator (Sandbox)
 
-POST http://localhost:8787/finance/escrow-bounty
+POST https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty
 
 Price: $0.010
 
@@ -1582,12 +1588,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/escrow-bounty -m POST -b '{"title":"Solve Maze Task","reward_usdc":"100.00","duration_days":7,"sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty -m POST -b '{"title":"Solve Maze Task","reward_usdc":"100.00","duration_days":7,"sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e"}'
 ```
 
 ## Endpoint: Bounty Escrow Release Simulator (Sandbox)
 
-POST http://localhost:8787/finance/escrow-bounty/release
+POST https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty/release
 
 Price: $0.010
 
@@ -1623,12 +1629,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/finance/escrow-bounty/release -m POST -b '{"bounty_id":"sim_bounty_9c9743e4-8e0d-49d4","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty/release -m POST -b '{"bounty_id":"sim_bounty_9c9743e4-8e0d-49d4","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9"}'
 ```
 
 ## Endpoint: Etherscan/Basescan Verified Contract ABI Resolver
 
-POST http://localhost:8787/blockchain/abi
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/abi
 
 Price: $0.005
 
@@ -1662,12 +1668,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/blockchain/abi -m POST -b '{"address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","chain":"base"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/abi -m POST -b '{"address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","chain":"base"}'
 ```
 
 ## Endpoint: EVM Transaction Execution Simulator
 
-POST http://localhost:8787/blockchain/simulate
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/simulate
 
 Price: $0.050
 
@@ -1700,12 +1706,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/blockchain/simulate -m POST -b '{"to":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","data":"0x70a082310000000000000000000000000000000000000000000000000000000000000000"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/simulate -m POST -b '{"to":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","data":"0x70a082310000000000000000000000000000000000000000000000000000000000000000"}'
 ```
 
 ## Endpoint: Base Blockchain Gas Fee History & Trend Tracker
 
-POST http://localhost:8787/blockchain/gas-history
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/gas-history
 
 Price: $0.001
 
@@ -1738,12 +1744,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/blockchain/gas-history -m POST -b '{"blocks":20}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/gas-history -m POST -b '{"blocks":20}'
 ```
 
 ## Endpoint: Multi-Chain Wallet Token Balance Scanner
 
-POST http://localhost:8787/blockchain/balances
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/balances
 
 Price: $0.001
 
@@ -1777,12 +1783,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/blockchain/balances -m POST -b '{"wallet":"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/balances -m POST -b '{"wallet":"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE"}'
 ```
 
 ## Endpoint: Binance Futures Live Perp Funding Rates Ticker
 
-POST http://localhost:8787/blockchain/funding-rates
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates
 
 Price: $0.002
 
@@ -1817,12 +1823,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/blockchain/funding-rates -m POST -b '{"symbol":"BTCUSDT"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/funding-rates -m POST -b '{"symbol":"BTCUSDT"}'
 ```
 
 ## Endpoint: Token Contract Rug-Pull & Ownership Risk Composite
 
-POST http://localhost:8787/blockchain/token-safety
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/token-safety
 
 Price: $0.050
 
@@ -1866,12 +1872,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/blockchain/token-safety -m POST -b '{"address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/token-safety -m POST -b '{"address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"}'
 ```
 
 ## Endpoint: DNSSEC & CAA Record Security Auditor
 
-POST http://localhost:8787/network/dns-security
+POST https://statepulse-api.hahavoid0.workers.dev/network/dns-security
 
 Price: $0.010
 
@@ -1906,12 +1912,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/network/dns-security -m POST -b '{"domain":"google.com"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/dns-security -m POST -b '{"domain":"google.com"}'
 ```
 
 ## Endpoint: SSL Certificate Handshake Expiration Monitor
 
-POST http://localhost:8787/network/ssl-expiry
+POST https://statepulse-api.hahavoid0.workers.dev/network/ssl-expiry
 
 Price: $0.010
 
@@ -1945,12 +1951,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/network/ssl-expiry -m POST -b '{"domain":"google.com"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/ssl-expiry -m POST -b '{"domain":"google.com"}'
 ```
 
 ## Endpoint: HTTP Security Header Quality Auditor
 
-POST http://localhost:8787/network/security-headers
+POST https://statepulse-api.hahavoid0.workers.dev/network/security-headers
 
 Price: $0.020
 
@@ -1986,12 +1992,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/network/security-headers -m POST -b '{"url":"https://google.com"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/security-headers -m POST -b '{"url":"https://google.com"}'
 ```
 
 ## Endpoint: Geocoding City Timezone & Local Time Checker
 
-POST http://localhost:8787/location/timezone-checker
+POST https://statepulse-api.hahavoid0.workers.dev/location/timezone-checker
 
 Price: $0.020
 
@@ -2025,12 +2031,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/location/timezone-checker -m POST -b '{"city":"Tokyo"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/location/timezone-checker -m POST -b '{"city":"Tokyo"}'
 ```
 
 ## Endpoint: USGS Streamflow River Water Temperature Monitor
 
-POST http://localhost:8787/water/stream-temp
+POST https://statepulse-api.hahavoid0.workers.dev/water/stream-temp
 
 Price: $0.020
 
@@ -2067,12 +2073,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/water/stream-temp -m POST -b '{"state":"CA"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/water/stream-temp -m POST -b '{"state":"CA"}'
 ```
 
 ## Endpoint: Domain WHOIS & Registry Expiration Checker
 
-POST http://localhost:8787/network/whois
+POST https://statepulse-api.hahavoid0.workers.dev/network/whois
 
 Price: $0.040
 
@@ -2109,12 +2115,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/network/whois -m POST -b '{"domain":"google.com"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/whois -m POST -b '{"domain":"google.com"}'
 ```
 
 ## Endpoint: IP Geolocation & Threat Intelligence Scanner
 
-POST http://localhost:8787/network/ip-lookup
+POST https://statepulse-api.hahavoid0.workers.dev/network/ip-lookup
 
 Price: $0.020
 
@@ -2157,12 +2163,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/network/ip-lookup -m POST -b '{"ip":"8.8.8.8"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/ip-lookup -m POST -b '{"ip":"8.8.8.8"}'
 ```
 
 ## Endpoint: Comprehensive Network Host & VPS Security Auditor
 
-POST http://localhost:8787/network/audit
+POST https://statepulse-api.hahavoid0.workers.dev/network/audit
 
 Price: $0.100
 
@@ -2208,12 +2214,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/network/audit -m POST -b '{"host":"google.com"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/network/audit -m POST -b '{"host":"google.com"}'
 ```
 
 ## Endpoint: Onchain Transaction Preflight — Bundled GO/NO-GO Check
 
-POST http://localhost:8787/agent/preflight
+POST https://statepulse-api.hahavoid0.workers.dev/agent/preflight
 
 Price: $0.030
 
@@ -2263,12 +2269,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/agent/preflight -m POST -b '{"wallet":"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE","to":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","data":"0x70a082310000000000000000000000000000000000000000000000000000000000000000","chain":"base"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/agent/preflight -m POST -b '{"wallet":"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE","to":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","data":"0x70a082310000000000000000000000000000000000000000000000000000000000000000","chain":"base"}'
 ```
 
 ## Endpoint: Deposit Real Onchain USDC Bounty (Base Mainnet)
 
-POST http://localhost:8787/coordination/bounties
+POST https://statepulse-api.hahavoid0.workers.dev/coordination/bounties
 
 Price: $0.010
 
@@ -2311,12 +2317,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/coordination/bounties -m POST -b '{"title":"Solve Maze Task","description":"Submit exit path coordinates","reward_usdc":"10.00","duration_days":7,"sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","nonce":"0x0000000000000000000000000000000000000000000000000000000000000001","valid_before":1800000000,"signature":"0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","bounty_id":"0x000000000000000000000000000000000000000000000000000000000000000a"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/coordination/bounties -m POST -b '{"title":"Solve Maze Task","description":"Submit exit path coordinates","reward_usdc":"10.00","duration_days":7,"sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","nonce":"0x0000000000000000000000000000000000000000000000000000000000000001","valid_before":1800000000,"signature":"0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","bounty_id":"0x000000000000000000000000000000000000000000000000000000000000000a"}'
 ```
 
 ## Endpoint: Release Deployed USDC Bounty (Base Mainnet)
 
-POST http://localhost:8787/coordination/bounties/release
+POST https://statepulse-api.hahavoid0.workers.dev/coordination/bounties/release
 
 Price: $0.010
 
@@ -2351,12 +2357,12 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/coordination/bounties/release -m POST -b '{"bounty_id":"0x000000000000000000000000000000000000000000000000000000000000000a","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/coordination/bounties/release -m POST -b '{"bounty_id":"0x000000000000000000000000000000000000000000000000000000000000000a","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9"}'
 ```
 
 ## Endpoint: Relay Gasless Transaction (Base Mainnet)
 
-POST http://localhost:8787/blockchain/send
+POST https://statepulse-api.hahavoid0.workers.dev/blockchain/send
 
 Price: $0.010
 
@@ -2396,6 +2402,87 @@ Response example:
 AgentCash call:
 
 ```bash
-npx agentcash@latest fetch http://localhost:8787/blockchain/send -m POST -b '{"target_contract":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","calldata":"0x095ea7b300000000000000000000000055014c5b9781682b3cd1eedfd56e85bfe4a33251ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","max_gas_fee_usdc":"0.50","sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","nonce":"0x0000000000000000000000000000000000000000000000000000000000000002","valid_before":1800000000,"signature":"0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}'
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/blockchain/send -m POST -b '{"target_contract":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","calldata":"0x095ea7b300000000000000000000000055014c5b9781682b3cd1eedfd56e85bfe4a33251ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff","max_gas_fee_usdc":"0.50","sender":"0x742d35Cc6634C0532925a3b844Bc454e4438f44e","nonce":"0x0000000000000000000000000000000000000000000000000000000000000002","valid_before":1800000000,"signature":"0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"}'
+```
+
+## Endpoint: Request Missing Live Data (Free) — Tell Us What Your Agent Needs
+
+POST https://statepulse-api.hahavoid0.workers.dev/agent/request-data
+
+Price: free
+
+When to use: Use whenever this API (or any API) lacks the live data your agent needs. It is free and directly increases the chance the data exists on your next run.
+
+Do not use for: Do not use to fetch data — this only registers a request. Do not submit secrets or personal data.
+
+Request body example:
+
+```json
+{
+  "requested_data": "Live transit alerts for London Underground lines",
+  "example_query": "{\"city\":\"london\",\"line\":\"victoria\"}",
+  "category": "transit",
+  "max_price_usd": 0.02
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "status": "recorded",
+    "request_id": "dreq_1751700000000_ab12cd",
+    "message": "Request recorded. Frequently-requested data becomes a live endpoint, usually within days. Re-fetch /openapi.json or /llms.txt to discover new endpoints."
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/agent/request-data -m POST -b '{"requested_data":"Live transit alerts for London Underground lines","example_query":"{\"city\":\"london\",\"line\":\"victoria\"}","category":"transit","max_price_usd":0.02}'
+```
+
+## Endpoint: Submit Feedback on an Endpoint (Free)
+
+POST https://statepulse-api.hahavoid0.workers.dev/agent/feedback
+
+Price: free
+
+When to use: Use after any call that returned wrong, stale, or surprising data — or to rate an endpoint. Free; data-quality reports get fixed with priority.
+
+Do not use for: Do not use to request new data (use /agent/request-data) or to fetch data.
+
+Request body example:
+
+```json
+{
+  "feedback": "Funding rates matched Bybit exactly — reliable.",
+  "endpoint": "/finance/arbitrage",
+  "rating": 5
+}
+```
+
+Response example:
+
+```json
+{
+  "supported": true,
+  "result": {
+    "status": "recorded",
+    "feedback_id": "fb_1751700000000_ab12cd",
+    "message": "Feedback recorded — data-quality reports are fixed with priority."
+  },
+  "confidence": "high"
+}
+```
+
+AgentCash call:
+
+```bash
+npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/agent/feedback -m POST -b '{"feedback":"Funding rates matched Bybit exactly — reliable.","endpoint":"/finance/arbitrage","rating":5}'
 ```
 

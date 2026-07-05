@@ -231,8 +231,8 @@
       "url": "https://statepulse-api.hahavoid0.workers.dev/transit/status",
       "price": "$0.030",
       "atomicAmount": "30000",
-      "description": "Check transit delays, active alerts, and schedule status updates for supported cities and lines.",
-      "keywords": "Global Public Transit Alerts & Delays Check transit delays, active alerts, and schedule status updates for supported cities and lines. Use when an agent needs real-world transit status or delays for trip scheduling. transit commute alerts Is the NYC L train delayed? {\"city\":\"nyc\",\"line\":\"L\"}",
+      "description": "Live subway alerts, delays, and planned-work advisories from the official MTA GTFS-RT feed for NYC lines. Other cities can be requested via the free /agent/request-data endpoint.",
+      "keywords": "Live Public Transit Alerts & Delays (NYC MTA) Live subway alerts, delays, and planned-work advisories from the official MTA GTFS-RT feed for NYC lines. Other cities can be requested via the free /agent/request-data endpoint. Use when an agent needs real-world transit status or delays for trip scheduling. transit commute alerts Is the NYC L train delayed? {\"city\":\"nyc\",\"line\":\"L\"}",
       "tags": [
         "transit",
         "commute",
@@ -1636,8 +1636,8 @@
       "url": "https://statepulse-api.hahavoid0.workers.dev/finance/company-lookup",
       "price": "$0.100",
       "atomicAmount": "100000",
-      "description": "Searches public business registries (e.g. OpenCorporates and SEC EDGAR databases) to retrieve registered address, incorporation date, jurisdiction, and official status. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup.",
-      "keywords": "Company & Corporate Registry Information Finder Searches public business registries (e.g. OpenCorporates and SEC EDGAR databases) to retrieve registered address, incorporation date, jurisdiction, and official status. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup. Use when an agent or B2B compliance checker needs to verify that a business is active, lookup its registered corporate office address, or retrieve its incorporation/registration ID. finance corporate legal company-checker verification Look up company Apple {\"company_name\":\"Apple\"}",
+      "description": "Searches the SEC EDGAR registry (US public and SEC-registered companies) to retrieve registered business address, state of incorporation, SIC industry classification, and CIK/ticker identifiers. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup.",
+      "keywords": "Company & Corporate Registry Information Finder Searches the SEC EDGAR registry (US public and SEC-registered companies) to retrieve registered business address, state of incorporation, SIC industry classification, and CIK/ticker identifiers. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup. Use when an agent or B2B compliance checker needs to verify that a business is active, lookup its registered corporate office address, or retrieve its incorporation/registration ID. finance corporate legal company-checker verification Look up company Apple {\"company_name\":\"Apple\"}",
       "tags": [
         "finance",
         "corporate",
@@ -1652,12 +1652,14 @@
       "responseExample": {
         "supported": true,
         "result": {
-          "name": "APPLE INC.",
-          "company_number": "C0802245",
+          "name": "Apple Inc.",
+          "cik": "0000320193",
+          "ticker": "AAPL",
           "jurisdiction": "us_ca",
           "company_status": "Active",
-          "date_of_creation": "1977-01-03",
-          "registered_address": "One Apple Park Way, Cupertino, CA 95014"
+          "sic_code": "3571",
+          "sic_description": "Electronic Computers",
+          "registered_address": "One Apple Park Way, Cupertino, CA, 95014"
         },
         "confidence": "high"
       },
@@ -1669,15 +1671,10 @@
         "properties": {
           "company_name": {
             "type": "string",
-            "description": "Target company name to search",
+            "description": "Target company name or stock ticker to search (SEC EDGAR — US public and SEC-registered companies)",
             "examples": [
               "Apple"
             ]
-          },
-          "country_code": {
-            "type": "string",
-            "description": "2-letter ISO jurisdiction/country code",
-            "default": "us"
           }
         }
       },
@@ -2945,6 +2942,128 @@
           "signature": {
             "type": "string",
             "description": "Hex signature authorizing the USDC receiveWithAuthorization transfer"
+          }
+        }
+      },
+      "responseSchema": {
+        "type": "object"
+      }
+    },
+    "/agent/request-data": {
+      "method": "POST",
+      "url": "https://statepulse-api.hahavoid0.workers.dev/agent/request-data",
+      "price": "free",
+      "atomicAmount": "0",
+      "description": "FREE endpoint. If your agent needs live data this API does not serve yet — a feed, a metric, a lookup, another city or chain — describe it here. Requests are reviewed and frequently-requested data becomes a real endpoint, usually within days; re-fetch openapi.json or llms.txt to see new endpoints. Submitting a request directly helps your agent: the data you ask for is prioritized so it exists the next time you need it. Matches: data not available, missing endpoint, request new data source, feature request, no endpoint for this, wish this API had.",
+      "keywords": "Request Missing Live Data (Free) — Tell Us What Your Agent Needs FREE endpoint. If your agent needs live data this API does not serve yet — a feed, a metric, a lookup, another city or chain — describe it here. Requests are reviewed and frequently-requested data becomes a real endpoint, usually within days; re-fetch openapi.json or llms.txt to see new endpoints. Submitting a request directly helps your agent: the data you ask for is prioritized so it exists the next time you need it. Matches: data not available, missing endpoint, request new data source, feature request, no endpoint for this, wish this API had. Use whenever this API (or any API) lacks the live data your agent needs. It is free and directly increases the chance the data exists on your next run. free meta data-request feedback roadmap Request an endpoint for London tube alerts {\"requested_data\":\"Live transit alerts for London Underground\"}",
+      "tags": [
+        "free",
+        "meta",
+        "data-request",
+        "feedback",
+        "roadmap"
+      ],
+      "requestExample": {
+        "requested_data": "Live transit alerts for London Underground lines",
+        "example_query": "{\"city\":\"london\",\"line\":\"victoria\"}",
+        "category": "transit",
+        "max_price_usd": 0.02
+      },
+      "responseExample": {
+        "supported": true,
+        "result": {
+          "status": "recorded",
+          "request_id": "dreq_1751700000000_ab12cd",
+          "message": "Request recorded. Frequently-requested data becomes a live endpoint, usually within days. Re-fetch /openapi.json or /llms.txt to discover new endpoints."
+        },
+        "confidence": "high"
+      },
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "requested_data"
+        ],
+        "properties": {
+          "requested_data": {
+            "type": "string",
+            "description": "Describe the live data you need (what it is, which source if known, how fresh it must be)",
+            "examples": [
+              "Live transit alerts for London Underground lines"
+            ]
+          },
+          "example_query": {
+            "type": "string",
+            "description": "An example request your agent would send to such an endpoint"
+          },
+          "category": {
+            "type": "string",
+            "description": "Rough category: finance, blockchain, transit, environmental, network, social, other"
+          },
+          "max_price_usd": {
+            "type": "number",
+            "description": "The most your agent would pay per call for this data, in USD (helps prioritization)"
+          },
+          "agent_contact": {
+            "type": "string",
+            "description": "Optional contact (URL, email, or handle) to be notified when the endpoint ships"
+          },
+          "agent_wallet": {
+            "type": "string",
+            "description": "Optional EVM wallet of the requesting agent"
+          }
+        }
+      },
+      "responseSchema": {
+        "type": "object"
+      }
+    },
+    "/agent/feedback": {
+      "method": "POST",
+      "url": "https://statepulse-api.hahavoid0.workers.dev/agent/feedback",
+      "price": "free",
+      "atomicAmount": "0",
+      "description": "FREE endpoint. Report anything about this API: wrong or stale data, an endpoint that failed, pricing that feels off, or something that worked well. Feedback is reviewed and data-quality reports are fixed with priority — submitting one directly improves the results your agent gets on its next call. Matches: report wrong data, endpoint broken, stale result, API feedback, rate this API.",
+      "keywords": "Submit Feedback on an Endpoint (Free) FREE endpoint. Report anything about this API: wrong or stale data, an endpoint that failed, pricing that feels off, or something that worked well. Feedback is reviewed and data-quality reports are fixed with priority — submitting one directly improves the results your agent gets on its next call. Matches: report wrong data, endpoint broken, stale result, API feedback, rate this API. Use after any call that returned wrong, stale, or surprising data — or to rate an endpoint. Free; data-quality reports get fixed with priority. free meta feedback quality Report stale data on /telemetry/air-quality {\"feedback\":\"AQI looked stale\",\"endpoint\":\"/telemetry/air-quality\"}",
+      "tags": [
+        "free",
+        "meta",
+        "feedback",
+        "quality"
+      ],
+      "requestExample": {
+        "feedback": "Funding rates matched Bybit exactly — reliable.",
+        "endpoint": "/finance/arbitrage",
+        "rating": 5
+      },
+      "responseExample": {
+        "supported": true,
+        "result": {
+          "status": "recorded",
+          "feedback_id": "fb_1751700000000_ab12cd",
+          "message": "Feedback recorded — data-quality reports are fixed with priority."
+        },
+        "confidence": "high"
+      },
+      "requestSchema": {
+        "type": "object",
+        "required": [
+          "feedback"
+        ],
+        "properties": {
+          "feedback": {
+            "type": "string",
+            "description": "What happened, what was wrong, or what worked well",
+            "examples": [
+              "/finance/arbitrage returned an empty list but Bybit shows funding above threshold"
+            ]
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The endpoint path this feedback is about, e.g. /finance/arbitrage"
+          },
+          "rating": {
+            "type": "number",
+            "description": "Optional rating 1 (bad) to 5 (great)"
           }
         }
       },
