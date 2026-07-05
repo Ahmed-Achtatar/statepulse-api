@@ -3,6 +3,7 @@ import { cors } from "hono/cors"
 import { paymentMiddleware, x402ResourceServer, HonoAdapter } from "@x402/hono"
 import { HTTPFacilitatorClient, x402HTTPResourceServer, FacilitatorResponseError } from "@x402/core/server"
 import { ExactEvmScheme } from "@x402/evm/exact/server"
+import { ExactSvmScheme } from "@x402/svm/exact/server"
 import { createFacilitatorConfig } from "@coinbase/x402"
 import { bazaarResourceServerExtension, declareDiscoveryExtension } from "@x402/extensions/bazaar"
 import { getHtmlContent } from "./html"
@@ -33,9 +34,12 @@ const API_VERSION = "1.0.1"
 const CONTACT_EMAIL = "support@statepulse.dev"
 const FACILITATOR_URL = "https://api.cdp.coinbase.com/platform/v2/x402"
 const USDC_BASE = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913"
+const SOLANA_MAINNET_CAIP2 = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
+const USDC_SOLANA = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+const SOLANA_PAY_TO = "Bs3oEYkvpbzdaLN8KuCHHATfaifmSp7iLUsKBCFQyvhL"
 const SERVICE_NAME = "StatePulse API"
 const SERVICE_SLUG = "statepulse-api"
-const SERVICE_DESCRIPTION = "Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base."
+const SERVICE_DESCRIPTION = "Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base or Solana."
 const A2A_PROTOCOL_VERSION = "0.3.0"
 const MCP_PROTOCOL_VERSION = "2025-06-18"
 const OASF_SCHEMA_VERSION = "1.0.0"
@@ -200,8 +204,8 @@ If your agent needs live data this API does not serve yet, POST a free request t
 Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Required with standard x402 payment instructions in response headers.
 
 ### Option 1: Direct x402 Payment
-- Network: Base mainnet, eip155:8453
-- Asset: USDC, ${USDC_BASE}
+- Networks: Base mainnet (eip155:8453) or Solana mainnet (${SOLANA_MAINNET_CAIP2})
+- Asset: USDC — Base ${USDC_BASE}, Solana ${USDC_SOLANA}
 - Facilitator: ${FACILITATOR_URL}
 - x402 metadata: ${baseUrl}/.well-known/x402.json
 - OpenAPI schema: ${baseUrl}/openapi.json
@@ -296,6 +300,7 @@ function publicMetadata(payTo: string, baseUrl: string) {
         facilitator: FACILITATOR_URL,
         network: "eip155:8453",
         asset: USDC_BASE,
+        alsoAccepts: [{ network: SOLANA_MAINNET_CAIP2, asset: USDC_SOLANA, payTo: SOLANA_PAY_TO }],
         primaryResource: `${baseUrl}${paidEndpoints()[0]?.path || ENDPOINTS[0]?.path || ""}`
       },
       a2a: {
@@ -544,18 +549,31 @@ function createOfficialX402Routes(payTo: string, baseUrl: string, multiplier = 1
     return [
       endpoint.path,
       {
-        accepts: {
-          scheme: "exact",
-          payTo,
-          price: `$${finalPrice.toFixed(3)}`,
-          network: "eip155:8453",
-          asset: USDC_BASE,
-          maxTimeoutSeconds: 120,
-          extra: {
-            name: "USD Coin",
-            version: "2"
+        accepts: [
+          {
+            scheme: "exact",
+            payTo,
+            price: `$${finalPrice.toFixed(3)}`,
+            network: "eip155:8453",
+            asset: USDC_BASE,
+            maxTimeoutSeconds: 120,
+            extra: {
+              name: "USD Coin",
+              version: "2"
+            }
+          },
+          {
+            scheme: "exact",
+            payTo: SOLANA_PAY_TO,
+            price: `$${finalPrice.toFixed(3)}`,
+            network: SOLANA_MAINNET_CAIP2,
+            asset: USDC_SOLANA,
+            maxTimeoutSeconds: 120,
+            // feePayer is injected by ExactSvmScheme.enhancePaymentRequirements
+            // from the facilitator's supported kinds.
+            extra: {}
           }
-        },
+        ],
         resource: `${baseUrl}${endpoint.path}`,
         description: endpoint.description,
         mimeType: "application/json",
@@ -745,6 +763,7 @@ function createResourceServer(env: Env) {
 
   return new x402ResourceServer(resilientFacilitatorClient)
     .register("eip155:8453", new ExactEvmScheme())
+    .register(SOLANA_MAINNET_CAIP2, new ExactSvmScheme())
     .registerExtension(bazaarResourceServerExtension)
 }
 
@@ -2068,6 +2087,7 @@ app.get("/.well-known/x402.json", (c) => {
       cdpCredentialsRequiredForVerifyAndSettle: !hasCdpCredentials
     },
     network: "eip155:8453",
+    networks: ["eip155:8453", SOLANA_MAINNET_CAIP2],
     asset: USDC_BASE,
     payTo: wallet,
     primaryEndpoint: `${baseUrl}${paidEndpoints()[0]?.path || ""}`,

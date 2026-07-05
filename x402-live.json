@@ -1,7 +1,7 @@
 {
   "name": "StatePulse API",
   "serviceName": "StatePulse API",
-  "description": "Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base.",
+  "description": "Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base or Solana.",
   "version": "1.0.1",
   "url": "https://statepulse-api.hahavoid0.workers.dev",
   "logoUrl": "https://statepulse-api.hahavoid0.workers.dev/logo.png",
@@ -19,6 +19,10 @@
     "cdpCredentialsRequiredForVerifyAndSettle": false
   },
   "network": "eip155:8453",
+  "networks": [
+    "eip155:8453",
+    "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"
+  ],
   "asset": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
   "payTo": "0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE",
   "primaryEndpoint": "https://statepulse-api.hahavoid0.workers.dev/product/barcode",

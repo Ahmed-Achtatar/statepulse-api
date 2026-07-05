@@ -1,6 +1,6 @@
 # StatePulse API
 
-Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base.
+Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base or Solana.
 
 ## Base URL
 
@@ -15,8 +15,8 @@ If your agent needs live data this API does not serve yet, POST a free request t
 Paid endpoints require x402 payment. Unpaid requests return HTTP 402 Payment Required with standard x402 payment instructions in response headers.
 
 ### Option 1: Direct x402 Payment
-- Network: Base mainnet, eip155:8453
-- Asset: USDC, 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913
+- Networks: Base mainnet (eip155:8453) or Solana mainnet (solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp)
+- Asset: USDC — Base 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913, Solana EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 - Facilitator: https://api.cdp.coinbase.com/platform/v2/x402
 - x402 metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json
 - OpenAPI schema: https://statepulse-api.hahavoid0.workers.dev/openapi.json
