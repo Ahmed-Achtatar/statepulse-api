@@ -1,0 +1,46 @@
+name: Agentic SEO Generator
+
+on:
+  schedule:
+    # Run every Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  generate-bait:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push commits back to the repo
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # LTS version
+
+      - name: Run Agentic Bait Generator
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DEV_TO_API_KEY: ${{ secrets.DEV_TO_API_KEY }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: node scripts/agentic-bait-generator.js
+
+      - name: Commit and Push SEO Files
+        run: |
+          git config --global user.name "Agentic SEO Bot"
+          git config --global user.email "actions@github.com"
+          git add .agentic-seo/
+          
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No new SEO files generated."
+          else
+            git commit -m "chore(seo): Add newly generated agentic bait tutorial [skip ci]"
+            git push
+            echo "Successfully committed and pushed new SEO files."
+          fi
