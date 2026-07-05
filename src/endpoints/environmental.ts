@@ -1,5 +1,5 @@
 import { EndpointDef } from "./types"
-import { str, num, response } from "./utils"
+import { str, num, response, fetchUpstream, saveLastGood, readLastGood, staleResponse } from "./utils"
 
 // Helper to create basic endpoint
 function createEndpoint(input: Omit<EndpointDef, "free"> & { free?: boolean }): EndpointDef {
@@ -97,12 +97,45 @@ export const wildfireEndpoint = createEndpoint({
     },
     confidence: "medium"
   }),
-  logic: async (args) => {
+  logic: async (args, c) => {
     const stateVal = str(args, "state", false).toUpperCase()
+    const cacheKey = `wildfire:${stateVal || "ALL"}`
+
+    // Primary: NIFC WFIGS current wildfire incident locations (keyless ArcGIS feed).
+    try {
+      const params = new URLSearchParams({
+        where: stateVal ? `POOState='US-${stateVal}'` : "1=1",
+        outFields: "IncidentName,POOState,POOCounty,IncidentSize,PercentContained,FireDiscoveryDateTime,ModifiedOnDateTime_dt,IncidentTypeCategory",
+        orderByFields: "ModifiedOnDateTime_dt DESC",
+        resultRecordCount: "10",
+        f: "json"
+      })
+      const res = await fetchUpstream(`https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?${params}`)
+      if (res.ok) {
+        const data: any = await res.json()
+        if (Array.isArray(data?.features)) {
+          const wildfires = data.features.map((f: any) => {
+            const a = f.attributes || {}
+            return {
+              name: a.IncidentName || "Unknown",
+              state: a.POOState || null,
+              county: a.POOCounty || null,
+              acres: a.IncidentSize ?? null,
+              percent_contained: a.PercentContained ?? null,
+              discovered: a.FireDiscoveryDateTime ? new Date(a.FireDiscoveryDateTime).toISOString() : null,
+              updated: a.ModifiedOnDateTime_dt ? new Date(a.ModifiedOnDateTime_dt).toISOString() : null
+            }
+          })
+          const result = { wildfires, source: "NIFC WFIGS current incidents" }
+          saveLastGood(c, cacheKey, result)
+          return response(result, "high")
+        }
+      }
+    } catch (e) {}
 
     try {
-      // InciWeb/USDA active fire feed
-      const res = await fetch("https://inciweb.wildfire.gov/feed/rss")
+      // Fallback: InciWeb/USDA active fire feed
+      const res = await fetchUpstream("https://inciweb.wildfire.gov/feed/rss")
       if (res.ok) {
         const text = await res.text()
         // Simple regex XML parsing for Cloudflare Worker environment
@@ -131,11 +164,16 @@ export const wildfireEndpoint = createEndpoint({
             published: date
           })
         }
-        return response({ wildfires: wildfires.slice(0, 10) }, "medium")
+        const result = { wildfires: wildfires.slice(0, 10), source: "InciWeb RSS" }
+        saveLastGood(c, cacheKey, result)
+        return response(result, "medium")
       }
     } catch (e) {}
 
-    return response({ wildfires: [], note: "Wildfire feed currently offline." }, "low", ["Upstream RSS feed query failed."])
+    const cached = await readLastGood(c, cacheKey)
+    if (cached) return staleResponse(cached, "WFIGS and InciWeb wildfire feeds both unreachable.")
+
+    return response({ wildfires: [], note: "Wildfire feeds currently offline." }, "low", ["WFIGS incident query and InciWeb RSS feed both failed."])
   },
   skillId: "get_wildfires",
   skillName: "Wildfire tracker",
@@ -169,27 +207,59 @@ export const spaceWeatherEndpoint = createEndpoint({
     },
     confidence: "high"
   }),
-  logic: async () => {
+  logic: async (_args, c) => {
+    const classify = (kp: number) => {
+      let status = "Quiet"
+      if (kp >= 5) status = "Minor Storm"
+      if (kp >= 7) status = "Severe Storm"
+      return status
+    }
+
+    // Primary: NOAA SWPC 1-minute estimated planetary K-index.
     try {
-      const res = await fetch("https://services.swpc.noaa.gov/json/planetary-k-index-1-day.json")
+      const res = await fetchUpstream("https://services.swpc.noaa.gov/json/planetary_k_index_1m.json")
       if (res.ok) {
         const data: any = await res.json()
-        const latest = data[data.length - 1]
-        const kp = Number(latest?.kp_index || "0")
-        let status = "Quiet"
-        if (kp >= 5) status = "Minor Storm"
-        if (kp >= 7) status = "Severe Storm"
-
-        return response({
-          kp_index: kp,
-          storm_alert: kp >= 5,
-          status,
-          updated: latest?.time_tag
-        }, "high")
+        const latest = Array.isArray(data) ? data[data.length - 1] : null
+        const kp = Number(latest?.estimated_kp ?? latest?.kp_index)
+        if (latest && Number.isFinite(kp)) {
+          const result = {
+            kp_index: kp,
+            storm_alert: kp >= 5,
+            status: classify(kp),
+            updated: latest.time_tag
+          }
+          saveLastGood(c, "space-weather", result)
+          return response(result, "high")
+        }
       }
     } catch (e) {}
 
-    return response({ kp_index: 0, status: "Unknown (Default)" }, "low", ["NOAA JSON endpoint request failed."])
+    // Fallback: NOAA SWPC 3-hour planetary K-index product.
+    try {
+      const res = await fetchUpstream("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json")
+      if (res.ok) {
+        const data: any = await res.json()
+        const rows = Array.isArray(data) ? data.filter((r: any) => r && typeof r === "object" && !Array.isArray(r)) : []
+        const latest = rows[rows.length - 1]
+        const kp = Number(latest?.Kp)
+        if (latest && Number.isFinite(kp)) {
+          const result = {
+            kp_index: kp,
+            storm_alert: kp >= 5,
+            status: classify(kp),
+            updated: latest.time_tag
+          }
+          saveLastGood(c, "space-weather", result)
+          return response(result, "medium", ["1-minute K-index feed unavailable; using NOAA 3-hour planetary K-index product."])
+        }
+      }
+    } catch (e) {}
+
+    const cached = await readLastGood(c, "space-weather")
+    if (cached) return staleResponse(cached, "Both NOAA SWPC K-index feeds unreachable.")
+
+    return response({ kp_index: null, storm_alert: null, status: "Unavailable" }, "low", ["NOAA SWPC K-index feeds unreachable and no recent observation cached; no K-index value can be reported."])
   },
   skillId: "get_space_weather",
   skillName: "Space weather tracker",
@@ -291,38 +361,89 @@ export const marineBuoyEndpoint = createEndpoint({
     },
     confidence: "high"
   }),
-  logic: async (args) => {
+  logic: async (args, c) => {
     const id = str(args, "buoy_id")
+    const cacheKey = `marine:${id}`
 
+    // Primary: NDBC realtime2 tabular feed. Sensors report on different
+    // cadences, so scan the newest ~24 rows for each field's latest reading
+    // instead of only the top row ("MM" marks a missing value).
     try {
-      const res = await fetch(`https://www.ndbc.noaa.gov/data/latest_obs/${id}.txt`)
+      const res = await fetchUpstream(`https://www.ndbc.noaa.gov/data/realtime2/${id}.txt`)
       if (res.ok) {
         const text = await res.text()
         const lines = text.split("\n").filter((l) => l.trim())
-        if (lines.length >= 3) {
-          const headers = lines[1].split(/\s+/)
-          const values = lines[2].split(/\s+/)
+        if (lines.length >= 3 && lines[0].startsWith("#")) {
+          const headers = lines[0].replace(/^#/, "").trim().split(/\s+/)
+          const rows = lines.slice(2, 26).map((l) => l.trim().split(/\s+/))
 
-          // Retrieve Wave Height (WVHT) and Water Temp (WTMP)
-          const wvhtIdx = headers.indexOf("WVHT")
-          const dpdIdx = headers.indexOf("DPD")
-          const wtmpIdx = headers.indexOf("WTMP")
+          const latestValue = (field: string): { value: number; observed: string } | null => {
+            const idx = headers.indexOf(field)
+            if (idx === -1) return null
+            for (const row of rows) {
+              const raw = row[idx]
+              if (raw && raw !== "MM") {
+                const n = Number(raw)
+                if (Number.isFinite(n)) {
+                  return { value: n, observed: `${row[0]}-${row[1]}-${row[2]}T${row[3]}:${row[4]}:00Z` }
+                }
+              }
+            }
+            return null
+          }
 
-          const wvht = wvhtIdx !== -1 ? Number(values[wvhtIdx]) : null
-          const dpd = dpdIdx !== -1 ? Number(values[dpdIdx]) : null
-          const wtmp = wtmpIdx !== -1 ? Number(values[wtmpIdx]) : null
+          const wvht = latestValue("WVHT")
+          const dpd = latestValue("DPD")
+          const wtmp = latestValue("WTMP")
 
-          return response({
-            station_id: id,
-            wave_height_m: isNaN(wvht as any) ? null : wvht,
-            wave_period_sec: isNaN(dpd as any) ? null : dpd,
-            water_temp_c: isNaN(wtmp as any) ? null : wtmp
-          }, "high")
+          if (wvht || dpd || wtmp) {
+            const missing = [
+              !wvht && "wave height (WVHT)",
+              !dpd && "dominant wave period (DPD)",
+              !wtmp && "water temperature (WTMP)"
+            ].filter(Boolean) as string[]
+
+            const result = {
+              station_id: id,
+              wave_height_m: wvht?.value ?? null,
+              wave_period_sec: dpd?.value ?? null,
+              water_temp_c: wtmp?.value ?? null,
+              observed_at: wvht?.observed || wtmp?.observed || dpd?.observed || null
+            }
+            saveLastGood(c, cacheKey, result)
+            return response(result, "high", missing.length ? [`Station ${id} has not reported ${missing.join(", ")} in its recent observations.`] : [])
+          }
         }
       }
     } catch (e) {}
 
-    return response({ station_id: id, note: "Buoy station data unavailable." }, "low", ["NOAA buoy file missing or rate-limited."])
+    // Fallback: NDBC human-readable latest_obs summary (imperial units).
+    try {
+      const res = await fetchUpstream(`https://www.ndbc.noaa.gov/data/latest_obs/${id}.txt`)
+      if (res.ok) {
+        const text = await res.text()
+        const seas = text.match(/Seas:\s*([\d.]+)\s*ft/i)
+        const period = text.match(/(?:Peak|Dominant Wave) Period:\s*([\d.]+)\s*sec/i)
+        const wtemp = text.match(/Water Temp:\s*([\d.]+)/i)
+
+        if (seas || period || wtemp) {
+          const result = {
+            station_id: id,
+            wave_height_m: seas ? Number((Number(seas[1]) * 0.3048).toFixed(2)) : null,
+            wave_period_sec: period ? Number(period[1]) : null,
+            water_temp_c: wtemp ? Number(((Number(wtemp[1]) - 32) / 1.8).toFixed(1)) : null,
+            observed_at: null
+          }
+          saveLastGood(c, cacheKey, result)
+          return response(result, "medium", ["Tabular realtime2 feed unavailable; values converted from NDBC latest_obs summary."])
+        }
+      }
+    } catch (e) {}
+
+    const cached = await readLastGood(c, cacheKey)
+    if (cached) return staleResponse(cached, `NOAA NDBC feeds for station ${id} unreachable or reporting no data.`)
+
+    return response({ station_id: id, note: "Buoy station data unavailable." }, "low", ["NOAA buoy realtime2 and latest_obs files both missing, rate-limited, or reporting no observations."])
   },
   skillId: "get_marine_conditions",
   skillName: "Marine conditions tracker",

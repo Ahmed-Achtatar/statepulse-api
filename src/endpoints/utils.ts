@@ -41,6 +41,44 @@ export function response(result: Record<string, unknown> | Array<unknown>, confi
   }
 }
 
+export const UPSTREAM_TIMEOUT_MS = 8000
+
+export function fetchUpstream(url: string, init: RequestInit = {}, timeoutMs = UPSTREAM_TIMEOUT_MS): Promise<Response> {
+  return fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) })
+}
+
+// Last-good-data cache: real upstream data persisted to KV so a transient
+// upstream outage serves the previous real observation with an explicit
+// staleness marker, never fabricated values.
+export function saveLastGood(c: any, key: string, result: Record<string, unknown>): void {
+  try {
+    const kv = c?.env?.CACHE
+    if (!kv) return
+    const put = kv.put(`lastgood:${key}`, JSON.stringify({ cached_at: new Date().toISOString(), result }), { expirationTtl: 172800 })
+    if (c?.executionCtx?.waitUntil) c.executionCtx.waitUntil(put.catch(() => undefined))
+  } catch (e) {}
+}
+
+export async function readLastGood(c: any, key: string): Promise<{ cached_at: string; result: Record<string, unknown> } | null> {
+  try {
+    const raw = await c?.env?.CACHE?.get(`lastgood:${key}`)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed?.cached_at || !parsed?.result) return null
+    return parsed
+  } catch (e) {
+    return null
+  }
+}
+
+export function staleResponse(cached: { cached_at: string; result: Record<string, unknown> }, upstreamWarning: string) {
+  return response(
+    { ...cached.result, stale: true, observed_at: cached.cached_at },
+    "low",
+    [upstreamWarning, `Live upstream unavailable; serving last real observation from ${cached.cached_at} (marked stale).`]
+  )
+}
+
 export function validateSchema(schema: any, body: any): { valid: boolean; error?: string } {
   if (!schema) return { valid: true }
   

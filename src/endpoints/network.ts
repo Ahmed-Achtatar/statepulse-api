@@ -1,5 +1,5 @@
 import { EndpointDef, validationError } from "./types"
-import { str, num, response } from "./utils"
+import { str, num, response, fetchUpstream, saveLastGood, readLastGood, staleResponse } from "./utils"
 
 function createEndpoint(input: Omit<EndpointDef, "free"> & { free?: boolean }): EndpointDef {
   return {
@@ -379,42 +379,70 @@ export const whoisEndpoint = createEndpoint({
     },
     confidence: "high"
   }),
-  logic: async (args) => {
+  logic: async (args, c) => {
     const domain = str(args, "domain")
 
-    try {
-      const res = await fetch(`https://rdap.org/domain/${domain}`)
-      if (res.ok) {
-        const data: any = await res.json()
-        const events = data.events || []
-        const registrationEvent = events.find((e: any) => e.eventAction === "registration")
-        const expirationEvent = events.find((e: any) => e.eventAction === "expiration")
+    const parseRdap = (data: any) => {
+      const events = data.events || []
+      const registrationEvent = events.find((e: any) => e.eventAction === "registration")
+      const expirationEvent = events.find((e: any) => e.eventAction === "expiration")
 
-        let registrar = "Unknown"
-        const entities = data.entities || []
-        for (const entity of entities) {
-          if (entity.roles?.includes("registrar")) {
-            const fnProperty = entity.vcardArray?.[1]?.find((prop: any) => prop[0] === "fn")
-            if (fnProperty) {
-              registrar = fnProperty[3]
-              break
-            }
+      let registrar = "Unknown"
+      const entities = data.entities || []
+      for (const entity of entities) {
+        if (entity.roles?.includes("registrar")) {
+          const fnProperty = entity.vcardArray?.[1]?.find((prop: any) => prop[0] === "fn")
+          if (fnProperty) {
+            registrar = fnProperty[3]
+            break
           }
         }
+      }
 
-        return response({
-          domain,
-          registrar,
-          created_date: registrationEvent?.eventDate || null,
-          expires_date: expirationEvent?.eventDate || null,
-          status: data.status || []
-        }, "high")
+      return {
+        domain,
+        registrar,
+        created_date: registrationEvent?.eventDate || null,
+        expires_date: expirationEvent?.eventDate || null,
+        status: data.status || []
+      }
+    }
+
+    try {
+      const res = await fetchUpstream(`https://rdap.org/domain/${domain}`)
+      if (res.ok) {
+        const result = parseRdap(await res.json())
+        saveLastGood(c, `whois:${domain.toLowerCase()}`, result)
+        return response(result, "high")
       }
     } catch (e) {}
 
+    // Fallback: resolve the TLD's authoritative RDAP server from the IANA
+    // bootstrap registry and query it directly.
+    try {
+      const tld = domain.split(".").pop()!.toLowerCase()
+      const bootRes = await fetchUpstream("https://data.iana.org/rdap/dns.json")
+      if (bootRes.ok) {
+        const boot: any = await bootRes.json()
+        const service = (boot.services || []).find((s: any) => (s[0] || []).includes(tld))
+        const base = service?.[1]?.[0]
+        if (base) {
+          const res = await fetchUpstream(`${base.replace(/\/$/, "")}/domain/${domain}`)
+          if (res.ok) {
+            const result = parseRdap(await res.json())
+            saveLastGood(c, `whois:${domain.toLowerCase()}`, result)
+            return response(result, "high")
+          }
+        }
+      }
+    } catch (e) {}
+
+    const cached = await readLastGood(c, `whois:${domain.toLowerCase()}`)
+    if (cached) return staleResponse(cached, "RDAP directory and authoritative registry RDAP both unreachable.")
+
     return response({
       domain,
-      note: "No matching RDAP record returned from public bootstrap directory."
+      note: "No matching RDAP record returned from public bootstrap directory or the TLD's authoritative registry."
     }, "low", ["Upstream RDAP directory request timed out or returned empty."])
   },
   skillId: "lookup_whois",

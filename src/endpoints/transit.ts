@@ -1,5 +1,5 @@
 import { EndpointDef } from "./types"
-import { str, num, response } from "./utils"
+import { str, num, response, fetchUpstream, saveLastGood, readLastGood, staleResponse } from "./utils"
 
 function createEndpoint(input: Omit<EndpointDef, "free"> & { free?: boolean }): EndpointDef {
   return {
@@ -377,25 +377,66 @@ export const airportBoardEndpoint = createEndpoint({
     },
     confidence: "high"
   }),
-  logic: async (args) => {
+  logic: async (args, c) => {
     const icao = str(args, "airport_icao").toUpperCase()
     const now = Math.floor(Date.now() / 1000)
-    const begin = now - 3600 // 1 hour ago
+    // Anonymous OpenSky access only permits recent (non-historical) windows;
+    // arrivals are published with a lag, so use the widest allowed window.
+    const begin = now - 7200
 
     try {
-      const res = await fetch(`https://opensky-network.org/api/flights/arrival?airport=${icao}&begin=${begin}&end=${now}`)
+      const res = await fetchUpstream(`https://opensky-network.org/api/flights/arrival?airport=${icao}&begin=${begin}&end=${now}`)
       if (res.ok) {
         const data: any = await res.json()
-        const arrivals = (data || []).slice(0, 5).map((f: any) => ({
+        const arrivals = (Array.isArray(data) ? data : []).slice(0, 5).map((f: any) => ({
           callsign: f.callsign?.trim() || "N/A",
           est_arrival_time: new Date(f.firstSeen * 1000).toISOString(),
           departure_airport: f.estDepartureAirport || "N/A"
         }))
-        return response({ airport: icao, arrivals }, "high")
+        if (arrivals.length > 0) {
+          const result = { airport: icao, arrivals }
+          saveLastGood(c, `airport-board:${icao}`, result)
+          return response(result, "high")
+        }
       }
     } catch (e) {}
 
-    return response({ airport: icao, arrivals: [] }, "low", ["OpenSky arrivals tracker is currently rate-limited."])
+    // Fallback: OpenSky publishes completed arrivals with a multi-hour lag,
+    // so report live ADS-B traffic currently within ~15nm of the field
+    // (aviationweather.gov resolves the ICAO to coordinates, adsb.lol
+    // provides live aircraft states). Real data, different semantics —
+    // flagged via mode + warning.
+    try {
+      const apRes = await fetchUpstream(`https://aviationweather.gov/api/data/airport?ids=${icao}&format=json`)
+      if (apRes.ok) {
+        const airports: any = await apRes.json()
+        const ap = Array.isArray(airports) ? airports[0] : null
+        if (ap && Number.isFinite(Number(ap.lat)) && Number.isFinite(Number(ap.lon))) {
+          const acRes = await fetchUpstream(`https://api.adsb.lol/v2/lat/${ap.lat}/lon/${ap.lon}/dist/15`)
+          if (acRes.ok) {
+            const acData: any = await acRes.json()
+            const aircraft = (acData?.ac || []).slice(0, 10).map((a: any) => ({
+              callsign: a.flight?.trim() || "N/A",
+              registration: a.r || null,
+              aircraft_type: a.t || null,
+              altitude_ft: a.alt_baro === "ground" ? 0 : (Number.isFinite(Number(a.alt_baro)) ? Number(a.alt_baro) : null),
+              on_ground: a.alt_baro === "ground",
+              ground_speed_kt: Number.isFinite(Number(a.gs)) ? Number(a.gs) : null
+            }))
+            return response(
+              { airport: icao, arrivals: [], mode: "live_vicinity", aircraft_within_15nm: aircraft },
+              "medium",
+              ["OpenSky completed-arrivals list is empty or lagging for this window; returning live ADS-B aircraft currently within 15nm of the airport instead."]
+            )
+          }
+        }
+      }
+    } catch (e) {}
+
+    const cached = await readLastGood(c, `airport-board:${icao}`)
+    if (cached) return staleResponse(cached, "OpenSky arrivals and live ADS-B vicinity feeds both unavailable.")
+
+    return response({ airport: icao, arrivals: [] }, "low", ["OpenSky arrivals tracker is rate-limited or lagging and no live vicinity data is available."])
   },
   skillId: "get_airport_board",
   skillName: "Airport flight board",
