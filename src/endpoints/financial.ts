@@ -329,14 +329,13 @@ export const companyLookupEndpoint = createEndpoint({
   path: "/finance/company-lookup",
   operationId: "lookupCompany",
   summary: "Company & Corporate Registry Information Finder",
-  description: "Searches public business registries (e.g. OpenCorporates and SEC EDGAR databases) to retrieve registered address, incorporation date, jurisdiction, and official status. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup.",
+  description: "Searches the SEC EDGAR registry (US public and SEC-registered companies) to retrieve registered business address, state of incorporation, SIC industry classification, and CIK/ticker identifiers. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup.",
   priceUsd: "0.100",
   requestSchema: {
     type: "object",
     required: ["company_name"],
     properties: {
-      company_name: { type: "string", description: "Target company name to search", examples: ["Apple"] },
-      country_code: { type: "string", description: "2-letter ISO jurisdiction/country code", default: "us" }
+      company_name: { type: "string", description: "Target company name or stock ticker to search (SEC EDGAR — US public and SEC-registered companies)", examples: ["Apple"] }
     }
   },
   responseSchema: {
@@ -350,74 +349,65 @@ export const companyLookupEndpoint = createEndpoint({
   exampleOutput: () => ({
     supported: true,
     result: {
-      name: "APPLE INC.",
-      company_number: "C0802245",
+      name: "Apple Inc.",
+      cik: "0000320193",
+      ticker: "AAPL",
       jurisdiction: "us_ca",
       company_status: "Active",
-      date_of_creation: "1977-01-03",
-      registered_address: "One Apple Park Way, Cupertino, CA 95014"
+      sic_code: "3571",
+      sic_description: "Electronic Computers",
+      registered_address: "One Apple Park Way, Cupertino, CA, 95014"
     },
     confidence: "high"
   }),
   logic: async (args) => {
     const companyName = str(args, "company_name")
-    const country = str(args, "country_code", false).toLowerCase() || "us"
+    const edgarHeaders = { "user-agent": "StatePulse-API contact@statepulse.dev", accept: "application/json" }
 
     try {
-      const res = await fetch(`https://api.opencorporates.com/v0.4/companies/search?q=${encodeURIComponent(companyName)}&jurisdiction_code=${country}`)
-      if (res.ok) {
-        const data: any = await res.json()
-        const companies = data?.results?.companies || []
-        if (companies.length > 0) {
-          const comp = companies[0].company
+      // SEC EDGAR company index — keyless, covers all SEC-registered entities
+      const idxRes = await fetch("https://www.sec.gov/files/company_tickers.json", { headers: edgarHeaders })
+      if (idxRes.ok) {
+        const idx: any = await idxRes.json()
+        const needle = companyName.toLowerCase()
+        const match: any = Object.values(idx).find(
+          (c: any) => c.title?.toLowerCase().includes(needle) || c.ticker?.toLowerCase() === needle
+        )
+        if (match) {
+          const cik10 = String(match.cik_str).padStart(10, "0")
+          const subRes = await fetch(`https://data.sec.gov/submissions/CIK${cik10}.json`, { headers: edgarHeaders })
+          if (subRes.ok) {
+            const sub: any = await subRes.json()
+            const addr = sub?.addresses?.business
+            return response({
+              name: sub.name || match.title,
+              cik: cik10,
+              ticker: match.ticker || null,
+              jurisdiction: sub.stateOfIncorporation ? `us_${String(sub.stateOfIncorporation).toLowerCase()}` : null,
+              company_status: "Active",
+              sic_code: sub.sic || null,
+              sic_description: sub.sicDescription || null,
+              registered_address: addr
+                ? [addr.street1, addr.street2, addr.city, addr.stateOrCountry, addr.zipCode].filter(Boolean).join(", ")
+                : null,
+              edgar_url: `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=${cik10}`
+            }, "high")
+          }
+          // Index matched but submissions fetch failed — return the identifiers we have
           return response({
-            name: comp.name,
-            company_number: comp.company_number,
-            jurisdiction: comp.jurisdiction_code,
-            company_status: comp.current_status || "Active",
-            date_of_creation: comp.incorporation_date || null,
-            registered_address: comp.registered_address_in_full || null,
-            opencorporates_url: comp.opencorporates_url
-          }, "high")
+            name: match.title,
+            cik: cik10,
+            ticker: match.ticker || null,
+            company_status: "Active"
+          }, "medium", ["EDGAR submissions detail fetch failed; identifiers only."])
         }
       }
     } catch (e) {}
 
-    // Fallback sandbox database for standard test runs and common names
-    const lowerName = companyName.toLowerCase()
-    if (lowerName.includes("apple")) {
-      return response({
-        name: "APPLE INC.",
-        company_number: "C0802245",
-        jurisdiction: "us_ca",
-        company_status: "Active",
-        date_of_creation: "1977-01-03",
-        registered_address: "One Apple Park Way, Cupertino, CA 95014"
-      }, "medium")
-    } else if (lowerName.includes("google") || lowerName.includes("alphabet")) {
-      return response({
-        name: "ALPHABET INC.",
-        company_number: "5573138",
-        jurisdiction: "us_de",
-        company_status: "Active",
-        date_of_creation: "2015-07-23",
-        registered_address: "1209 Orange St, Wilmington, DE 19801"
-      }, "medium")
-    } else if (lowerName.includes("spotify")) {
-      return response({
-        name: "SPOTIFY TECHNOLOGY S.A.",
-        company_number: "B121335",
-        jurisdiction: "lu",
-        company_status: "Active",
-        date_of_creation: "2006-12-27",
-        registered_address: "86 Boulevard de la Foire, L-1528 Luxembourg"
-      }, "medium")
-    }
-
     return response({
       name: companyName,
-      note: "No matching record returned from the registry search indices."
-    }, "low", ["Company index lookup did not return results."])
+      note: "No matching record in the SEC EDGAR registry. Coverage is limited to US public and SEC-registered companies."
+    }, "low", ["Company registry lookup did not return results."])
   },
   skillId: "lookup_company",
   skillName: "Company registry lookup",
@@ -461,40 +451,79 @@ export const arbitrageEndpoint = createEndpoint({
   }),
   logic: async (args) => {
     const minRate = num(args, "min_funding_rate") || 0.0001
+    const shape = (symbol: string, markPrice: number, indexPrice: number | null, fundingRate: number, periodsPerDay: number) => ({
+      symbol,
+      mark_price: markPrice,
+      index_price: indexPrice,
+      funding_rate: fundingRate,
+      annualized_yield_percentage: Number((fundingRate * periodsPerDay * 365 * 100).toFixed(2)),
+      action: fundingRate > 0 ? "SHORT_PERP_LONG_SPOT" : "LONG_PERP_SHORT_SPOT"
+    })
+    const rank = (items: any[]) =>
+      items
+        .filter((item: any) => Math.abs(item.funding_rate) >= minRate)
+        .sort((a: any, b: any) => Math.abs(b.funding_rate) - Math.abs(a.funding_rate))
+        .slice(0, 10)
 
+    // Binance is geo-blocked from many Worker egress IPs — fall through to Bybit, then Hyperliquid.
     try {
       const res = await fetch("https://fapi.binance.com/fapi/v1/premiumIndex")
       if (res.ok) {
         const data: any = await res.json()
-        const opportunities = (Array.isArray(data) ? data : [])
-          .map((item: any) => {
-            const fundingRate = parseFloat(item.lastFundingRate || "0")
-            const absRate = Math.abs(fundingRate)
-            const annualized = fundingRate * 3 * 365 * 100 // 8-hour funding rates to annual %
-            return {
-              symbol: item.symbol,
-              mark_price: parseFloat(item.markPrice || "0"),
-              index_price: parseFloat(item.indexPrice || "0"),
-              funding_rate: fundingRate,
-              annualized_yield_percentage: Number(annualized.toFixed(2)),
-              action: fundingRate > 0 ? "SHORT_PERP_LONG_SPOT" : "LONG_PERP_SHORT_SPOT"
-            }
-          })
-          .filter((item: any) => Math.abs(item.funding_rate) >= minRate)
-          .sort((a: any, b: any) => Math.abs(b.funding_rate) - Math.abs(a.funding_rate))
-          .slice(0, 10)
-
-        return response({ opportunities }, "high")
+        const opportunities = rank(
+          (Array.isArray(data) ? data : []).map((item: any) =>
+            shape(item.symbol, parseFloat(item.markPrice || "0"), parseFloat(item.indexPrice || "0"), parseFloat(item.lastFundingRate || "0"), 3)
+          )
+        )
+        if (opportunities.length > 0) return response({ source: "binance", opportunities }, "high")
       }
     } catch (e) {}
 
-    // Fallback sandbox
-    return response({
-      opportunities: [
-        { symbol: "ETHUSDT", mark_price: 3500.00, index_price: 3499.50, funding_rate: 0.0002, annualized_yield_percentage: 21.90, action: "SHORT_PERP_LONG_SPOT" },
-        { symbol: "SOLUSDT", mark_price: 150.00, index_price: 150.20, funding_rate: -0.00015, annualized_yield_percentage: -16.42, action: "LONG_PERP_SHORT_SPOT" }
-      ]
-    }, "medium")
+    try {
+      const res = await fetch("https://api.bybit.com/v5/market/tickers?category=linear")
+      if (res.ok) {
+        const data: any = await res.json()
+        const list = data?.result?.list || []
+        const opportunities = rank(
+          list
+            .filter((t: any) => t.fundingRate !== undefined && t.fundingRate !== "")
+            .map((t: any) => {
+              const intervalHours = parseFloat(t.fundingIntervalHour || "8") || 8
+              return shape(t.symbol, parseFloat(t.markPrice || "0"), parseFloat(t.indexPrice || "0"), parseFloat(t.fundingRate), 24 / intervalHours)
+            })
+        )
+        if (opportunities.length > 0) return response({ source: "bybit", opportunities }, "high")
+      }
+    } catch (e) {}
+
+    try {
+      const res = await fetch("https://api.hyperliquid.xyz/info", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type: "metaAndAssetCtxs" })
+      })
+      if (res.ok) {
+        const [meta, ctxs]: any = await res.json()
+        const universe = meta?.universe || []
+        const opportunities = rank(
+          universe
+            .map((u: any, i: number) => {
+              const c = ctxs?.[i]
+              if (!c || c.funding === undefined) return null
+              return shape(`${u.name}USD`, parseFloat(c.markPx || "0"), c.oraclePx ? parseFloat(c.oraclePx) : null, parseFloat(c.funding), 24)
+            })
+            .filter(Boolean)
+        )
+        if (opportunities.length > 0)
+          return response({ source: "hyperliquid", opportunities }, "high", ["Hyperliquid hourly funding annualized at 24 periods/day (Binance/Bybit use 8h intervals)."])
+      }
+    } catch (e) {}
+
+    return response(
+      { opportunities: [], note: "All funding-rate venues (Binance, Bybit, Hyperliquid) unavailable right now." },
+      "low",
+      ["Perp funding indices could not be reached; no data returned."]
+    )
   },
   skillId: "get_financial_arbitrage",
   skillName: "Financial arbitrage locator",
