@@ -70,7 +70,7 @@ https://statepulse-api.hahavoid0.workers.dev/mcp
 
 Every endpoint also responds to `GET <path>` (no payment) with its schema, description, and example input/output, and is fully described in `/openapi.json` and `/llms.txt`.
 
-The current registry exposes 44 paid micro-endpoints. See `AGENT_DISCOVERY_PLAYBOOK.local.md` for the private discovery and checklist.
+The current registry exposes 44 paid micro-endpoints.
 
 ## Agent-First Architecture
 
@@ -84,21 +84,7 @@ The current registry exposes 44 paid micro-endpoints. See `AGENT_DISCOVERY_PLAYB
 | OASF | `/.well-known/oasf.json` / `/oasf` |
 | EIP-8004 | `agenterc-metadata.json` / `/.well-known/agent-registration.json` |
 
-## Local Development
 
-```bash
-npm install
-npm run dev
-npm run typecheck
-```
-
-## Deployment
-
-```bash
-npm run deploy
-```
-
-This deploys to the `statepulse-api` Cloudflare Worker at `https://statepulse-api.hahavoid0.workers.dev`.
 
 ## Payment
 
@@ -114,4 +100,4 @@ npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/weather/
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/product/barcode -m POST -b '{"barcode":"9780140449136"}'
 ```
 
-See `buyer/README.md` for local x402 buyer testing.
+
