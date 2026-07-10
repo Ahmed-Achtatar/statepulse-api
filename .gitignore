@@ -23,8 +23,6 @@ wrangler-dev.out.log
 *.local.md
 *.log
 
-
-
 # IDEs and editors
 .idea/
 .vscode/
@@ -40,3 +38,26 @@ wrangler-dev.out.log
 .DS_Store
 Thumbs.db
 bazaar-recon-report.md
+
+# Proprietary / Execution Code
+src/
+buyer/
+contracts/
+mcp-server/
+mcp-registry/
+scripts/
+
+# Setup & Tests
+setup*
+test*
+
+# Deployment & Config
+wrangler.toml
+deploy.mjs
+package*.json
+tsconfig.json
+server.json
+smithery.yaml
+
+# Development Playbooks
+AGENTIC_API_DEVELOPMENT_PLAYBOOK.md
