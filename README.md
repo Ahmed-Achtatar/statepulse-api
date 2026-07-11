@@ -12,7 +12,7 @@ https://statepulse-api.hahavoid0.workers.dev/mcp
 
 - Transport: streamable HTTP
 - Auth: none (paid tools settle via x402 USDC on Base, per call)
-- Tools exposed: 50
+- Tools exposed: 59 (55 paid, 4 free discovery/feedback tools)
 - Metadata: https://statepulse-api.hahavoid0.workers.dev/.well-known/mcp.json
 
 ## Commercial Endpoints
@@ -51,11 +51,11 @@ https://statepulse-api.hahavoid0.workers.dev/mcp
 | `POST /finance/halts` | `$0.020` USDC | Parses the Nasdaq Trader RSS feed for active or recent stock trading halts. |
 | `POST /finance/fed-rate` | `$0.020` USDC | Retrieves the current federal funds target interest rate. |
 | `POST /finance/company-lookup` | `$0.100` USDC | Searches public business registries (e.g. OpenCorporates and SEC EDGAR databases) to retrieve registered address, incorporation date, jurisdiction, and official status. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup. |
-| `POST /blockchain/abi` | `$0.030` USDC | Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser. |
-| `POST /blockchain/simulate` | `$0.150` USDC | Runs eth_call state simulation against the Base blockchain RPC to check for transaction reverts. Matches: EVM revert checks, test contract call, inspect transaction failure, dry-run solidity method, gas estimator, test token swap failure, simulate multisig transaction execution. |
-| `POST /blockchain/gas-history` | `$0.010` USDC | Scans recent block gas details to estimate the minimum, average, and maximum base fee. |
-| `POST /blockchain/balances` | `$0.020` USDC | Scans native balance and ERC-20 token balances for a wallet address on Base or Ethereum. |
-| `POST /blockchain/funding-rates` | `$0.020` USDC | Queries current pricing and funding rate margins for perpetual swap contracts from Binance. |
+| `POST /blockchain/abi` | `$0.005` USDC | Resolves the contract interface JSON (ABI) for Sourcify-verified smart contracts on Base or Ethereum, with Blockscout as a fallback. |
+| `POST /blockchain/simulate` | `$0.050` USDC | Runs eth_call state simulation against the Base blockchain RPC to check for transaction reverts. Matches: EVM revert checks, test contract call, inspect transaction failure, dry-run solidity method, gas estimator, test token swap failure, simulate multisig transaction execution. |
+| `POST /blockchain/gas-history` | `$0.001` USDC | Scans recent block gas details to estimate the minimum, average, and maximum base fee. |
+| `POST /blockchain/balances` | `$0.001` USDC | Scans native balance and ERC-20 token balances for a wallet address on Base or Ethereum. |
+| `POST /blockchain/funding-rates` | `$0.002` USDC | Queries current pricing and funding rate margins for perpetual swap contracts from Binance. |
 | `POST /blockchain/send` | `$0.010` USDC | Relays a transaction to Base Mainnet, paying the native gas on your behalf and charging your wallet equivalent USDC via EIP-3009 receiveWithAuthorization. Matches: gasless tx relayer, submit transaction base, pay gas in usdc. |
 | `POST /coordination/bounties` | `$0.010` USDC | Deposits a real USDC bounty on Base using EIP-3009 receiveWithAuthorization, locking it in the non-custodial EscrowRegistry contract. Matches: deposit onchain bounty, non-custodial escrow bounty, lock usdc bounty. |
 | `POST /coordination/bounties/release` | `$0.010` USDC | Triggers the EscrowRegistry contract to release a locked USDC bounty to a worker wallet. Releasing can only be authorized by the StatePulse hot wallet (owner). Matches: release onchain bounty, payout escrow bounty, resolve locked bounty. |
@@ -70,7 +70,7 @@ https://statepulse-api.hahavoid0.workers.dev/mcp
 
 Every endpoint also responds to `GET <path>` (no payment) with its schema, description, and example input/output, and is fully described in `/openapi.json` and `/llms.txt`.
 
-The current registry exposes 44 paid micro-endpoints.
+The current registry exposes 55 paid micro-endpoints and 4 free discovery/feedback endpoints.
 
 ## Agent-First Architecture
 

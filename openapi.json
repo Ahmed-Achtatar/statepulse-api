@@ -5,7 +5,9 @@
     "description": "Pay-per-call x402 API for AI agents to find and use narrow real-time endpoints: bank and public holidays, DNS propagation, radio stream URLs, barcode lookup, live airspace tracking, air quality, transit status, weather anomalies, brand assets, prediction odds, and USGS streamflow. No account setup required; pay per request with USDC on Base or Solana.",
     "version": "1.0.1",
     "contact": {
-      "email": "support@statepulse.dev"
+      "email": "ahmedacht2017@gmail.com",
+      "name": "Ahmed",
+      "url": "tel:+212706235893"
     },
     "termsOfService": "https://statepulse-api.hahavoid0.workers.dev/terms",
     "x-logo": {
@@ -38,6 +40,12 @@
         "bearerFormat": "sp_...",
         "description": "Prepaid API key generated via `/credits/deposit` and passed in the `Authorization: Bearer sp_...` header."
       },
+      "x402": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "PAYMENT-SIGNATURE",
+        "description": "x402 payment authorization. An unpaid request returns HTTP 402 with the exact payment requirements."
+      },
       "siwx": {
         "type": "http",
         "scheme": "bearer",
@@ -46,11 +54,7 @@
       }
     }
   },
-  "security": [
-    {
-      "ApiKeyAuth": []
-    }
-  ],
+  "security": [],
   "externalDocs": {
     "description": "x402 and A2A metadata",
     "url": "https://statepulse-api.hahavoid0.workers.dev/.well-known/x402.json"
@@ -64,11 +68,7 @@
         "tags": [
           "utilities"
         ],
-        "security": [
-          {
-            "siwx": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -152,11 +152,7 @@
         "tags": [
           "utilities"
         ],
-        "security": [
-          {
-            "siwx": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -239,6 +235,14 @@
           "lookup"
         ],
         "x-agent-keywords": "Universal Barcode & Retail Product Metadata Lookup Resolves a UPC/EAN or ISBN barcode into detailed product metadata using OpenLibrary and UPCitemdb free search endpoints. Use when an agent needs to turn a raw barcode number into rich product details, title, and metadata. commerce barcode lookup Look up barcode 9780140449136 {\"barcode\":\"9780140449136\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -378,6 +382,14 @@
           "flight"
         ],
         "x-agent-keywords": "Global Air Traffic & Flight State Vectors Queries live airspace vectors for a specific aircraft ICAO24 hex identifier or a regional bounding box using OpenSky Network. Use when an agent needs live flight tracking coordinate details (lat, lng, altitude, speed) for an aircraft. logistics airspace flight Track live flight 3c6444 {\"icao24\":\"3c6444\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -538,6 +550,14 @@
           "lookup"
         ],
         "x-agent-keywords": "Hyperlocal Air Quality & Environmental Conditions Retrieves live localized air quality indices (AQI) and pollutant levels for a given latitude/longitude using OpenAQ. Use when an agent needs the local air quality index (AQI) or specific PM2.5 counts for a coordinate location. environment air-quality lookup What is the air quality in Los Angeles? {\"lat\":34.05,\"lng\":-118.24}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -679,6 +699,14 @@
           "alerts"
         ],
         "x-agent-keywords": "Live Public Transit Alerts & Delays (NYC MTA) Live subway alerts, delays, and planned-work advisories from the official MTA GTFS-RT feed for NYC lines. Other cities can be requested via the free /agent/request-data endpoint. Use when an agent needs real-world transit status or delays for trip scheduling. transit commute alerts Is the NYC L train delayed? {\"city\":\"nyc\",\"line\":\"L\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -812,6 +840,14 @@
           "environment"
         ],
         "x-agent-keywords": "Dark Sky / Open-Meteo Historic Weather Anomalies Compares current weather conditions with a 10-year historical average to flag climate anomalies. Use when an agricultural, energy-trading, or supply-chain agent needs to detect unusual local temperatures. weather anomaly environment Is the weather in New York normal? {\"lat\":40.71,\"lng\":-74.00}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -944,6 +980,14 @@
           "audio"
         ],
         "x-agent-keywords": "Live Radio & Podcast Stream Audio Extraction Resolves direct Shoutcast/Icecast streaming URLs from an open-source radio station database by country or tag. Use when a monitoring or translation agent needs a live audio streaming source URL for news scraping. media radio audio Get Moroccan news radio stream {\"country\":\"Morocco\",\"genre\":\"news\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1073,6 +1117,14 @@
           "utilities"
         ],
         "x-agent-keywords": "DNS Watch / Dig-Web-Interface Record Checker Checks global MX, TXT, A, and CNAME propagation status using Cloudflare DoH endpoints. Use when verifying TXT/MX records during server setup or routing updates. network dns utilities Check MX records for google.com {\"domain\":\"google.com\",\"type\":\"MX\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1206,6 +1258,14 @@
           "utilities"
         ],
         "x-agent-keywords": "Canva / Brandfetch Color & Logo Scraper Extracts brand logos and theme colors for any public business URL using Clearbit and HTML parsing. Use when an agent needs SVG/PNG logo links and brand hex colors for frontend component layout generation. brand design utilities Get brand colors and logo for spotify.com {\"domain\":\"spotify.com\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1323,6 +1383,14 @@
           "utilities"
         ],
         "x-agent-keywords": "PredictIt / ElectionBettingOdds Market Tracker Retrieves live betting market prices and contract odds for global geopolitical events using PredictIt. Use when hedging geopolitical or macro indicators in trading pipelines. prediction market utilities Get election odds {\"market_id\":7000}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1439,6 +1507,14 @@
           "agriculture"
         ],
         "x-agent-keywords": "USGS WaterData River Level Tracker Queries live US river level, streamflow gauge height, and flow velocity metrics using the USGS National Water Information System. Use when planning irrigation or identifying flood alerts for asset positioning. water logistics agriculture Get California streamflow metrics {\"state\":\"CA\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1560,6 +1636,14 @@
           "utilities"
         ],
         "x-agent-keywords": "Nager.Date National Bank Holiday Lookup Retrieves local bank and public holidays across 100+ countries to verify business days. Use when validating if a day is a working day before triggering B2B schedules. holidays calendar utilities Get US bank holidays for 2026 {\"year\":2026,\"country_code\":\"US\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1694,6 +1778,14 @@
           "safety"
         ],
         "x-agent-keywords": "USGS Live Earthquake Seismic Activity Tracker Queries the USGS Earthquake Hazards API for recent earthquakes exceeding a minimum magnitude. Use when an agent needs to check for recent earthquake activity or assess local seismic threats. environment seismic safety Show recent earthquakes over magnitude 4.5 {\"min_magnitude\":4.5}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1801,17 +1893,25 @@
     "/environment/wildfire": {
       "post": {
         "operationId": "getWildfires",
-        "summary": "NASA FIRMS Satellite Active Forest Fire Detector",
-        "description": "Scans active wildfire reports and incidents via public NASA FIRMS satellite active fire alert feeds to locate active blazes. Matches: active wildfire detector, NASA FIRMS fire coordinates, forest fire satellite alert, wildfire tracking map, satellite burn zones detector.",
+        "summary": "NASA EONET Active Wildfire Incident Tracker",
+        "description": "Scans NASA EONET for currently open wildfire incidents and their latest reported geometry. Matches: active wildfire detector, NASA wildfire coordinates, forest fire alert, wildfire tracking map, active fire incidents.",
         "tags": [
           "environment",
           "wildfire",
           "safety",
-          "nasa-firms",
-          "satellite-fire-alert",
+          "nasa-eonet",
+          "fire-alert",
           "hazard-monitoring"
         ],
-        "x-agent-keywords": "NASA FIRMS Satellite Active Forest Fire Detector Scans active wildfire reports and incidents via public NASA FIRMS satellite active fire alert feeds to locate active blazes. Matches: active wildfire detector, NASA FIRMS fire coordinates, forest fire satellite alert, wildfire tracking map, satellite burn zones detector. Use when evaluating if active wildfire hazards or forest fires disrupt agricultural assets, logistics cargo shipping routes, or real estate listings. environment wildfire safety nasa-firms satellite-fire-alert hazard-monitoring Are there active wildfires in California? {\"state\":\"CA\"}",
+        "x-agent-keywords": "NASA EONET Active Wildfire Incident Tracker Scans NASA EONET for currently open wildfire incidents and their latest reported geometry. Matches: active wildfire detector, NASA wildfire coordinates, forest fire alert, wildfire tracking map, active fire incidents. Use when evaluating if active wildfire hazards or forest fires disrupt agricultural assets, logistics cargo shipping routes, or real estate listings. environment wildfire safety nasa-eonet fire-alert hazard-monitoring Are there active wildfires in California? {\"state\":\"CA\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -1833,11 +1933,11 @@
             "environment",
             "wildfire",
             "safety",
-            "nasa-firms",
-            "satellite-fire-alert",
+            "nasa-eonet",
+            "fire-alert",
             "hazard-monitoring"
           ],
-          "keywords": "NASA FIRMS Satellite Active Forest Fire Detector Scans active wildfire reports and incidents via public NASA FIRMS satellite active fire alert feeds to locate active blazes. Matches: active wildfire detector, NASA FIRMS fire coordinates, forest fire satellite alert, wildfire tracking map, satellite burn zones detector. Use when evaluating if active wildfire hazards or forest fires disrupt agricultural assets, logistics cargo shipping routes, or real estate listings. environment wildfire safety nasa-firms satellite-fire-alert hazard-monitoring Are there active wildfires in California? {\"state\":\"CA\"}",
+          "keywords": "NASA EONET Active Wildfire Incident Tracker Scans NASA EONET for currently open wildfire incidents and their latest reported geometry. Matches: active wildfire detector, NASA wildfire coordinates, forest fire alert, wildfire tracking map, active fire incidents. Use when evaluating if active wildfire hazards or forest fires disrupt agricultural assets, logistics cargo shipping routes, or real estate listings. environment wildfire safety nasa-eonet fire-alert hazard-monitoring Are there active wildfires in California? {\"state\":\"CA\"}",
           "input": {
             "method": "POST",
             "body": {
@@ -1935,6 +2035,14 @@
           "noaa-swpc"
         ],
         "x-agent-keywords": "NOAA Live Solar Storm & Geomagnetic Alert System Retrieves the current planetary K-Index and active solar storms from NOAA SWPC. Matches: space weather solar storm alert, planetary k-index monitor, geomagnetic activity tracker, solar flare satellite warnings, coronal mass ejection tracking. Use when checking solar flare alerts, geomagnetic solar storm warnings, or K-index spikes that can cause GPS telemetry drift or radio communications anomalies. environment space-weather telemetry solar-storm k-index noaa-swpc Is there a solar storm warning right now? {}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2030,6 +2138,14 @@
           "health"
         ],
         "x-agent-keywords": "Hyperlocal Pollen & Allergen Live Forecast Queries pollen allergen index counts (grass, birch, oak) by coordinate using Open-Meteo. Use when checking environmental allergen profiles for health or ventilation assistant agents. environment pollen health Check pollen level in Los Angeles {\"lat\":34.05,\"lng\":-118.24}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2162,6 +2278,14 @@
           "shipping"
         ],
         "x-agent-keywords": "NOAA NDBC Wave Height & Sea Temperature Tracker Fetches live observation data for a specific NOAA marine buoy station. Use when an offshore or drone-boat navigation agent needs wave height, wave period, or water temp metrics. water marine shipping Get wave details for buoy 41002 {\"buoy_id\":\"41002\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2284,6 +2408,14 @@
           "river-flood-monitor"
         ],
         "x-agent-keywords": "USGS Streamflow River Gauge Height & Flood Alert System Scans active USGS gauge heights in a US state for potential river flooding. Matches: streamflow flood alerts, USGS gauge height warnings, river level flood checker, water streamflow warnings, river overflow stage alerts. Use when evaluating river flood alerts, USGS streamflow warnings, or gauge height alerts for inland assets, agricultural positioning, or real estate risk triage. water flood logistics usgs-gauges streamflow-warnings river-flood-monitor Are there river flood alerts in California? {\"state\":\"CA\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2409,6 +2541,14 @@
           "health"
         ],
         "x-agent-keywords": "Open-Meteo Current UV Index & Sun-Safety Triage Retrieves the current solar UV Index and calculates sun safety burn times. Use to dynamically triage sunburn hazards and solar radiation index levels. environment uv-index health Get current UV index in Los Angeles {\"lat\":34.05,\"lng\":-118.24}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2540,6 +2680,14 @@
           "weather"
         ],
         "x-agent-keywords": "Open-Meteo Current Lightning Strike Potential Queries the hourly lightning potential indices for coordinates. Use when validating if lightning threat risks interfere with drone operations or outdoor activities. environment lightning weather Check lightning risk in Los Angeles {\"lat\":34.05,\"lng\":-118.24}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2672,6 +2820,14 @@
           "oracle-verification"
         ],
         "x-agent-keywords": "Signed IP Geolocation Presence Verification Oracle Validates an IP address's physical route and latency offsets to verify country compliance, returning a cryptographically signed Geolocation Certificate. Matches: geolocate ip check, secure location verification, ip route validator, compliant network geodata. Use when an agent needs to prove or check that a server or client node resides in a specific regulatory jurisdiction. location compliance security ip-geolocation oracle-verification Verify IP presence 8.8.8.8 is in US {\"ip\":\"8.8.8.8\",\"expected_country\":\"US\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2815,6 +2971,14 @@
           "maritime-routes"
         ],
         "x-agent-keywords": "Global AIS Cargo Ship & Vessel Location Tracker Resolves the current coordinate telemetry and voyage details for a cargo ship by MMSI number. Matches: cargo ship location tracker, AIS transponder coordinate lookup, find container vessel by MMSI, ocean logistics cargo positioning, track shipping container vessel, sea lanes transit tracker. Use when a shipping agent or logistics bot needs to verify the real-time position, speed, destination port, or current heading of an ocean cargo container vessel using AIS global transponder feeds. transit shipping logistics ais-tracker vessel-locator maritime-routes Track container ship MMSI 205792000 {\"mmsi\":\"205792000\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -2940,6 +3104,14 @@
           "travel"
         ],
         "x-agent-keywords": "OpenData European Railway Station Board & Delays Queries live train departures and schedule delays for European transit hubs using transport.opendata.ch. Use when scheduling business trips or verifying train connection delays for travelers. transit rail travel Check train departures from Zurich HB {\"station\":\"Zurich HB\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -3067,6 +3239,14 @@
           "freight-dispatch"
         ],
         "x-agent-keywords": "US/EU Toll Road Route Fee Calculator Estimates the approximate toll road costs for a route based on distance and state-level averages. Matches: toll road pricing, toll calculator, toll highway fees, driving trip expense calculator, truck route toll cost checker, logistics delivery overhead. Use when planning overland shipping routes and verifying travel toll costs for logistics budgeting or autonomous vehicle dispatching. transit toll logistics tollway-calculator route-pricing freight-dispatch Estimate tolls for 80 miles in NY {\"state\":\"NY\",\"distance_miles\":80}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -3205,6 +3385,14 @@
           "charging"
         ],
         "x-agent-keywords": "Open Charge Map EV Charging Station Live Finder Locates public electric vehicle charging stations within a given radius using Open Charge Map. Use to route autonomous electric delivery cars or robotic agents to active charging stations. transit ev charging Find EV chargers near Los Angeles {\"lat\":34.05,\"lng\":-118.24}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -3355,6 +3543,14 @@
           "logistics"
         ],
         "x-agent-keywords": "OpenStreetMap OSRM Driving Distance & Duration Calculator Computes the shortest driving distance and duration between two coordinates using the public OSRM engine. Use to estimate driving times and distances for delivery dispatches or travel planning agents. transit routing logistics Estimate route from 34.05, -118.24 to 34.14, -118.14 {\"start_lat\":34.05,\"start_lng\":-118.24,\"end_lat\":34.14,\"end_lng\":-118.14}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -3518,6 +3714,14 @@
           "landing-board"
         ],
         "x-agent-keywords": "OpenSky Network Live Airport Flight Board Retrieves the recent live arrivals list for a specific airport by ICAO code. Matches: airport arrivals board list, check arriving aircraft, OpenSky schedule flight landing board, flight terminal details. Use when an automated dispatch agent monitors airport arrival status to verify landing timestamps of passenger or cargo flights. transit airport flight opensky arrivals-schedule landing-board Show arrivals for EDDF airport {\"airport_icao\":\"EDDF\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -3648,6 +3852,14 @@
           "aviation-status"
         ],
         "x-agent-keywords": "FAA US Airport Live Ground Stop & Delay Checker Queries the FAA public API for active delays, ground stops, and weather statuses for a US airport. Matches: air traffic control delays, US airport ground stops, flight weather delays, FAA flight restrictions, airport layout status. Use when flight cargo routes or travelers need to check active ground stops, delays, or air traffic control weather halts at a US airport. transit airport logistics faa-delays ground-stops weather-delays aviation-status Check FAA delays for SFO {\"airport_code\":\"SFO\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -3685,6 +3897,7 @@
               "properties": {
                 "airport_code": {
                   "type": "string",
+                  "pattern": "^[A-Za-z]{3}$",
                   "description": "3-character IATA airport code (e.g. SFO)",
                   "examples": [
                     "SFO"
@@ -3709,6 +3922,7 @@
                 "properties": {
                   "airport_code": {
                     "type": "string",
+                    "pattern": "^[A-Za-z]{3}$",
                     "description": "3-character IATA airport code (e.g. SFO)",
                     "examples": [
                       "SFO"
@@ -3775,6 +3989,14 @@
           "billing-utilities"
         ],
         "x-agent-keywords": "US State & County Sales Tax Rate Triage Locates the combined sales tax rate (state, county, local) for a US ZIP code using Zippopotam. Matches: sales tax rate calculator, zip code tax lookup, commercial sales tax checker, e-commerce tax estimator, state county city tax rates. Use to calculate sales tax percentages before finalizing a checkout, invoice, or billing statement in e-commerce workflows. finance tax e-commerce sales-tax zip-code-tax billing-utilities Get sales tax rate for zip 90210 {\"zip_code\":\"90210\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -3900,6 +4122,14 @@
           "patent-tracker"
         ],
         "x-agent-keywords": "USPTO PatentsView Database Live Search Queries the official public USPTO PatentsView database to fetch status and info for a patent. Matches: USPTO patent lookup, search patent number info, patent inventor checker, patent filing date tracker, technology patent registry search. Use when an agent needs to verify patent filing details, status, title, assignee, or inventors for technology scouting and competitor research. legal patent intellectual-property uspto-search inventor-lookup patent-tracker Look up patent 10000000 {\"patent_number\":\"10000000\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4016,8 +4246,8 @@
     "/intellectual-property/trademark": {
       "post": {
         "operationId": "checkTrademark",
-        "summary": "USPTO Trademark Registry Brand Name Checker",
-        "description": "Performs a preliminary conflict check on a word against public trademark registries. Matches: trademark check, brand conflict check, domain availability name checker, intellectual property brand screening.",
+        "summary": "Trademark Registry Brand Name Checker (Temporarily Unavailable)",
+        "description": "Reserved for preliminary trademark conflict checks. Calls are rejected before payment while a reliable official registry search source is unavailable.",
         "tags": [
           "legal",
           "trademark",
@@ -4026,7 +4256,15 @@
           "name-screening",
           "conflict-checker"
         ],
-        "x-agent-keywords": "USPTO Trademark Registry Brand Name Checker Performs a preliminary conflict check on a word against public trademark registries. Matches: trademark check, brand conflict check, domain availability name checker, intellectual property brand screening. Use when an agent needs to perform a first-pass, automated conflict check before naming products, registering domains, or launching brands. legal trademark intellectual-property brand-checker name-screening conflict-checker Is 'Apple' a registered trademark? {\"word\":\"Apple\"}",
+        "x-agent-keywords": "Trademark Registry Brand Name Checker (Temporarily Unavailable) Reserved for preliminary trademark conflict checks. Calls are rejected before payment while a reliable official registry search source is unavailable. Use when an agent needs to perform a first-pass, automated conflict check before naming products, registering domains, or launching brands. legal trademark intellectual-property brand-checker name-screening conflict-checker Is 'Apple' a registered trademark? {\"word\":\"Apple\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4052,7 +4290,7 @@
             "name-screening",
             "conflict-checker"
           ],
-          "keywords": "USPTO Trademark Registry Brand Name Checker Performs a preliminary conflict check on a word against public trademark registries. Matches: trademark check, brand conflict check, domain availability name checker, intellectual property brand screening. Use when an agent needs to perform a first-pass, automated conflict check before naming products, registering domains, or launching brands. legal trademark intellectual-property brand-checker name-screening conflict-checker Is 'Apple' a registered trademark? {\"word\":\"Apple\"}",
+          "keywords": "Trademark Registry Brand Name Checker (Temporarily Unavailable) Reserved for preliminary trademark conflict checks. Calls are rejected before payment while a reliable official registry search source is unavailable. Use when an agent needs to perform a first-pass, automated conflict check before naming products, registering domains, or launching brands. legal trademark intellectual-property brand-checker name-screening conflict-checker Is 'Apple' a registered trademark? {\"word\":\"Apple\"}",
           "input": {
             "method": "POST",
             "body": {
@@ -4150,6 +4388,14 @@
           "halts"
         ],
         "x-agent-keywords": "Nasdaq Stock Exchange Circuit Breaker & Halts Tracker Parses the Nasdaq Trader RSS feed for active or recent stock trading halts. Use to evaluate if an active stock ticker has had trading halted due to news or volatility. finance trading halts Are there any active stock halts? {}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4246,6 +4492,14 @@
           "macroeconomics"
         ],
         "x-agent-keywords": "Federal Reserve Current Target & Discount Rate Retrieves the current federal funds target interest rate. Use when interest rate pricing is needed for smart contract borrowing or financial calculations. finance fed-rate macroeconomics What is the current Federal Reserve rate? {}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4339,6 +4593,14 @@
           "verification"
         ],
         "x-agent-keywords": "Company & Corporate Registry Information Finder Searches the SEC EDGAR registry (US public and SEC-registered companies) to retrieve registered business address, state of incorporation, SIC industry classification, and CIK/ticker identifiers. Matches: corporate registration check, company status finder, look up business incorporation details, verify corporate address lookup. Use when an agent or B2B compliance checker needs to verify that a business is active, lookup its registered corporate office address, or retrieve its incorporation/registration ID. finance corporate legal company-checker verification Look up company Apple {\"company_name\":\"Apple\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4468,6 +4730,14 @@
           "yield-alpha"
         ],
         "x-agent-keywords": "Cross-Market Perpetual Arbitrage & Funding Yield Triage Queries live funding rates and mark-index spreads from centralised perp indices to locate yield arbitrage opportunities. Matches: arbitrage finder, funding rate arbitrage, cross-chain yield, spot-perp spread, perp funding rates checker. Use when an agent wants to find high-yield cross-market perpetual swap funding rate spreads or spot-perp arbitrage opportunities. finance trading arbitrage funding-rates perpetuals yield-alpha Find funding rate arbitrage opportunities {\"min_funding_rate\":0.0001}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4586,6 +4856,14 @@
           "compliance-check"
         ],
         "x-agent-keywords": "Corporate Status Escrow Simulator (Sandbox) SIMULATION ONLY — does not hold, lock, or move any funds. Looks up the seller company's live corporate registration status and returns a simulated, status-gated escrow ticket so agents can prototype a KYB-gated escrow flow. Matches: escrow simulation, corporate seller status check, sandbox compliance flow. Use to simulate a corporate-status-gated escrow flow, or to check a seller company's live registration status. No funds are held or transferred. finance corporate escrow-simulation sandbox compliance-check Simulate a KYB-gated escrow for Apple {\"company_name\":\"Apple\",\"buyer_wallet\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"seller_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\",\"amount_usdc\":\"100.00\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4766,6 +5044,14 @@
           "bounties"
         ],
         "x-agent-keywords": "Bounty Escrow Simulator (Sandbox) SIMULATION ONLY — does not deposit, lock, or move any USDC. Models a bounty-escrow creation flow (fee math, IDs, status) so agents can prototype task-reward coordination without on-chain custody. Matches: simulate bounty escrow, sandbox task reward, bounty escrow prototype. Use to simulate creating a bounty-escrow lockup (fee math, IDs, status). No USDC is deposited or locked. finance escrow-simulation sandbox coordination bounties Simulate a 100 USDC bounty escrow for Solve Maze Task {\"title\":\"Solve Maze\",\"reward_usdc\":\"100.00\",\"sender\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -4965,6 +5251,14 @@
           "bounties"
         ],
         "x-agent-keywords": "Bounty Escrow Release Simulator (Sandbox) SIMULATION ONLY — verifies no signature and moves no funds. Models a bounty-payout authorization and returns a simulated completed-payout ticket. Matches: simulate escrow release, sandbox bounty payout, payout flow prototype. Use to simulate a bounty-payout authorization flow. No signature is verified and no funds are moved. finance escrow-simulation sandbox coordination bounties Simulate releasing payout for sim_bounty_123 to 0x976EA74026E726554dB657fa54763abd0C3a0aa9 {\"bounty_id\":\"sim_bounty_123\",\"worker_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -5110,18 +5404,26 @@
     "/blockchain/abi": {
       "post": {
         "operationId": "getContractAbi",
-        "summary": "Etherscan/Basescan Verified Contract ABI Resolver",
-        "description": "Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser.",
+        "summary": "Sourcify Verified Contract ABI Resolver",
+        "description": "Resolves the contract interface JSON (ABI) for Sourcify-verified smart contracts on Base or Ethereum, with Blockscout as a fallback. Matches: verified ABI fetcher, contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser.",
         "tags": [
           "blockchain",
           "abi",
           "utilities",
-          "etherscan",
-          "basescan",
+          "sourcify",
+          "blockscout",
           "verified-contract",
           "calldata-decoder"
         ],
-        "x-agent-keywords": "Etherscan/Basescan Verified Contract ABI Resolver Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser. Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically. blockchain abi utilities etherscan basescan verified-contract calldata-decoder Get Base USDC ABI {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
+        "x-agent-keywords": "Sourcify Verified Contract ABI Resolver Resolves the contract interface JSON (ABI) for Sourcify-verified smart contracts on Base or Ethereum, with Blockscout as a fallback. Matches: verified ABI fetcher, contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser. Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically. blockchain abi utilities sourcify blockscout verified-contract calldata-decoder Get Base USDC ABI {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -5143,12 +5445,12 @@
             "blockchain",
             "abi",
             "utilities",
-            "etherscan",
-            "basescan",
+            "sourcify",
+            "blockscout",
             "verified-contract",
             "calldata-decoder"
           ],
-          "keywords": "Etherscan/Basescan Verified Contract ABI Resolver Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser. Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically. blockchain abi utilities etherscan basescan verified-contract calldata-decoder Get Base USDC ABI {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
+          "keywords": "Sourcify Verified Contract ABI Resolver Resolves the contract interface JSON (ABI) for Sourcify-verified smart contracts on Base or Ethereum, with Blockscout as a fallback. Matches: verified ABI fetcher, contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser. Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically. blockchain abi utilities sourcify blockscout verified-contract calldata-decoder Get Base USDC ABI {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
           "input": {
             "method": "POST",
             "body": {
@@ -5166,6 +5468,10 @@
                 },
                 "chain": {
                   "type": "string",
+                  "enum": [
+                    "ethereum",
+                    "base"
+                  ],
                   "description": "Target blockchain (ethereum or base)",
                   "default": "base"
                 }
@@ -5195,6 +5501,10 @@
                   },
                   "chain": {
                     "type": "string",
+                    "enum": [
+                      "ethereum",
+                      "base"
+                    ],
                     "description": "Target blockchain (ethereum or base)",
                     "default": "base"
                   }
@@ -5259,6 +5569,14 @@
           "eth-call"
         ],
         "x-agent-keywords": "EVM Transaction Execution Simulator Runs eth_call state simulation against the Base blockchain RPC to check for transaction reverts. Matches: EVM revert checks, test contract call, inspect transaction failure, dry-run solidity method, gas estimator, test token swap failure, simulate multisig transaction execution. Use when an on-chain coding agent or auto-trader needs to check if a contract transaction (e.g. Uniswap swap, lending deposit, claim tokens) will succeed, revert, or fail before paying network transaction gas fees. blockchain simulation utilities revert-guard solidity-dry-run uniswap-simulation eth-call Simulate Base read call {\"to\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\",\"data\":\"0x70a082310000000000000000000000000000000000000000000000000000000000000000\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -5413,6 +5731,14 @@
           "utilities"
         ],
         "x-agent-keywords": "Base Blockchain Gas Fee History & Trend Tracker Scans recent block gas details to estimate the minimum, average, and maximum base fee. Use when an agent wants to find cheap gas fee windows to execute heavy transactions. blockchain gas utilities Check gas trend for last 30 blocks {\"blocks\":30}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -5521,6 +5847,14 @@
           "finance"
         ],
         "x-agent-keywords": "Multi-Chain Wallet Token Balance Scanner Scans native balance and ERC-20 token balances for a wallet address on Base or Ethereum. Use when an agent needs to monitor the stablecoin or native asset balance of a wallet. blockchain balances finance Check balance of wallet 0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE {\"wallet\":\"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -5650,6 +5984,14 @@
           "trading"
         ],
         "x-agent-keywords": "Binance Futures Live Perp Funding Rates Ticker Queries current pricing and funding rate margins for perpetual swap contracts from Binance. Use when calculating delta-neutral yield margins or perp arbitrage funding offsets. blockchain funding-rates trading Get funding rate for BTCUSDT {\"symbol\":\"BTCUSDT\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -5772,6 +6114,14 @@
           "defi"
         ],
         "x-agent-keywords": "Token Contract Rug-Pull & Ownership Risk Composite One call that bundles the checks needed before trusting an unfamiliar ERC-20 token: scans deployed bytecode for dangerous function selectors (mint/pause/blacklist), reads on-chain owner() to check if ownership was renounced, and cross-references DexScreener for liquidity depth and pair age — returning a single risk score with flags. Matches: rug pull check, token safety score, is this token safe, contract risk scan, honeypot pre-check, ownership renounced check, liquidity risk. Use before an agent trades, bridges, or holds an unfamiliar ERC-20 token — surfaces mint/pause/blacklist risk, ownership renouncement, and liquidity depth in one call. blockchain crypto-security rug-pull token-safety defi Check if token 0x833589fcd6edb6e08f4c7c32d4f71b54bda02913 is safe to trade {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -5903,6 +6253,14 @@
           "security"
         ],
         "x-agent-keywords": "DNSSEC & CAA Record Security Auditor Queries DNSSEC (DS) and Certification Authority Authorization (CAA) records for a domain using Cloudflare DoH. Use to verify domain name security signing and certificate issuance policies. network dns security Audit DNS security for google.com {\"domain\":\"google.com\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6023,6 +6381,14 @@
           "monitoring"
         ],
         "x-agent-keywords": "SSL Certificate Handshake Expiration Monitor Extracts certificate validity dates and expiration countdown for a domain using CertSpotter logs. Use when an IT monitor agent checks if website certificates are valid or close to expiration. network ssl monitoring Check SSL expiry for google.com {\"domain\":\"google.com\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6142,6 +6508,14 @@
           "security"
         ],
         "x-agent-keywords": "HTTP Security Header Quality Auditor Fetches target URL headers to score configurations (HSTS, CSP, X-Frame-Options). Use when an auditor or system integration agent evaluates web host settings. network headers security Audit headers for https://google.com {\"url\":\"https://google.com\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6263,6 +6637,14 @@
           "geodata"
         ],
         "x-agent-keywords": "Geocoding City Timezone & Local Time Checker Resolves the local time, offset, and daylight savings status for a city name using Open-Meteo Geocoding. Use when scheduling notifications or execution scripts to prevent calls during late local hours. location timezone geodata Check timezone of Tokyo {\"city\":\"Tokyo\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6382,6 +6764,14 @@
           "environment"
         ],
         "x-agent-keywords": "USGS Streamflow River Water Temperature Monitor Queries live stream water temperature telemetry from active USGS gauges in a US state. Use when an agricultural, aquacultural, or cooling agent needs live water temperature checks. water temperature environment Get stream temp for CA {\"state\":\"CA\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6506,6 +6896,14 @@
           "monitoring"
         ],
         "x-agent-keywords": "Domain WHOIS & Registry Expiration Checker Queries the global RDAP bootstrap directory for domain registration details, registrar name, creation date, and expiration timestamp. Matches: domain registration checker, WHOIS lookup tool, check domain owner registry, check website expiry date. Use when an IT monitor agent or security bot needs to verify domain registration dates, registrar details, or check if a domain is close to expiration. network dns whois domain-checker monitoring Check WHOIS for google.com {\"domain\":\"google.com\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6632,6 +7030,14 @@
           "utilities"
         ],
         "x-agent-keywords": "IP Geolocation & Threat Intelligence Scanner Scans an IPv4 or IPv6 address using public geodata to resolve location, country, ISP, autonomous system, and hosting flags. Matches: geolocate IP address, check client IP country, query ISP metadata, threat intelligence proxy check, hosting provider detector. Use when an automated security agent or crawler checks geolocation, ISP ASN info, or hosting provider tags to identify scraping bots or proxy traffic. network ip geolocation threat-intel utilities Geolocate IP 8.8.8.8 {\"ip\":\"8.8.8.8\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6765,6 +7171,14 @@
           "monitoring"
         ],
         "x-agent-keywords": "Comprehensive Network Host & VPS Security Auditor Scans an IP address or hostname to audit DNSSEC safety, SSL expiration status, HTTP security headers, and geodata compliance. Matches: network security audit, scan website ports, VPS shield test, audit host headers. Use when a server monitoring agent or compliance bot needs a complete security profile of a web server or agent VPS in a single call. network security audit ssl dns monitoring Perform network security audit for google.com {\"host\":\"google.com\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -6904,6 +7318,14 @@
           "auto-trader"
         ],
         "x-agent-keywords": "Onchain Transaction Preflight — Bundled GO/NO-GO Check One call that pre-flights an onchain transaction for an agent: simulates the call for reverts, checks the sender wallet's native gas balance, and reads current Base gas — returning a single GO/NO_GO verdict with reasons. Replaces 3 separate calls (simulate + balances + gas-history) every agent runs before transacting. Matches: pre-transaction check, agent transaction guard, revert + balance + gas preflight, onchain go/no-go, safe-to-send checker, autonomous trade preflight. Use as the single pre-send check before an autonomous agent or auto-trader broadcasts an onchain transaction: confirms it won't revert, the sender can pay gas, and gas is reasonable — in one call. blockchain agent preflight transaction-guard revert-guard go-no-go bundle auto-trader Preflight a Base USDC transfer before sending {\"wallet\":\"0x4a82F147c8A4339409C9097Adc1EedFd56E85bFE\",\"to\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\",\"data\":\"0x70a08231...\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -7079,6 +7501,14 @@
           "blockchain"
         ],
         "x-agent-keywords": "Deposit Real Onchain USDC Bounty (Base Mainnet) Deposits a real USDC bounty on Base using EIP-3009 receiveWithAuthorization, locking it in the non-custodial EscrowRegistry contract. Matches: deposit onchain bounty, non-custodial escrow bounty, lock usdc bounty. Use when an agent wants to lock real USDC on Base to coordinate and incentivize a task payout. coordination bounties finance blockchain Deposit 10 USDC bounty on Base for Solve Maze Task {\"title\":\"Solve Maze\",\"reward_usdc\":\"10.00\",\"duration_days\":7,\"sender\":\"0x742d35Cc6634C0532925a3b844Bc454e4438f44e\",\"nonce\":\"0x0000000000000000000000000000000000000000000000000000000000000001\",\"valid_before\":1800000000,\"signature\":\"0x...\",\"bounty_id\":\"0x...\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -7283,6 +7713,14 @@
           "blockchain"
         ],
         "x-agent-keywords": "Release Deployed USDC Bounty (Base Mainnet) Triggers the EscrowRegistry contract to release a locked USDC bounty to a worker wallet. Releasing can only be authorized by the StatePulse hot wallet (owner). Matches: release onchain bounty, payout escrow bounty, resolve locked bounty. Use to payout a locked USDC bounty once the task is verified as completed. coordination bounties finance blockchain Release payout for bounty 0x... to 0x976EA74026E726554dB657fa54763abd0C3a0aa9 {\"bounty_id\":\"0x...\",\"worker_wallet\":\"0x976EA74026E726554dB657fa54763abd0C3a0aa9\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -7409,6 +7847,14 @@
           "finance"
         ],
         "x-agent-keywords": "Relay Gasless Transaction (Base Mainnet) Relays a transaction to Base Mainnet, paying the native gas on your behalf and charging your wallet equivalent USDC via EIP-3009 receiveWithAuthorization. Matches: gasless tx relayer, submit transaction base, pay gas in usdc. Use when an agent wants to execute a transaction on Base without maintaining an ETH balance for gas. blockchain relayer gasless finance Relay call to 0x... with payload 0x... and max gas fee 0.50 USDC {\"target_contract\":\"0x...\",\"calldata\":\"0x...\",\"max_gas_fee_usdc\":\"0.50\",\"sender\":\"0x...\",\"nonce\":\"0x...\",\"valid_before\":1800000000,\"signature\":\"0x...\"}",
+        "security": [
+          {
+            "x402": []
+          },
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -7591,11 +8037,7 @@
           "roadmap"
         ],
         "x-agent-keywords": "Request Missing Live Data (Free) — Tell Us What Your Agent Needs FREE endpoint. If your agent needs live data this API does not serve yet — a feed, a metric, a lookup, another city or chain — describe it here. Requests are reviewed and frequently-requested data becomes a real endpoint, usually within days; re-fetch openapi.json or llms.txt to see new endpoints. Submitting a request directly helps your agent: the data you ask for is prioritized so it exists the next time you need it. Matches: data not available, missing endpoint, request new data source, feature request, no endpoint for this, wish this API had. Use whenever this API (or any API) lacks the live data your agent needs. It is free and directly increases the chance the data exists on your next run. free meta data-request feedback roadmap Request an endpoint for London tube alerts {\"requested_data\":\"Live transit alerts for London Underground\"}",
-        "security": [
-          {
-            "siwx": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -7690,11 +8132,7 @@
           "quality"
         ],
         "x-agent-keywords": "Submit Feedback on an Endpoint (Free) FREE endpoint. Report anything about this API: wrong or stale data, an endpoint that failed, pricing that feels off, or something that worked well. Feedback is reviewed and data-quality reports are fixed with priority — submitting one directly improves the results your agent gets on its next call. Matches: report wrong data, endpoint broken, stale result, API feedback, rate this API. Use after any call that returned wrong, stale, or surprising data — or to rate an endpoint. Free; data-quality reports get fixed with priority. free meta feedback quality Report stale data on /telemetry/air-quality {\"feedback\":\"AQI looked stale\",\"endpoint\":\"/telemetry/air-quality\"}",
-        "security": [
-          {
-            "siwx": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -7776,11 +8214,7 @@
           "feedback"
         ],
         "x-agent-keywords": "Suggest Endpoint Pricing (Free) — Signal Willingness-to-Pay FREE endpoint. If a paid endpoint's pricing is too high, suggest a target price based on alternative sources, budget limitations, or query frequency. Feedback is used to optimize pricing decisions. Use when an endpoint is too expensive for your budget to trigger a price reduction review. free meta pricing feedback Suggest $0.05 price for /blockchain/simulate {\"endpoint_path\":\"/blockchain/simulate\",\"suggested_price_usd\":0.05}",
-        "security": [
-          {
-            "siwx": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -7863,11 +8297,7 @@
           "discovery"
         ],
         "x-agent-keywords": "Capabilities Diff Discovery (Free) — Match Needs & Request Gaps FREE endpoint. Submit an array of data or capability needs. The API returns details on matching endpoints we currently serve and automatically logs unmatched needs as roadmap requests. Use before starting a complex task to determine if the required tools exist, and request them in bulk if they don't. free meta discovery Check support for interest rates and flight tracking {\"needs\":[\"interest rates\",\"flight tracking\"]}",
-        "security": [
-          {
-            "siwx": []
-          }
-        ],
+        "security": [],
         "requestBody": {
           "required": true,
           "content": {

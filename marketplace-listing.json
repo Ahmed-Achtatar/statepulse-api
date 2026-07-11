@@ -117,7 +117,7 @@
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/environment/wildfire",
       "method": "POST",
       "price_usd": "0.050",
-      "description": "Scans active wildfire reports and incidents via public NASA FIRMS satellite active fire alert feeds to locate active blazes. Matches: active wildfire detector, NASA FIRMS fire coordinates, forest fire satellite alert, wildfire tracking map, satellite burn zones detector."
+      "description": "Scans NASA EONET for currently open wildfire incidents and their latest reported geometry. Matches: active wildfire detector, NASA wildfire coordinates, forest fire alert, wildfire tracking map, active fire incidents."
     },
     {
       "name": "Environment Space weather",
@@ -236,7 +236,7 @@
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark",
       "method": "POST",
       "price_usd": "0.100",
-      "description": "Performs a preliminary conflict check on a word against public trademark registries. Matches: trademark check, brand conflict check, domain availability name checker, intellectual property brand screening."
+      "description": "Reserved for preliminary trademark conflict checks. Calls are rejected before payment while a reliable official registry search source is unavailable."
     },
     {
       "name": "Finance Halts",
@@ -292,7 +292,7 @@
       "endpoint": "https://statepulse-api.hahavoid0.workers.dev/blockchain/abi",
       "method": "POST",
       "price_usd": "0.005",
-      "description": "Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser."
+      "description": "Resolves the contract interface JSON (ABI) for Sourcify-verified smart contracts on Base or Ethereum, with Blockscout as a fallback. Matches: verified ABI fetcher, contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser."
     },
     {
       "name": "Blockchain Simulate",

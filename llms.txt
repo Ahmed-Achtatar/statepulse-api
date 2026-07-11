@@ -82,7 +82,7 @@ Note: The payment gateway middleware will also run these validation checks autom
 
 ## Cheapest endpoints for agent tests
 
-The cheapest paid endpoints cost $0.010 USDC:
+The cheapest paid endpoints cost $0.001 USDC:
 
 - /blockchain/gas-history: Base Blockchain Gas Fee History & Trend Tracker. Use for use when an agent wants to find cheap gas fee windows to execute heavy transactions.
 - /blockchain/balances: Multi-Chain Wallet Token Balance Scanner. Use for use when an agent needs to monitor the stablecoin or native asset balance of a wallet.
@@ -601,7 +601,7 @@ AgentCash call:
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/environment/earthquake -m POST -b '{"min_magnitude":4}'
 ```
 
-## Endpoint: NASA FIRMS Satellite Active Forest Fire Detector
+## Endpoint: NASA EONET Active Wildfire Incident Tracker
 
 POST https://statepulse-api.hahavoid0.workers.dev/environment/wildfire
 
@@ -1296,7 +1296,7 @@ AgentCash call:
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/intellectual-property/patent -m POST -b '{"patent_number":"10000000"}'
 ```
 
-## Endpoint: USPTO Trademark Registry Brand Name Checker
+## Endpoint: Trademark Registry Brand Name Checker (Temporarily Unavailable)
 
 POST https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark
 
@@ -1632,7 +1632,7 @@ AgentCash call:
 npx agentcash@latest fetch https://statepulse-api.hahavoid0.workers.dev/finance/escrow-bounty/release -m POST -b '{"bounty_id":"sim_bounty_9c9743e4-8e0d-49d4","worker_wallet":"0x976EA74026E726554dB657fa54763abd0C3a0aa9"}'
 ```
 
-## Endpoint: Etherscan/Basescan Verified Contract ABI Resolver
+## Endpoint: Sourcify Verified Contract ABI Resolver
 
 POST https://statepulse-api.hahavoid0.workers.dev/blockchain/abi
 

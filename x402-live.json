@@ -671,14 +671,14 @@
       "url": "https://statepulse-api.hahavoid0.workers.dev/environment/wildfire",
       "price": "$0.050",
       "atomicAmount": "50000",
-      "description": "Scans active wildfire reports and incidents via public NASA FIRMS satellite active fire alert feeds to locate active blazes. Matches: active wildfire detector, NASA FIRMS fire coordinates, forest fire satellite alert, wildfire tracking map, satellite burn zones detector.",
-      "keywords": "NASA FIRMS Satellite Active Forest Fire Detector Scans active wildfire reports and incidents via public NASA FIRMS satellite active fire alert feeds to locate active blazes. Matches: active wildfire detector, NASA FIRMS fire coordinates, forest fire satellite alert, wildfire tracking map, satellite burn zones detector. Use when evaluating if active wildfire hazards or forest fires disrupt agricultural assets, logistics cargo shipping routes, or real estate listings. environment wildfire safety nasa-firms satellite-fire-alert hazard-monitoring Are there active wildfires in California? {\"state\":\"CA\"}",
+      "description": "Scans NASA EONET for currently open wildfire incidents and their latest reported geometry. Matches: active wildfire detector, NASA wildfire coordinates, forest fire alert, wildfire tracking map, active fire incidents.",
+      "keywords": "NASA EONET Active Wildfire Incident Tracker Scans NASA EONET for currently open wildfire incidents and their latest reported geometry. Matches: active wildfire detector, NASA wildfire coordinates, forest fire alert, wildfire tracking map, active fire incidents. Use when evaluating if active wildfire hazards or forest fires disrupt agricultural assets, logistics cargo shipping routes, or real estate listings. environment wildfire safety nasa-eonet fire-alert hazard-monitoring Are there active wildfires in California? {\"state\":\"CA\"}",
       "tags": [
         "environment",
         "wildfire",
         "safety",
-        "nasa-firms",
-        "satellite-fire-alert",
+        "nasa-eonet",
+        "fire-alert",
         "hazard-monitoring"
       ],
       "requestExample": {
@@ -1419,6 +1419,7 @@
         "properties": {
           "airport_code": {
             "type": "string",
+            "pattern": "^[A-Za-z]{3}$",
             "description": "3-character IATA airport code (e.g. SFO)",
             "examples": [
               "SFO"
@@ -1531,8 +1532,8 @@
       "url": "https://statepulse-api.hahavoid0.workers.dev/intellectual-property/trademark",
       "price": "$0.100",
       "atomicAmount": "100000",
-      "description": "Performs a preliminary conflict check on a word against public trademark registries. Matches: trademark check, brand conflict check, domain availability name checker, intellectual property brand screening.",
-      "keywords": "USPTO Trademark Registry Brand Name Checker Performs a preliminary conflict check on a word against public trademark registries. Matches: trademark check, brand conflict check, domain availability name checker, intellectual property brand screening. Use when an agent needs to perform a first-pass, automated conflict check before naming products, registering domains, or launching brands. legal trademark intellectual-property brand-checker name-screening conflict-checker Is 'Apple' a registered trademark? {\"word\":\"Apple\"}",
+      "description": "Reserved for preliminary trademark conflict checks. Calls are rejected before payment while a reliable official registry search source is unavailable.",
+      "keywords": "Trademark Registry Brand Name Checker (Temporarily Unavailable) Reserved for preliminary trademark conflict checks. Calls are rejected before payment while a reliable official registry search source is unavailable. Use when an agent needs to perform a first-pass, automated conflict check before naming products, registering domains, or launching brands. legal trademark intellectual-property brand-checker name-screening conflict-checker Is 'Apple' a registered trademark? {\"word\":\"Apple\"}",
       "tags": [
         "legal",
         "trademark",
@@ -1966,14 +1967,14 @@
       "url": "https://statepulse-api.hahavoid0.workers.dev/blockchain/abi",
       "price": "$0.005",
       "atomicAmount": "5000",
-      "description": "Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser.",
-      "keywords": "Etherscan/Basescan Verified Contract ABI Resolver Resolves the contract interface JSON (ABI) for verified smart contracts on Base or Ethereum. Matches: get verified smart contract source interface, Basescan verified ABI fetcher, Etherscan contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser. Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically. blockchain abi utilities etherscan basescan verified-contract calldata-decoder Get Base USDC ABI {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
+      "description": "Resolves the contract interface JSON (ABI) for Sourcify-verified smart contracts on Base or Ethereum, with Blockscout as a fallback. Matches: verified ABI fetcher, contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser.",
+      "keywords": "Sourcify Verified Contract ABI Resolver Resolves the contract interface JSON (ABI) for Sourcify-verified smart contracts on Base or Ethereum, with Blockscout as a fallback. Matches: verified ABI fetcher, contract JSON interface loader, decode transaction calldata helpers, verified contract methods parser. Use when an on-chain coding or execution agent needs to inspect a contract's verified ABI interface or methods to encode call arguments or decode transaction event logs dynamically. blockchain abi utilities sourcify blockscout verified-contract calldata-decoder Get Base USDC ABI {\"address\":\"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913\"}",
       "tags": [
         "blockchain",
         "abi",
         "utilities",
-        "etherscan",
-        "basescan",
+        "sourcify",
+        "blockscout",
         "verified-contract",
         "calldata-decoder"
       ],
@@ -2005,6 +2006,10 @@
           },
           "chain": {
             "type": "string",
+            "enum": [
+              "ethereum",
+              "base"
+            ],
             "description": "Target blockchain (ethereum or base)",
             "default": "base"
           }
